@@ -62,6 +62,7 @@ def _example_cur_kline(quote_ctx):
             print(kline_table)
             print("\n\n")
             print(kline_table[["close", "time_key"]])
+            print(kline_table["close"][0])
 
 
 def _example_rt_ticker(quote_ctx):
@@ -162,6 +163,131 @@ class TickerTest(TickerHandlerBase):
         print("TickerTest", content)
         return RET_OK, content
 
+class MovingAverage:
+    def __init__(self, qc):
+        self.__quote_ctx = qc
+
+    def get_ma_10m(self, number):
+        stock_code_list = ["HK_FUTURE.999010"]
+        sub_type_list = ["K_1M"]
+
+        for code in stock_code_list:
+            for sub_type in sub_type_list:
+                ret_status, ret_data = self.__quote_ctx.subscribe(code, sub_type)
+                if ret_status != RET_OK:
+                    print("%s %s: %s" % (code, sub_type, ret_data))
+                    exit()
+
+        ret_status, ret_data = self.__quote_ctx.query_subscription()
+
+        if ret_status == RET_ERROR:
+            print(ret_data)
+            exit()
+
+        print(ret_data)
+
+        for code in stock_code_list:
+            for ktype in ["K_1M"]:
+                ret_code, ret_data = self.__quote_ctx.get_cur_kline(code, number + 9, ktype)
+                if ret_code == RET_ERROR:
+                    print(code, ktype, ret_data)
+                    exit()
+                kline_table = ret_data
+
+                sub_kline_table = kline_table
+                sub_kline_table = sub_kline_table[9: 10 + number]
+                # make whole value list
+                whole_value_list= []
+                for unit in kline_table["close"]:
+                    whole_value_list.append(unit)
+
+                repli_whole_value_list = [i for i in whole_value_list]
+                # Caculate MA
+                count = 0
+                for i in whole_value_list:
+                    if count >= 9:
+                        tmp_sum = 0
+                        for j in range(0, 10):
+                            tmp_sum = tmp_sum + repli_whole_value_list[count - j]
+                        whole_value_list[count] = tmp_sum / 10
+                    count = count + 1
+
+                # abandon the first 9 numbers
+                ma10_value_list = whole_value_list[9:9+number]
+
+                # make time list
+                time_list = []
+                for unit in sub_kline_table["time_key"]:
+                    time_list.append(unit)
+
+                # Combine data
+                data = []
+                for i in range(0, number ):
+                    data.append({"MA10": ma10_value_list[i], "time_key": time_list[i]})
+                ma_10m_table = pd.DataFrame(data, columns=["MA10", "time_key"])
+
+                print(ma_10m_table)
+
+    def get_ma_Xm(self, number, x):
+        stock_code_list = ["HK_FUTURE.999010"]
+        sub_type_list = ["K_1M"]
+
+        for code in stock_code_list:
+            for sub_type in sub_type_list:
+                ret_status, ret_data = self.__quote_ctx.subscribe(code, sub_type)
+                if ret_status != RET_OK:
+                    print("%s %s: %s" % (code, sub_type, ret_data))
+                    exit()
+
+        ret_status, ret_data = self.__quote_ctx.query_subscription()
+
+        if ret_status == RET_ERROR:
+            print(ret_data)
+            exit()
+
+        print(ret_data)
+
+        for code in stock_code_list:
+            for ktype in ["K_1M"]:
+                ret_code, ret_data = self.__quote_ctx.get_cur_kline(code, number + x-1, ktype)
+                if ret_code == RET_ERROR:
+                    print(code, ktype, ret_data)
+                    exit()
+                kline_table = ret_data
+
+                sub_kline_table = kline_table
+                sub_kline_table = sub_kline_table[x-1: x + number]
+                # make whole value list
+                whole_value_list= []
+                for unit in kline_table["close"]:
+                    whole_value_list.append(unit)
+
+                repli_whole_value_list = [i for i in whole_value_list]
+                # Caculate MA
+                count = 0
+                for i in whole_value_list:
+                    if count >= x-1:
+                        tmp_sum = 0
+                        for j in range(0, x):
+                            tmp_sum = tmp_sum + repli_whole_value_list[count - j]
+                        whole_value_list[count] = tmp_sum / x
+                    count = count + 1
+
+                # abandon the first 9 numbers
+                ma10_value_list = whole_value_list[x-1:x-1+number]
+
+                # make time list
+                time_list = []
+                for unit in sub_kline_table["time_key"]:
+                    time_list.append(unit)
+
+                # Combine data
+                data = []
+                for i in range(0, number ):
+                    data.append({"MAx": ma10_value_list[i], "time_key": time_list[i]})
+                ma_10m_table = pd.DataFrame(data, columns=["MAx", "time_key"])
+
+                print(ma_10m_table)
 
 if __name__ == "__main__":
 
@@ -172,10 +298,13 @@ if __name__ == "__main__":
     quote_context.set_handler(TickerTest())
     quote_context.start()
 
-    _example_stock_quote(quote_context)
+    ma = MovingAverage(quote_context)
+    print(ma.get_ma_10m(60))
+    print(ma.get_ma_Xm(10, 20))
+#    _example_stock_quote(quote_context)
 #    _example_cur_kline(quote_context)
 #    _example_rt_ticker(quote_context)
-    _example_order_book(quote_context)
+#    _example_order_book(quote_context)
 #    _example_get_trade_days(quote_context)
 #    _example_stock_basic(quote_context)
 
