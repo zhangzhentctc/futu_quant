@@ -1,5 +1,5 @@
 from openft.open_quant_context import *
-
+import time
 
 # Examples for use the python functions
 #
@@ -348,7 +348,176 @@ class MovingAverage:
                     data.append({"MA-x": ma_value_list[i], "time_key": time_list[i]})
                 ma_x_table = pd.DataFrame(data, columns=["MA-x", "time_key"])
 
-                print(ma_x_table)
+                return ma_x_table
+
+class DayReview:
+    def __init__(self, qc):
+        self.__quote_ctx = qc
+
+    def review(self):
+        ma = MovingAverage(quote_context)
+        ma10 = ma.get_ma_10m(765)
+        ma20 = ma.get_ma_20m(765)
+        ma50 = ma.get_ma_Xm(765, 50)
+        # Condition 1 : Downward Trend
+        #   1. Define T, around 10 mins
+        #   2. During T,
+        #        MA-10M[i] < MA-20M[i]
+        #   3. During T
+        #        delta
+        t = 2
+        ch_rate = 0.8
+        print("**************************")
+        count = 0
+
+        i = 0
+        i += 15
+        while i < 765 - 420:
+            flag = 1
+            if ma10['MA10'][i] > ma20['MA20'][i]:
+                for j in range(1, t):
+                    flag = 1
+                    # In case index is our of range
+                    if i + j >= 765:
+                        flag = 0
+                        break
+                    # Condition 1 MA Value Compare
+                    if ma10['MA10'][i + j] <= ma20['MA20'][i + j]:
+                        flag = 0
+                        break
+                    # Condition 2 MA Trend
+                    if ma10['MA10'][i + j] - ma10['MA10'][i + j - 1] < 0 or ma20['MA20'][i + j] - ma20['MA20'][
+                                        i + j - 1] < 0:
+                        flag = 0
+                        break
+                # Condition 3 MA change rate
+                if flag == 1:
+                    ma10_ch_rate = (ma10['MA10'][i + t] - ma10['MA10'][i]) / t
+                    ma20_ch_rate = (ma20['MA20'][i + t] - ma20['MA20'][i]) / t
+                    if abs(ma20_ch_rate) < ch_rate:
+                        flag = 0
+                    else:
+                        print("\nM10 Ch:" + str(ma10_ch_rate) + "  " + "M20 Ch:" + str(ma20_ch_rate))
+                if j == t - 1 and flag == 1:
+                    while 1:
+                        if i + j >= 765:
+                            break
+                        if ma10['MA10'][i + j] <= ma20['MA20'][i + j]:
+                            break
+                        j += 1
+                    print("SUCCESS!!! Upward ")
+                    print(str(i) + " " + ma10['time_key'][i])
+                    print("Duration:" + str(j))
+                    count += 1
+                    i += j
+
+            if ma10['MA10'][i] < ma20['MA20'][i]:
+                for j in range(1, t):
+                    flag = 1
+                    # In case index is our of range
+                    if i + j >= 765:
+                        flag = 0
+                        break
+                    # Condition 1 Value Compare
+                    if ma10['MA10'][i + j] >= ma20['MA20'][i + j]:
+                        flag = 0
+                        break
+                    # Condition 2 MA Trend
+                    if ma10['MA10'][i + j] - ma10['MA10'][i + j - 1] > 0 or ma20['MA20'][i + j] - ma20['MA20'][
+                                        i + j - 1] > 0:
+                        flag = 0
+                        break
+                if flag == 1:
+                    ma10_ch_rate = (ma10['MA10'][i + t] - ma10['MA10'][i]) / t
+                    ma20_ch_rate = (ma20['MA20'][i + t] - ma20['MA20'][i]) / t
+                    if abs(ma20_ch_rate) < ch_rate:
+                        flag = 0
+                    else:
+                        print("\nM10 Ch:" + str(ma10_ch_rate) + "  " + "M20 Ch:" + str(ma20_ch_rate))
+                if j == t - 1 and flag == 1:
+                    while 1:
+                        if i + j >= 765:
+                            break
+                        if ma10['MA10'][i + j] >= ma20['MA20'][i + j]:
+                            break
+                        j += 1
+                    print("SUCCESS!!! Downward")
+                    print(str(i) + " " + ma10['time_key'][i])
+                    print("Duration:" + str(j))
+
+                    count += 1
+                    i += j
+
+            i += 1
+
+        print("Finished " + str(count))
+        # Condition 2 : Upward Trend
+        #   1. Define T, around 10 mins
+        #   2. During T,
+        #        MA-10M[i] > MA-20M[i]
+        #   3. During T
+        #        delta
+
+class DetectSignal:
+    def __init__(self, qc):
+        self.__quote_ctx = qc
+
+    def detect(self):
+        t = 2
+        ch_rate = 0.8
+        flag = 1
+
+        ma = MovingAverage(quote_context)
+        ma10 = ma.get_ma_10m(t)
+        ma20 = ma.get_ma_20m(t)
+
+        # Check Upward Trend
+        if ma10['MA10'][0] > ma20['MA20'][0]:
+            for j in range(1, t):
+                flag = 1
+                # Condition 1 MA Value Compare
+                if ma10['MA10'][j] <= ma20['MA20'][j]:
+                    flag = 0
+                    break
+                # Condition 2 MA Trend
+                if ma10['MA10'][j] - ma10['MA10'][j - 1] < 0 or ma20['MA20'][j] - ma20['MA20'][j - 1] < 0:
+                    flag = 0
+                    break
+            # Condition 3 MA change rate
+            if flag == 1:
+                ma10_ch_rate = (ma10['MA10'][t] - ma10['MA10'][0]) / t
+                ma20_ch_rate = (ma20['MA20'][t] - ma20['MA20'][0]) / t
+                if abs(ma20_ch_rate) < ch_rate:
+                    flag = 0
+                else:
+                    print("\nM10 Ch:" + str(ma10_ch_rate) + "  " + "M20 Ch:" + str(ma20_ch_rate))
+            if j == t - 1 and flag == 1:
+                print("SUCCESS!!! Upward " + ma10['time_key'][0])
+                return 1
+
+        # Check Downward Trend
+        if ma10['MA10'][0] < ma20['MA20'][0]:
+            for j in range(1, t):
+                flag = 1
+                # Condition 1 Value Compare
+                if ma10['MA10'][j] >= ma20['MA20'][j]:
+                    flag = 0
+                    break
+                # Condition 2 MA Trend
+                if ma10['MA10'][j] - ma10['MA10'][j - 1] > 0 or ma20['MA20'][j] - ma20['MA20'][ j - 1] > 0:
+                    flag = 0
+                    break
+            if flag == 1:
+                ma10_ch_rate = (ma10['MA10'][t] - ma10['MA10'][0]) / t
+                ma20_ch_rate = (ma20['MA20'][t] - ma20['MA20'][0]) / t
+                if abs(ma20_ch_rate) < ch_rate:
+                    flag = 0
+                else:
+                    print("\nM10 Ch:" + str(ma10_ch_rate) + "  " + "M20 Ch:" + str(ma20_ch_rate))
+            if j == t - 1 and flag == 1:
+                print("SUCCESS!!! Downward " + ma10['time_key'][0])
+                return 1
+        return 0
 
 if __name__ == "__main__":
 
@@ -359,63 +528,17 @@ if __name__ == "__main__":
     quote_context.set_handler(TickerTest())
     quote_context.start()
 
-    ma = MovingAverage(quote_context)
-    ma10 = ma.get_ma_10m(765)
-    ma20 = ma.get_ma_20m(765)
+    detectSignal = DetectSignal(quote_context)
+    while 1:
+        if detectSignal.detect() == 1:
+            print("Signal Trigger")
+        else:
+            print("Wait...")
+        time.sleep(0.5)
 
-# Condition 1 : Downward Trend
-#   1. Define T, around 10 mins
-#   2. During T,
-#        MA-10M[i] < MA-20M[i]
-#   3. During T
-#        delta
-    t = 10
-    print("**************************")
+    dayReview = DayReview(quote_context)
+    dayReview.review()
 
-    for i in range(0,765):
-        if ma10['MA10'][i] > ma20['MA20'][i]:
-            for j in range(1,t):
-                # In case index is our of range
-                if i+j >= 765:
-                    break
-                # Condition 1 Value Compare
-                if ma10['MA10'][i+j] <= ma20['MA20'][i+j]:
-                    break
-                # Condition 2 MA Trend
-                if ma10['MA10'][i+j] - ma10['MA10'][i+j-1] < 0:
-                    break
-            if j == t - 1:
-                print("SUCCESS!!! Downward")
-                print(i)
-                print(ma10['time_key'][i])
-                i = i + 9
-        if ma10['MA10'][i] < ma20['MA20'][i]:
-            for j in range(1,t):
-                # In case index is our of range
-                if i+j >= 765:
-                    break
-                # Condition 1 Value Compare
-                if ma10['MA10'][i+j] >= ma20['MA20'][i+j]:
-                    break
-                # Condition 2 MA Trend
-                if ma10['MA10'][i+j] - ma10['MA10'][i+j-1] > 0:
-                    break
-            if j == t - 1:
-                print("SUCCESS!!! Upward")
-                print(i)
-                print(ma10['time_key'][i])
-                i = i + 9
-
-    print("Finished")
-# Condition 2 : Upward Trend
-#   1. Define T, around 10 mins
-#   2. During T,
-#        MA-10M[i] > MA-20M[i]
-#   3. During T
-#        delta
-
-#    print(ma.get_ma_Xm(390, 20))
-#    print(ma.get_ma_Xm(390, 50))
 #    _example_stock_quote(quote_context)
 #    _example_cur_kline(quote_context)
 #    _example_rt_ticker(quote_context)
