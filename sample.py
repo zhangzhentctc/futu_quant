@@ -226,7 +226,7 @@ class MovingAverage:
                     data.append({"MA10": ma10_value_list[i], "time_key": time_list[i]})
                 ma_10m_table = pd.DataFrame(data, columns=["MA10", "time_key"])
 
-                print(ma_10m_table)
+                return ma_10m_table
 
     def get_ma_20m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -287,7 +287,7 @@ class MovingAverage:
                     data.append({"MA20": ma20_value_list[i], "time_key": time_list[i]})
                 ma_20m_table = pd.DataFrame(data, columns=["MA20", "time_key"])
 
-                print(ma_20m_table)
+                return ma_20m_table
 
     def get_ma_Xm(self, number, x):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -360,8 +360,60 @@ if __name__ == "__main__":
     quote_context.start()
 
     ma = MovingAverage(quote_context)
-    print(ma.get_ma_10m(390))
-    print(ma.get_ma_20m(390))
+    ma10 = ma.get_ma_10m(765)
+    ma20 = ma.get_ma_20m(765)
+
+# Condition 1 : Downward Trend
+#   1. Define T, around 10 mins
+#   2. During T,
+#        MA-10M[i] < MA-20M[i]
+#   3. During T
+#        delta
+    t = 10
+    print("**************************")
+
+    for i in range(0,765):
+        if ma10['MA10'][i] > ma20['MA20'][i]:
+            for j in range(1,t):
+                # In case index is our of range
+                if i+j >= 765:
+                    break
+                # Condition 1 Value Compare
+                if ma10['MA10'][i+j] <= ma20['MA20'][i+j]:
+                    break
+                # Condition 2 MA Trend
+                if ma10['MA10'][i+j] - ma10['MA10'][i+j-1] < 0:
+                    break
+            if j == t - 1:
+                print("SUCCESS!!! Downward")
+                print(i)
+                print(ma10['time_key'][i])
+                i = i + 9
+        if ma10['MA10'][i] < ma20['MA20'][i]:
+            for j in range(1,t):
+                # In case index is our of range
+                if i+j >= 765:
+                    break
+                # Condition 1 Value Compare
+                if ma10['MA10'][i+j] >= ma20['MA20'][i+j]:
+                    break
+                # Condition 2 MA Trend
+                if ma10['MA10'][i+j] - ma10['MA10'][i+j-1] > 0:
+                    break
+            if j == t - 1:
+                print("SUCCESS!!! Upward")
+                print(i)
+                print(ma10['time_key'][i])
+                i = i + 9
+
+    print("Finished")
+# Condition 2 : Upward Trend
+#   1. Define T, around 10 mins
+#   2. During T,
+#        MA-10M[i] > MA-20M[i]
+#   3. During T
+#        delta
+
 #    print(ma.get_ma_Xm(390, 20))
 #    print(ma.get_ma_Xm(390, 50))
 #    _example_stock_quote(quote_context)
