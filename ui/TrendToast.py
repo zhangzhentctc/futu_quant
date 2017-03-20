@@ -18,13 +18,17 @@ class TrendToast:
 
     def __show(self,text,detectSignal):
         text.delete(1.0, 'end')
-        if detectSignal.detect() == 1:
+        ret = detectSignal.detect()
+        if ret != 0:
             count = detectSignal.count
-            val = "Trend"
+            if ret == 1:
+                val = "Upward"
+            else:
+                val = "Downward"
             time = count*(self.delay/1000)
             val = val + " " + str(time)
         else:
             val = "Wait"
 
         text.insert('end', val)
-        text.after(500, self.__show, text, detectSignal)
+        text.after(self.delay, self.__show, text, detectSignal)

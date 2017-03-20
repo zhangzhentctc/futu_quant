@@ -27,7 +27,6 @@ class MovingAverage:
             print(ret_data)
             exit()
 
-        print(ret_data)
 
         for code in stock_code_list:
             for ktype in ["K_1M"]:
@@ -88,8 +87,6 @@ class MovingAverage:
             print(ret_data)
             exit()
 
-        print(ret_data)
-
         for code in stock_code_list:
             for ktype in ["K_1M"]:
                 ret_code, ret_data = self.__quote_ctx.get_cur_kline(code, number + 19, ktype)
@@ -148,8 +145,6 @@ class MovingAverage:
         if ret_status == RET_ERROR:
             print(ret_data)
             exit()
-
-        print(ret_data)
 
         for code in stock_code_list:
             for ktype in ["K_1M"]:
