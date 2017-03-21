@@ -125,9 +125,8 @@ def _example_stock_basic(quote_ctx):
     print(ret_data)
 
 
-
 if __name__ == "__main__":
-    init = Initialize('127.0.0.1',11111)
+    init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
 
     trendToast = TrendToast(quote_context)

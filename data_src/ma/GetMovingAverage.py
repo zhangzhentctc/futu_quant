@@ -6,6 +6,8 @@ from openft.open_quant_context import *
 #    pd Dataframe
 #    format: MAx, time_key
 ##
+
+
 class MovingAverage:
     def __init__(self, qc):
         self.__quote_ctx = qc
@@ -26,7 +28,6 @@ class MovingAverage:
         if ret_status == RET_ERROR:
             print(ret_data)
             exit()
-
 
         for code in stock_code_list:
             for ktype in ["K_1M"]:
