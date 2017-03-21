@@ -12,6 +12,49 @@ class MovingAverage:
     def __init__(self, qc):
         self.__quote_ctx = qc
 
+    def get_ma_1m(self, number):
+        stock_code_list = ["HK_FUTURE.999010"]
+        sub_type_list = ["K_1M"]
+
+        for code in stock_code_list:
+            for sub_type in sub_type_list:
+                ret_status, ret_data = self.__quote_ctx.subscribe(code, sub_type)
+                if ret_status != RET_OK:
+                    print("%s %s: %s" % (code, sub_type, ret_data))
+                    exit()
+
+        ret_status, ret_data = self.__quote_ctx.query_subscription()
+
+        if ret_status == RET_ERROR:
+            print(ret_data)
+            exit()
+
+        for code in stock_code_list:
+            for ktype in ["K_1M"]:
+                ret_code, ret_data = self.__quote_ctx.get_cur_kline(code, number, ktype)
+                if ret_code == RET_ERROR:
+                    print(code, ktype, ret_data)
+                    exit()
+                kline_table = ret_data
+
+                # Make Data List
+                ma1_value_list= []
+                for unit in kline_table["close"]:
+                    ma1_value_list.append(unit)
+
+               # make time list
+                time_list = []
+                for unit in kline_table["time_key"]:
+                    time_list.append(unit)
+
+                # Combine data
+                data = []
+                for i in range(0, number ):
+                    data.append({"MA1": ma1_value_list[i], "time_key": time_list[i]})
+                ma_1m_table = pd.DataFrame(data, columns=["MA1", "time_key"])
+
+                return ma_1m_table
+
     def get_ma_10m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
         sub_type_list = ["K_1M"]

@@ -6,22 +6,25 @@ class TrendToast:
     def __init__(self,quote_context):
         # Init tk
         self.qc = quote_context
-        self.delay = 500
+        self.delay = 200
         self.top = Tk()
         self.text = Text(self.top)
         self.text.pack(expand=1, fill='both')
 
     def display(self):
-        detectSignal = DetectSignal(self.qc)
-        self.__show(self.text, detectSignal)
+        detectMATrend = DetectMATrend(self.qc)
+        detectMATrend.start()
+ #       detectRecover = DetectRecover(self.qc)
+ #       detectRecover.start()
+        self.__show(self.text, detectMATrend)
         self.top.mainloop()
 
-    def __show(self,text,detectSignal):
+    def __show(self,text,detectMATrend):
         text.delete(1.0, 'end')
-        ret = detectSignal.detect()
-        ma10_rate, ma20_rate = detectSignal.get_ma_ch_rate()
+        ret = detectMATrend.get_ma_trend()
+        ma10_rate, ma20_rate = detectMATrend.get_ma_ch_rate()
         if ret != 0:
-            count = detectSignal.count
+            count = detectMATrend.count
             if ret == 1:
                 val = "Upward"
             else:
@@ -32,4 +35,4 @@ class TrendToast:
             val = "Wait"
         ch_rate = "\nMA10 " + str(ma10_rate) + "\n" + "MA20 " + str(ma20_rate)
         text.insert('end', val + ch_rate)
-        text.after(self.delay, self.__show, text, detectSignal)
+        text.after(self.delay, self.__show, text, detectMATrend)
