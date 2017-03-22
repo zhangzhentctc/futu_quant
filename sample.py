@@ -130,13 +130,15 @@ if __name__ == "__main__":
     quote_context = init.initialize()
     ma = MovingAverage(quote_context)
     ma.start()
+    detectMATrend = DetectMATrend(quote_context, ma)
+    detectMATrend.start()
 #   while 1:
 #      print(ma.get_get_ma_1m_data(5))
 #      print(ma.get_get_ma_10m_data(3))
 #      print(ma.get_get_ma_20m_data(3))
 #      time.sleep(0.5)
 
-    trendToast = TrendToast(quote_context,ma)
+    trendToast = TrendToast(detectMATrend)
     trendToast.display()
 
 
