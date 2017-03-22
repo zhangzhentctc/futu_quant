@@ -13,8 +13,10 @@ import time
 #    2. trend
 #    3. ma10_ch_rate
 #    4. ma20_ch_rate
+
+
 class DetectMATrend(threading.Thread):
-    def __init__(self, qc, ma, duration = 2, interval = 500, ch_rate = 0.8):
+    def __init__(self, qc, ma, duration=2, interval=500, ch_rate=0.8):
         super(DetectMATrend, self).__init__()
         self.ma = ma
         self.__quote_ctx = qc
@@ -46,6 +48,7 @@ class DetectMATrend(threading.Thread):
 
         ma10 = self.ma.get_get_ma_10m_data(self.duration)
         ma20 = self.ma.get_get_ma_20m_data(self.duration)
+
         if len(ma10) == 0 or len(ma20) == 0:
             return 0
 
@@ -99,11 +102,22 @@ class DetectMATrend(threading.Thread):
                 else:
                     print("\nM10 Ch:" + str(self.ma10_ch_rate) + "  " + "M20 Ch:" + str(self.ma20_ch_rate))
             if j == self.duration - 1 and flag == 1:
-                print("SUCCESS!!! Downward " + ma10['time_key'][0]+ " " + str(self.count))
+                print("SUCCESS!!! Downward " + ma10['time_key'][0] + " " + str(self.count))
                 self.count += 1
                 return -1
         self.count = 0
         return 0
+
+    def get_ma_cur_gap(self):
+        ma1 = self.ma.get_get_ma_1m_data(1)
+        ma10 = self.ma.get_get_ma_10m_data(1)
+        if len(ma10) == 0 or len(ma1) == 0:
+            return 0
+        ma1_val = ma1["MA1"]
+        ma10_val = ma10["MA10"]
+        ret = abs(ma10_val[0] - ma1_val[0])
+        print(ret)
+        return ret
 
 # Return Change Rate of MA10 and MA20
     def get_ma_ch_rate(self):

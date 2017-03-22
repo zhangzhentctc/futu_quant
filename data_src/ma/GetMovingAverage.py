@@ -264,6 +264,7 @@ class MovingAverage(threading.Thread):
         ret = pd.DataFrame(data, columns=["MA20", "time_key"])
         return ret
 
+
     def run(self):
         while 1:
             self.get_ma_1m(self.dutation)
