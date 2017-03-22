@@ -14,9 +14,9 @@ import time
 #    3. ma10_ch_rate
 #    4. ma20_ch_rate
 class DetectMATrend(threading.Thread):
-    def __init__(self, qc, duration = 2, interval = 500, ch_rate = 0.8):
+    def __init__(self, qc, ma, duration = 2, interval = 500, ch_rate = 0.8):
         super(DetectMATrend, self).__init__()
-
+        self.ma = ma
         self.__quote_ctx = qc
         self.duration = duration
         self.interval = interval
@@ -44,9 +44,10 @@ class DetectMATrend(threading.Thread):
     def detect(self):
         flag = 1
 
-        ma = MovingAverage(self.__quote_ctx)
-        ma10 = ma.get_ma_10m(self.duration)
-        ma20 = ma.get_ma_20m(self.duration)
+        ma10 = self.ma.get_get_ma_10m_data(self.duration)
+        ma20 = self.ma.get_get_ma_20m_data(self.duration)
+        if len(ma10) == 0 or len(ma20) == 0:
+            return 0
 
         self.ma10_ch_rate = (ma10['MA10'][self.duration - 1] - ma10['MA10'][0]) / self.duration
         self.ma20_ch_rate = (ma20['MA20'][self.duration - 1] - ma20['MA20'][0]) / self.duration
@@ -116,19 +117,19 @@ class DetectMATrend(threading.Thread):
     def run(self):
         while 1:
             self.trend = self.detect()
-            time.sleep(self.interval)
+            time.sleep(self.interval/1000)
 
 
 class DetectRecover(threading.Thread):
-    def __init__(self, qc, duration = 5):
+    def __init__(self, qc, ma, duration = 5):
         super(DetectRecover, self).__init__()
         self.__quote_ctx = qc
+        self.ma = ma
         self.duration = duration
         self.ref = 0
 
     def detect(self):
-        ma = MovingAverage(self.__quote_ctx)
-        ma1 = ma.get_ma_1m(self.duration)
+        ma1 = self.ma.get_get_ma_1m_data(self.duration)
         # 0,1,...,D-1
         ma1_value = [i for i in ma1["MA1"]]
 

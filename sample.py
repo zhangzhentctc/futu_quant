@@ -128,9 +128,17 @@ def _example_stock_basic(quote_ctx):
 if __name__ == "__main__":
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
+    ma = MovingAverage(quote_context)
+    ma.start()
+#   while 1:
+#      print(ma.get_get_ma_1m_data(5))
+#      print(ma.get_get_ma_10m_data(3))
+#      print(ma.get_get_ma_20m_data(3))
+#      time.sleep(0.5)
 
-    trendToast = TrendToast(quote_context)
+    trendToast = TrendToast(quote_context,ma)
     trendToast.display()
+
 
 
 

@@ -3,18 +3,19 @@ from sample import *
 from strategies.ma.detectSignal import *
 
 class TrendToast:
-    def __init__(self,quote_context):
+    def __init__(self,quote_context,ma):
         # Init tk
         self.qc = quote_context
+        self.ma = ma
         self.delay = 200
         self.top = Tk()
         self.text = Text(self.top)
         self.text.pack(expand=1, fill='both')
 
     def display(self):
-        detectMATrend = DetectMATrend(self.qc)
+        detectMATrend = DetectMATrend(self.qc,self.ma)
         detectMATrend.start()
- #       detectRecover = DetectRecover(self.qc)
+#        detectRecover = DetectRecover(self.qc)
  #       detectRecover.start()
         self.__show(self.text, detectMATrend)
         self.top.mainloop()

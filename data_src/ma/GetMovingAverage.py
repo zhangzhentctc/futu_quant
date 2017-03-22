@@ -1,5 +1,6 @@
 from openft.open_quant_context import *
-
+import threading
+import time
 ##
 # Get Real-Time Moving Average
 # Return :
@@ -8,9 +9,16 @@ from openft.open_quant_context import *
 ##
 
 
-class MovingAverage:
-    def __init__(self, qc):
+class MovingAverage(threading.Thread):
+    def __init__(self, qc, duration = 10, cycle = 0.5):
+        super(MovingAverage, self).__init__()
         self.__quote_ctx = qc
+        self.dutation = duration
+        self.refresh_cycle =cycle
+        self.__ma_1m_table = []
+        self.__ma_10m_table = []
+        self.__ma_20m_table = []
+
 
     def get_ma_1m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -51,9 +59,9 @@ class MovingAverage:
                 data = []
                 for i in range(0, number ):
                     data.append({"MA1": ma1_value_list[i], "time_key": time_list[i]})
-                ma_1m_table = pd.DataFrame(data, columns=["MA1", "time_key"])
+                self.__ma_1m_table = pd.DataFrame(data, columns=["MA1", "time_key"])
 
-                return ma_1m_table
+                return self.__ma_1m_table
 
     def get_ma_10m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -110,9 +118,9 @@ class MovingAverage:
                 data = []
                 for i in range(0, number ):
                     data.append({"MA10": ma10_value_list[i], "time_key": time_list[i]})
-                ma_10m_table = pd.DataFrame(data, columns=["MA10", "time_key"])
+                self.__ma_10m_table = pd.DataFrame(data, columns=["MA10", "time_key"])
 
-                return ma_10m_table
+                return  self.__ma_10m_table
 
     def get_ma_20m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -169,9 +177,9 @@ class MovingAverage:
                 data = []
                 for i in range(0, number ):
                     data.append({"MA20": ma20_value_list[i], "time_key": time_list[i]})
-                ma_20m_table = pd.DataFrame(data, columns=["MA20", "time_key"])
+                    self.__ma_20m_table = pd.DataFrame(data, columns=["MA20", "time_key"])
 
-                return ma_20m_table
+                return self.__ma_20m_table
 
     def get_ma_Xm(self, number, x):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -231,3 +239,34 @@ class MovingAverage:
                 ma_x_table = pd.DataFrame(data, columns=["MA-x", "time_key"])
 
                 return ma_x_table
+
+    def get_get_ma_1m_data(self, number):
+        data = []
+        if len(self.__ma_1m_table) != 0:
+            for i in range(self.dutation - number, self.dutation ):
+                data.append({"MA1": self.__ma_1m_table["MA1"][i], "time_key": self.__ma_1m_table["time_key"][i]})
+        ret = pd.DataFrame(data, columns=["MA1", "time_key"])
+        return ret
+
+    def get_get_ma_10m_data(self, number):
+        data = []
+        if len(self.__ma_10m_table) != 0:
+            for i in range(self.dutation - number, self.dutation ):
+                data.append({"MA10": self.__ma_10m_table["MA10"][i], "time_key": self.__ma_1m_table["time_key"][i]})
+        ret = pd.DataFrame(data, columns=["MA10", "time_key"])
+        return ret
+
+    def get_get_ma_20m_data(self, number):
+        data = []
+        if len(self.__ma_20m_table) != 0:
+            for i in range(self.dutation - number, self.dutation ):
+                data.append({"MA20": self.__ma_20m_table["MA20"][i], "time_key": self.__ma_1m_table["time_key"][i]})
+        ret = pd.DataFrame(data, columns=["MA20", "time_key"])
+        return ret
+
+    def run(self):
+        while 1:
+            self.get_ma_1m(self.dutation)
+            self.get_ma_10m(self.dutation)
+            self.get_ma_20m(self.dutation)
+            time.sleep(self.refresh_cycle)
