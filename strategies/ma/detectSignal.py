@@ -116,7 +116,6 @@ class DetectMATrend(threading.Thread):
         ma1_val = ma1["MA1"]
         ma10_val = ma10["MA10"]
         ret = abs(ma10_val[0] - ma1_val[0])
-        print(ret)
         return ret
 
 # Return Change Rate of MA10 and MA20
