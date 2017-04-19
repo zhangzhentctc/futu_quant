@@ -242,7 +242,7 @@ class MovingAverage(threading.Thread):
 
     def get_get_ma_1m_data(self, number):
         data = []
-        if len(self.__ma_1m_table) != 0:
+        if len(self.__ma_1m_table) == self.dutation:
             for i in range(self.dutation - number, self.dutation ):
                 data.append({"MA1": self.__ma_1m_table["MA1"][i], "time_key": self.__ma_1m_table["time_key"][i]})
         ret = pd.DataFrame(data, columns=["MA1", "time_key"])
@@ -250,7 +250,7 @@ class MovingAverage(threading.Thread):
 
     def get_get_ma_10m_data(self, number):
         data = []
-        if len(self.__ma_10m_table) != 0:
+        if len(self.__ma_10m_table) == self.dutation:
             for i in range(self.dutation - number, self.dutation ):
                 data.append({"MA10": self.__ma_10m_table["MA10"][i], "time_key": self.__ma_1m_table["time_key"][i]})
         ret = pd.DataFrame(data, columns=["MA10", "time_key"])
@@ -258,12 +258,11 @@ class MovingAverage(threading.Thread):
 
     def get_get_ma_20m_data(self, number):
         data = []
-        if len(self.__ma_20m_table) != 0:
+        if len(self.__ma_20m_table) == self.dutation:
             for i in range(self.dutation - number, self.dutation ):
                 data.append({"MA20": self.__ma_20m_table["MA20"][i], "time_key": self.__ma_1m_table["time_key"][i]})
         ret = pd.DataFrame(data, columns=["MA20", "time_key"])
         return ret
-
 
     def run(self):
         while 1:
