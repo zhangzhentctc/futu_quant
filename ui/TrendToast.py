@@ -20,6 +20,7 @@ class TrendToast:
         ret = self.detectMATrend.get_ma_trend()
         ma10_rate, ma20_rate = self.detectMATrend.get_ma_ch_rate()
         gap = self.detectMATrend.get_ma_cur_gap()
+        val_ch_rate = self.detectMATrend.get_ch_rate_val()
         if ret != 0:
             count = self.detectMATrend.count
             if ret == 1:
@@ -31,6 +32,7 @@ class TrendToast:
         else:
             val = "Wait"
         ch_rate = "\nMA10 " + str(ma10_rate) + "\n" + "MA20 " + str(ma20_rate)
+        val_ch_rate_show = "\nChange Rate: " + str(val_ch_rate)
         gap = "\nGap: " + str(gap)
-        text.insert('end', val + ch_rate + gap)
+        text.insert('end', val + ch_rate + gap + val_ch_rate_show)
         text.after(self.delay, self.__show, text)

@@ -29,6 +29,9 @@ class DetectMATrend(threading.Thread):
         self.ma10_ch_rate = 0
         self.ma20_ch_rate = 0
 
+        self.ch_rate = 0
+        self.ch_pre_val = 0
+
 #
 # Detect Current Trend
 # Condition (During an interval t):
@@ -119,6 +122,18 @@ class DetectMATrend(threading.Thread):
         print(ret)
         return ret
 
+    def get_ch_rate(self):
+        ma1 = self.ma.get_get_ma_1m_data(1)
+        if len(ma1) == 0:
+            return 0
+        ma1_val = ma1["MA1"]
+        self.ch_rate = (ma1_val[0] - self.ch_pre_val)/(self.interval/1000)
+        self.ch_pre_val = ma1_val[0]
+        return 1
+
+    def get_ch_rate_val(self):
+        return self.ch_rate
+
 # Return Change Rate of MA10 and MA20
     def get_ma_ch_rate(self):
         return self.ma10_ch_rate, self.ma20_ch_rate
@@ -131,6 +146,7 @@ class DetectMATrend(threading.Thread):
     def run(self):
         while 1:
             self.trend = self.detect()
+            self.get_ch_rate()
             time.sleep(self.interval/1000)
 
 
