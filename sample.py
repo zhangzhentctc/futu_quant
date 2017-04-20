@@ -132,7 +132,6 @@ def _example_stock_basic(quote_ctx):
 if __name__ == "__main__":
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
-#    _example_order_book(quote_context)
     ma = MovingAverage(quote_context)
     ma.start()
 

@@ -119,6 +119,8 @@ class DetectMATrend(threading.Thread):
         if len(ma1) == 0:
             return 0
         ma1_val = ma1["MA1"]
+        if ma1_val[0] == 0:
+            return 0
         self.cur_val = ma1_val[0]
         return 1
 
