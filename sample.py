@@ -3,6 +3,8 @@ import time
 from data_src.ma.GetMovingAverage import *
 from ui.TrendToast import *
 from init import *
+from db.store_control import *
+from trade_api.hk_trade_api import *
 # Examples for use the python functions
 #
 def _example_stock_quote(quote_ctx):
@@ -128,19 +130,24 @@ def _example_stock_basic(quote_ctx):
 if __name__ == "__main__":
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
+    _example_order_book(quote_context)
     ma = MovingAverage(quote_context)
     ma.start()
-    detectMATrend = DetectMATrend(quote_context, ma)
-    detectMATrend.start()
-#   while 1:
-#      print(ma.get_get_ma_1m_data(5))
-#      print(ma.get_get_ma_10m_data(3))
-#      print(ma.get_get_ma_20m_data(3))
-#      time.sleep(0.5)
+ #   detectMATrend = DetectMATrend(quote_context, ma)
+ #   detectMATrend.start()
+  #  detectMATrend5 = DetectMATrend(quote_context, ma, 5)
+ #   detectMATrend5.start()
 
-    trendToast = TrendToast(detectMATrend)
-    trendToast.display()
+ #   sc = store_control(detectMATrend,detectMATrend5)
+ #   sc.start()
 
+ #   hk_trade = hk_trade()
+ #   hk_trade.initialize()
+ #   hk_trade.unlock_trade('88888888', '584679')
+ #   hk_trade.accinfo_query('99999999', 0)
+
+  #  trendToast = TrendToast(detectMATrend,detectMATrend5)
+  #  trendToast.display()
 
 
 

@@ -34,7 +34,8 @@ class DetectMATrend(threading.Thread):
         self.val_ch_rate = 0
         self.ch_pre_val = 0
 
-#
+        self.cur_val = 0
+    #
 # Detect Current Trend
 # Condition (During an interval t):
 #     1. MA10 and MA20 have the same direction
@@ -113,6 +114,17 @@ class DetectMATrend(threading.Thread):
         self.count = 0
         return 0
 
+    def cal_cur(self):
+        ma1 = self.ma.get_get_ma_1m_data(1)
+        if len(ma1) == 0:
+            return 0
+        ma1_val = ma1["MA1"]
+        self.cur_val = ma1_val[0]
+        return 1
+
+    def get_cur_val(self):
+        return self.cur_val
+
     def cal_ma_cur_gap(self):
         ma1 = self.ma.get_get_ma_1m_data(1)
         ma10 = self.ma.get_get_ma_10m_data(1)
@@ -152,6 +164,7 @@ class DetectMATrend(threading.Thread):
             self.trend = self.detect()
             self.cal_ch_rate()
             self.cal_ma_cur_gap()
+            self.cal_cur()
             time.sleep(self.interval/1000)
 
 
