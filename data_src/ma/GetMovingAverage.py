@@ -10,7 +10,7 @@ import time
 
 
 class MovingAverage(threading.Thread):
-    def __init__(self, qc, duration = 10, cycle = 0.5):
+    def __init__(self, qc, duration = 10, cycle = 0.2):
         super(MovingAverage, self).__init__()
         self.__quote_ctx = qc
         self.dutation = duration
@@ -19,6 +19,8 @@ class MovingAverage(threading.Thread):
         self.__ma_10m_table = []
         self.__ma_20m_table = []
 
+        self.ask = 0
+        self.bid = 0
 
     def get_ma_1m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -264,9 +266,31 @@ class MovingAverage(threading.Thread):
         ret = pd.DataFrame(data, columns=["MA20", "time_key"])
         return ret
 
+    def get_ask_bid(self):
+        stock_code_list = ["HK.65724"]
+
+        # subscribe "ORDER_BOOK"
+        for stk_code in stock_code_list:
+            ret_status, ret_data = self.__quote_ctx.subscribe(stk_code, "ORDER_BOOK")
+            if ret_status != RET_OK:
+                print("%s %s: %s" % (stk_code, "ORDER_BOOK", ret_data))
+                exit()
+
+        for stk_code in stock_code_list:
+            ret_status, ret_data = self.__quote_ctx.get_order_book(stk_code)
+            if ret_status == RET_ERROR:
+                print(stk_code, ret_data)
+                exit()
+            self.ask = ret_data["Ask"][0][0]
+            self.bid = ret_data["Bid"][0][0]
+
+    def get_get_ask_bid(self):
+        return self.ask, self.bid
+
     def run(self):
         while 1:
             self.get_ma_1m(self.dutation)
             self.get_ma_10m(self.dutation)
             self.get_ma_20m(self.dutation)
+            self.get_ask_bid()
             time.sleep(self.refresh_cycle)
