@@ -6,6 +6,7 @@ from init import *
 from db.store_control import *
 from trade_api.hk_trade_api import *
 from data_src.stock_info.stock_info import *
+from strategies.zma.daytest import *
 
 # Examples for use the python functions
 #
@@ -130,26 +131,30 @@ def _example_stock_basic(quote_ctx):
 
 
 if __name__ == "__main__":
-    init = Initialize('127.0.0.1', 11111)
-    quote_context = init.initialize()
-    ma = MovingAverage(quote_context)
-    ma.start()
+    test = daytest()
+    test.daytest()
 
-    detectMATrend = DetectMATrend(quote_context, ma)
-    detectMATrend.start()
-    detectMATrend5 = DetectMATrend(quote_context, ma, 5)
-    detectMATrend5.start()
 
-    sc = store_control(detectMATrend, detectMATrend5, ma)
-    sc.start()
+#    init = Initialize('127.0.0.1', 11111)
+#    quote_context = init.initialize()
+#    ma = MovingAverage(quote_context)
+#    ma.start()
+
+ #   detectMATrend = DetectMATrend(quote_context, ma)
+ #   detectMATrend.start()
+ #   detectMATrend5 = DetectMATrend(quote_context, ma, 5)
+ #   detectMATrend5.start()
+
+ #   sc = store_control(detectMATrend, detectMATrend5, ma)
+ #   sc.start()
 
  #   hk_trade = hk_trade()
  #   hk_trade.initialize()
  #   hk_trade.unlock_trade('88888888', '584679')
  #   hk_trade.accinfo_query('99999999', 0)
 
-    trendToast = TrendToast(detectMATrend,detectMATrend5)
-    trendToast.display()
+#    trendToast = TrendToast(detectMATrend,detectMATrend5)
+#    trendToast.display()
 
 
 

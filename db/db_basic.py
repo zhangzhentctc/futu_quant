@@ -20,11 +20,19 @@ class MySQLCommand(object):
     def queryMysql(self, sql):
         print("execute " + sql)
         try:
-            self.cursor.execute(sql)
-            row = self.cursor.fetchone()
-            print(row)
+            count = self.cursor.execute(sql)
         except:
             print(sql + ' execute failed.')
+            return -1
+        return count
+
+    def fetchoneMysql(self):
+        try:
+            self.cursor.fetchone()
+        except:
+            print('fetchone failed.')
+            return -1
+        return 0
 
     def insertMysql(self, sql):
         print("execute " + sql)
