@@ -5,8 +5,10 @@ from ui.TrendToast import *
 from init import *
 from db.store_control import *
 from trade_api.hk_trade_api import *
+from trade_api.hk_trade_op import *
 from data_src.stock_info.stock_info import *
 from strategies.zma.daytest import *
+from trade_api.hk_trader_placer import *
 
 # Examples for use the python functions
 #
@@ -131,30 +133,38 @@ def _example_stock_basic(quote_ctx):
 
 
 if __name__ == "__main__":
-    test = daytest()
-    test.daytest()
+#    test = daytest()
+ #   test.daytest()
 
 
-#    init = Initialize('127.0.0.1', 11111)
-#    quote_context = init.initialize()
-#    ma = MovingAverage(quote_context)
-#    ma.start()
+    init = Initialize('127.0.0.1', 11111)
+    quote_context = init.initialize()
+    ma = MovingAverage(quote_context)
+    ma.start()
 
- #   detectMATrend = DetectMATrend(quote_context, ma)
- #   detectMATrend.start()
- #   detectMATrend5 = DetectMATrend(quote_context, ma, 5)
- #   detectMATrend5.start()
+    detectMATrend = DetectMATrend(quote_context, ma)
+    detectMATrend.start()
+    detectMATrend5 = DetectMATrend(quote_context, ma, 5)
+    detectMATrend5.start()
 
  #   sc = store_control(detectMATrend, detectMATrend5, ma)
  #   sc.start()
 
- #   hk_trade = hk_trade()
- #   hk_trade.initialize()
- #   hk_trade.unlock_trade('88888888', '584679')
- #   hk_trade.accinfo_query('99999999', 0)
+    hk_trade = hk_trade_api()
+    hk_trade.initialize()
+    hk_trade.unlock_trade('88888888', '584679')
+    opt = hk_trade_opt(hk_trade)
+    placer = hk_trader_placer(ma, opt)
+#    placer.buy()
+#    localid = opt.buy(0.06, 10000, "67541")
+ #   orderid = opt.get_order_id(localid)
+ #   status = opt.check_order_status(orderid)
+  #  dealt = opt.get_dealt_qty(orderid)
+  #  print(dealt)
+  #  opt.disable_order(orderid)
 
-#    trendToast = TrendToast(detectMATrend,detectMATrend5)
-#    trendToast.display()
+    trendToast = TrendToast(detectMATrend,detectMATrend5,placer)
+    trendToast.display()
 
 
 

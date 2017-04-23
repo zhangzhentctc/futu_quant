@@ -6,12 +6,12 @@ class dbop_ma_trand:
         self.count = 0
         self.position = 0
 
-    def dbop_store_ma_dur2(self, db_basic, ma10_val, ma20_val,cur_val, ask_val, bid_val):
-        sql = "insert into dur2_trend(ma10,ma20,cur,ask,bid) values(" + str(ma10_val) + "," + str(ma20_val) + "," + str(cur_val)  + "," + str(ask_val)  + "," + str(bid_val) + ");"
+    def dbop_store_ma_dur2(self, db_basic, ma10_val, ma20_val,cur_val, ask_val, bid_val, ask_p_val, bid_p_val):
+        sql = "insert into dur2_trend(ma10,ma20,cur,ask,bid) values(" + str(ma10_val) + "," + str(ma20_val) + "," + str(cur_val)  + "," + str(ask_val)  + "," + str(bid_val) + "," + str(ask_p_val) + "," + str(bid_p_val) + ");"
         db_basic.insertMysql(sql)
 
-    def dbop_store_ma_dur5(self, db_basic, ma10_val, ma20_val, cur_val, ask_val, bid_val):
-        sql = "insert into dur5_trend(ma10,ma20,cur,ask,bid) values(" + str(ma10_val) + "," + str(ma20_val) + "," + str(cur_val)  + "," + str(ask_val)  + "," + str(bid_val) + ");"
+    def dbop_store_ma_dur5(self, db_basic, ma10_val, ma20_val, cur_val, ask_val, bid_val, ask_p_val, bid_p_val):
+        sql = "insert into dur5_trend(ma10,ma20,cur,ask,bid) values(" + str(ma10_val) + "," + str(ma20_val) + "," + str(cur_val)  + "," + str(ask_val)  + "," + str(bid_val) + "," + str(ask_p_val) + "," + str(bid_p_val) + ");"
         db_basic.insertMysql(sql)
 
     def dbop_read_ma_dur2(self, db_basic, time_start, time_end):

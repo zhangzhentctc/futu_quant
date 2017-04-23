@@ -3,14 +3,17 @@ from sample import *
 from strategies.ma.detectSignal import *
 
 class TrendToast:
-    def __init__(self, detectMATrend, detectMATrend5):
+    def __init__(self, detectMATrend, detectMATrend5,placer):
         # Init tk
         self.detectMATrend  = detectMATrend
         self.detectMATrend5 = detectMATrend5
+        self.placer = placer
         self.delay = 200
         self.top = Tk()
         self.text = Text(self.top)
         self.text.pack(expand=1, fill='both')
+        self.button1 = Button(self.top, text = "BUY", command = lambda : placer.buy(10000, "65724"))
+        self.button1.pack()
 
     def display(self):
         self.__show(self.text,)

@@ -22,6 +22,9 @@ class MovingAverage(threading.Thread):
         self.ask = 0
         self.bid = 0
 
+        self.p_ask = 0
+        self.p_bid = 0
+
     def get_ma_1m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
         sub_type_list = ["K_1M"]
@@ -284,8 +287,29 @@ class MovingAverage(threading.Thread):
             self.ask = ret_data["Ask"][0][0]
             self.bid = ret_data["Bid"][0][0]
 
+    def get_p_ask_bid(self):
+        stock_code_list = ["HK.67541"]
+
+        # subscribe "ORDER_BOOK"
+        for stk_code in stock_code_list:
+            ret_status, ret_data = self.__quote_ctx.subscribe(stk_code, "ORDER_BOOK")
+            if ret_status != RET_OK:
+                print("%s %s: %s" % (stk_code, "ORDER_BOOK", ret_data))
+                exit()
+
+        for stk_code in stock_code_list:
+            ret_status, ret_data = self.__quote_ctx.get_order_book(stk_code)
+            if ret_status == RET_ERROR:
+                print(stk_code, ret_data)
+                exit()
+            self.p_ask = ret_data["Ask"][0][0]
+            self.p_bid = ret_data["Bid"][0][0]
+
     def get_get_ask_bid(self):
         return self.ask, self.bid
+
+    def get_get_p_ask_bid(self):
+        return self.p_ask, self.p_bid
 
     def run(self):
         while 1:
@@ -293,4 +317,5 @@ class MovingAverage(threading.Thread):
             self.get_ma_10m(self.dutation)
             self.get_ma_20m(self.dutation)
             self.get_ask_bid()
+            self.get_p_ask_bid()
             time.sleep(self.refresh_cycle)
