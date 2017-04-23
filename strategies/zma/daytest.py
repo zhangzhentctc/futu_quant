@@ -173,7 +173,7 @@ class daytest:
  #                   print("delta_zma20_ma60 end: " + str(position))
                 zma20_f = 0
 
-            if abs(self.ret["delta_zma20_ma60"][position]) > ma20_shrethold * 0.8:
+            if abs(self.ret["delta_zma20_ma60"][position]) > 0:
                 zma20_x_f = 1
             else:
                 zma20_x_f = 0
@@ -193,25 +193,38 @@ class daytest:
                 ratio_x_f = 0
 
             if status == 0:
+                if self.ret["delta_zma20_ma60"][position - 1] < 0 and self.ret["delta_zma20_ma60"][position] > 0 and self.ret["delta_zma10_ma60"][position] > 14:
+                    status = 1
+                    prod = 1
+                    print("BUY: C " + str(self.ret["time"][position]) + " cross " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
+                    buy_position = position
+                if self.ret["delta_zma20_ma60"][position - 1] > 0 and self.ret["delta_zma20_ma60"][position] < 0 and self.ret["delta_zma10_ma60"][position] < -14:
+                    status = 1
+                    prod = -1
+                    print("BUY: P " + str(self.ret["time"][position]) + " cross " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
+                    buy_position = position
+
+            if status == 0:
                 if zma20_f == 1 and ratio_f == 1:
                     status = 1
                     if self.ret["delta_zma20_ma60"][position] > 0:
                         prod = 1
                     if self.ret["delta_zma20_ma60"][position] < 0:
                         prod = -1
-                    print("BUY:" + str(prod) + str(self.ret["time"][position]) + " " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(self.ret["ratio"][position]))
+                    print("BUY:" + str(prod) + " " + str(self.ret["time"][position]) + " " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(self.ret["ratio"][position]))
                     buy_position = position
 
             if status != 0:
-                if zma20_f == 0 and zma20_x_f == 1 and ratio_x_f == 1:
-                    status = 2
-                if zma20_f == 0 and (zma20_x_f == 0 or ratio_x_f == 0):
-                    status = 0
+                if zma20_f == 0:
 
-                    print("SELL:" + str(self.ret["time"][position]) + " " + str(self.ret["cur"][position]))
-                    sell_position = position
-                    data.append({"buy_position": buy_position, "sell_position": sell_position, "product": prod})
-                    prod = 0
+                    if zma20_x_f == 1 and ratio_x_f == 1:
+                        status = 2
+                    else:
+                        status = 0
+                        print("SELL:" + str(self.ret["time"][position]) + " " + str(self.ret["cur"][position]) + "  " + str(self.ret["ratio"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
+                        sell_position = position
+                        data.append({"buy_position": buy_position, "sell_position": sell_position, "product": prod})
+                        prod = 0
 
             position += 1
         ret = pd.DataFrame(data, columns=["buy_position", "sell_position", "product"])
@@ -219,30 +232,39 @@ class daytest:
 
     def search_biggest(self, start, end, prod):
         max_value = 0
+        value = 0
         if prod == 1:
-            for i in (start, end + 1):
-                if self.ret["cur"][i] < self.ret["cur"][start]:
-                    continue
-                if abs(self.ret["cur"][start] - self.ret["cur"][i]) > max_value:
-                    max_value = abs(self.ret["cur"][start] - self.ret["cur"][i])
+            value = self.zmax(start, end)
         if prod == -1:
-            for i in (start, end + 1):
-                if self.ret["cur"][i] > self.ret["cur"][start]:
-                    continue
-                if abs(self.ret["cur"][start] - self.ret["cur"][i]) > max_value:
-                    max_value = abs(self.ret["cur"][start] - self.ret["cur"][i])
+            value = self.zmin(start, end)
+        print(value)
+        max_value = abs(self.ret["cur"][start] - value)
         return max_value
 
-    def judge(self, trade_recorde):
+    def zmin(self, start, end):
+        min_v = self.ret["cur"][start]
+        for i in (start + 1, end + 1):
+            if self.ret["cur"][i] < min_v:
+                min_v = self.ret["cur"][i]
+        return min_v
+
+    def zmax(self, start, end):
+        max_v = self.ret["cur"][start]
+        for i in (start + 1, end + 1):
+            if self.ret["cur"][i] > max_v:
+                max_v = self.ret["cur"][i]
+        return max_v
+
+    def judge(self, trade_record):
         len = 0
         ret = []
-        for index in trade_recorde.iterrows():
+        for index in trade_record.iterrows():
             len += 1
 
         for i in range(0, len):
-            start = trade_recorde.iloc[i, 0]
-            end = trade_recorde.iloc[i, 1]
-            prod = trade_recorde.iloc[i, 2]
+            start = trade_record.iloc[i, 0]
+            end = trade_record.iloc[i, 1]
+            prod = trade_record.iloc[i, 2]
             max = self.search_biggest(start, end, prod)
             ret.append(max)
         return ret
