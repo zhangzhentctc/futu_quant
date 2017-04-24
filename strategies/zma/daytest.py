@@ -1,18 +1,18 @@
 from db.db_ma_trend import *
-from openft.open_quant_context import *
-
+#from openft.open_quant_context import *
+import pandas as pd
 
 class daytest:
     def __init__(self):
         self.count = 0
 
     def Initialize(self):
-        self.db = MySQLCommand("localhost", 3306, "root", "123456", "trend")
+        self.db = MySQLCommand("localhost", 3306, "root", "123456", "trend2")
         self.db.connectMysql()
         self.op = dbop_ma_trand()
 
     def queryData(self):
-        self.count = self.op.dbop_read_ma_dur2(self.db, "2017-04-21 9:20:00", "2017-04-21 16:00:00")
+        self.count = self.op.dbop_read_ma_dur2(self.db, "2017-04-24 9:30:00", "2017-04-24 16:00:00")
         if self.count == 0:
             return -1
         return self.count
@@ -25,10 +25,21 @@ class daytest:
         data = []
         for i in range(0, self.count):
             line = self.getNextData()
-            data.append({"No.": line[0], "cur": line[3], "time": line[6]})
+            data.append({"No.": line[0], "cur": line[3], "time": line[8]})
 
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "zma10", "zma20", "delta_zma10", "delta_zma20", "delta_zma10_ma60", "delta_zma20_ma60", "ratio", "time"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "zma10", "zma20", "delta_zma10", "delta_zma20", "delta_zma10_ma60", "delta_zma20_ma60", "ratio",  "delta_delta_zma20_ma60", "time"])
         return self.ret
+
+    def cal_delta_delta_zma20_ma60(self):
+        start_pos = 2461
+        if self.count < start_pos + 1:
+            return -1
+        for i in range(start_pos, self.count):
+            val = self.ret["delta_zma20_ma60"][i] - self.ret["delta_zma20_ma60"][i-1]
+            val *= 1000
+            self.ret.iloc[i, 9] = val
+        return 0
+
 
     def cal_zma10(self):
         len = 1200
@@ -150,6 +161,8 @@ class daytest:
         self.cal_delta_zma20_ma60()
         print("cal_ratio")
         self.cal_ratio()
+        print("cal_delta_delta_zma20_ma60")
+        self.cal_delta_delta_zma20_ma60()
 
     def detectSignal(self, ma20_shrethold, ma10_ma20_ratio_threshold):
         start = 2400 + 60 + 1
@@ -163,7 +176,16 @@ class daytest:
         data = []
         buy_position  = -1
         sell_position = -1
+        cross = 0
+        trend = 0
+        print(self.ret)
         while position < self.count:
+            curvity = 0
+            if self.ret["delta_zma20_ma60"][position] > 0:
+                trend = 1
+            else:
+                trend = -1
+
             if abs(self.ret["delta_zma20_ma60"][position]) > ma20_shrethold:
    #             if zma20_f == 0:
    #                 print("delta_zma20_ma60 start: " + str(position))
@@ -193,26 +215,52 @@ class daytest:
                 ratio_x_f = 0
 
             if status == 0:
-                if self.ret["delta_zma20_ma60"][position - 1] < 0 and self.ret["delta_zma20_ma60"][position] > 0 and self.ret["delta_zma10_ma60"][position] > 14:
-                    status = 1
-                    prod = 1
-                    print("BUY: C " + str(self.ret["time"][position]) + " cross " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
-                    buy_position = position
-                if self.ret["delta_zma20_ma60"][position - 1] > 0 and self.ret["delta_zma20_ma60"][position] < 0 and self.ret["delta_zma10_ma60"][position] < -14:
-                    status = 1
-                    prod = -1
-                    print("BUY: P " + str(self.ret["time"][position]) + " cross " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
-                    buy_position = position
+                if zma20_f == 1 and ratio_f == 1:
+                    t = 240
+                    ma20_max_pos = -1
+                    ma20_max_val = 0
+                    ma10_max_pos = -1
+                    ma10_max_val = 0
+                    for i in range (position - t + 1, position + 1):
+                        if abs(self.ret["delta_zma20_ma60"][i] - self.ret["delta_zma20_ma60"][position]) > ma20_max_val:
+                            ma20_max_val = abs(self.ret["delta_zma20_ma60"][i] - self.ret["delta_zma20_ma60"][position])
+                            ma20_max_pos = i
+                        if abs(self.ret["delta_zma10_ma60"][i] - self.ret["delta_zma10_ma60"][position]) > ma10_max_val:
+                            ma10_max_val = abs(self.ret["delta_zma10_ma60"][i] - self.ret["delta_zma10_ma60"][position])
+                            ma10_max_pos = i
+                    ma20_curvity = (self.ret["delta_zma20_ma60"][position] - self.ret["delta_zma20_ma60"][ma20_max_pos]) / (position - ma20_max_pos + 1)
+                    ma10_curvity = (self.ret["delta_zma10_ma60"][position] - self.ret["delta_zma10_ma60"][ma10_max_pos]) / (position - ma10_max_pos + 1)
+
+#            if status == 0:
+#                if self.ret["delta_zma20_ma60"][position - 1] < 0 and self.ret["delta_zma20_ma60"][position] > 0 and self.ret["delta_zma10_ma60"][position] > 12:
+#                    cross = 1
+#                    status = 1
+#                    prod = 1
+#                    print("BUY: C " + str(self.ret["time"][position]) + " cross " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
+#                    buy_position = position
+#                if self.ret["delta_zma20_ma60"][position - 1] > 0 and self.ret["delta_zma20_ma60"][position] < 0 and self.ret["delta_zma10_ma60"][position] < -12:
+#                    cross = -1
+#                    status = 1
+#                    prod = -1
+#                    print("BUY: P " + str(self.ret["time"][position]) + " cross " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma10_ma60"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(ratio_x_f))
+#                    buy_position = position
 
             if status == 0:
                 if zma20_f == 1 and ratio_f == 1:
-                    status = 1
-                    if self.ret["delta_zma20_ma60"][position] > 0:
-                        prod = 1
-                    if self.ret["delta_zma20_ma60"][position] < 0:
-                        prod = -1
-                    print("BUY:" + str(prod) + " " + str(self.ret["time"][position]) + " " + str(self.ret["cur"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + str(self.ret["ratio"][position]))
-                    buy_position = position
+                    if self.ret["delta_zma20_ma60"][position] > 0 :
+                        if (ma10_curvity / ma20_curvity) > 1.25 and ma20_curvity >= 20/1000:
+                            prod = 1
+                            status = 1
+                            print("BUY:" + "C " + str(self.ret["time"][position]) + " " + str(
+                                self.ret["cur"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + "curvity " + str(ma10_curvity) + " " + str(ma20_curvity))
+                            buy_position = position
+                    if self.ret["delta_zma20_ma60"][position] < 0 :
+                        if (ma10_curvity / ma20_curvity) > 1.25 and ma20_curvity <= -20/1000:
+                            prod = -1
+                            status = 1
+                            print("BUY:" + "P " + str(self.ret["time"][position]) + " " + str(
+                            self.ret["cur"][position]) + " " + str(self.ret["delta_zma20_ma60"][position]) + " " + "curvity " + str(ma10_curvity) + " " + str(ma20_curvity))
+                            buy_position = position
 
             if status != 0:
                 if zma20_f == 0:
@@ -283,3 +331,59 @@ class daytest:
         judge_ret = self.judge(trade_record)
         print(judge_ret)
 
+if __name__ == "__main__":
+#    Usage
+    test = daytest()
+    test.daytest()
+
+
+
+"""
+                start_point = -1
+                curvity_threshold = 5
+                duration = 2400
+                if zma20_f == 1 and ratio_f == 1:
+                    curvity_threshold = self.ret["delta_delta_zma20_ma60"][position]/ 10
+                    for i in range(0, duration):
+                        if trend == 1:
+                            if self.ret["delta_delta_zma20_ma60"][position - i] < curvity_threshold:
+                                start_point = position - i
+                                break
+                        if trend == -1:
+                            if self.ret["delta_delta_zma20_ma60"][position - i] > -1 * curvity_threshold:
+                                start_point = position - i
+                                break
+                    if start_point == -1:
+                        curvity = 0
+                    gap = float(self.ret["delta_delta_zma20_ma60"][position]) - float(
+                        self.ret["delta_delta_zma20_ma60"][start_point])
+                    print("aaaa")
+                    print(self.ret["delta_delta_zma20_ma60"][position])
+                    print(self.ret["delta_delta_zma20_ma60"][start_point])
+                    print(gap)
+                    print(position)
+                    print(start_point)
+                    if position - start_point == 0:
+                        cuvity = 0
+                    else:
+                        curvity = gap / (position - start_point)
+"""
+
+"""
+            if status == 0:
+                ##
+                # Calculate y = ax + b
+                ##
+                t = 240
+                A = 0
+                B = 0
+                C = 0
+                D = 0
+                for i in range(position - t + 1, position + 1):
+                    A += i * i
+                    B += i
+                    C += i * self.ret["delta_zma20_ma60"][i]
+                    D += self.ret["delta_zma20_ma60"][i]
+
+                curvity = (C * t - D * B)/ (A * t - B * B)
+"""

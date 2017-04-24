@@ -311,6 +311,14 @@ class MovingAverage(threading.Thread):
     def get_get_p_ask_bid(self):
         return self.p_ask, self.p_bid
 
+    def find_ask_bid(self, type):
+        if type == "C":
+            return self.ask, self.bid
+        if type == "P":
+            return self.p_ask, self.p_bid
+        if type != "C" or type != "P":
+            return 0, 0
+
     def run(self):
         while 1:
             self.get_ma_1m(self.dutation)

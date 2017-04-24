@@ -4,7 +4,10 @@ import time
 class hk_trade_opt:
     def __init__(self, hk_trade_api):
         self.hk_trade_api = hk_trade_api
-        self.envtype = 1
+
+# envtype == 1 stands simulation
+# envtype == 0 stands real trade
+        self.envtype = 0
         self.place_time = 0
 
 # Buy return:
@@ -22,6 +25,20 @@ class hk_trade_opt:
             print("cookie check fail")
             return -1
         self.place_time = time.time()
+        return ret_data["LocalID"]
+
+    def sell(self,  price, qty, strcode):
+        cookie = "444"
+        ret_code, ret_data = self.hk_trade_api.place_order(cookie, price, qty, strcode, 1, 0, self.envtype)
+        if ret_code == -1:
+            print("place order fail")
+            return -1
+        if ret_data["SvrResult"] == -1:
+            print("sell fail")
+            return -1
+        if ret_data["Cookie"] != cookie:
+            print("cookie check fail")
+            return -1
         return ret_data["LocalID"]
 
 # order_list_query:
