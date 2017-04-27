@@ -3,6 +3,20 @@ from db.db_ma_trend import *
 import pandas as pd
 import time
 
+# "No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio",
+NO_POS = 0
+CUR_POS = 1
+TIME_POS = 2
+ZMA10_POS = 3
+ZMA20_POS = 4
+ZMA10_RATIO_POS = 5
+ZMA20_RATIO_POS = 6
+ZMA20_RATIO_RATIO_POS = 7
+ZMA_GAP_POS = 8
+ZMA_GAP_RATIO_POS = 9
+ZMA_GAP_RATIO_RATIO_POS = 10
+
+
 class daytest:
     def __init__(self):
         self.count = 0
@@ -16,16 +30,8 @@ class daytest:
         self.mydb.connectMysql()
         self.myop = dbop_ma_trand()
 
-#    data["No."], data["cur"], data["zma10"], data["zma20"], data["delta_zma10"], data["delta_zma20"], data["delta_zma10_ma60"], data["delta_zma20_ma60"], data["ratio"], data["delta_delta_zma20_ma60"], data["time"]
-    def addDayTestData(self, data):
-        len = 0
-        for index in data.iterrows():
-            len += 1
-        for i in range(0, len):
-            self.myop.dbop_add_day_data(self.mydb, data["No."][i], data["cur"][i], data["time"][i], data["zma10"][i], data["zma20"][i], \
-                                   data["delta_zma10"][i], data["delta_zma20"][i], data["delta_zma10_ma60"][i], data["delta_zma20_ma60"][i], data["ratio"][i], data["zma_gap"][i], data["zma_gap_ratio"][i], data["delta_zma20_ma60_ratio"][i], data["zma10_ratio"][i], data["zma20_ratio"][i],data["zma20_ratio_ratio"][i])
-
-
+    ##
+    # Operation on Database: day_review_01
     def queryDayTestData(self,start, end):
 
         self.daytestcount = self.myop.dbop_read_day_data(self.mydb, start, end)
@@ -41,12 +47,28 @@ class daytest:
         data = []
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
-            data.append({"No.": line[0], "cur": line[1], "zma10":line[3], "zma20":line[4], "delta_zma10":line[5], "delta_zma20":line[6], "delta_zma10_ma60":line[7], "delta_zma20_ma60":line[8], "ratio":line[9],  "zma_gap":line[10], "zma_gap_ratio":line[11],"time": line[2], "delta_zma20_ma60_ratio": line[12], "zma10_ratio": line[13], "zma20_ratio": line[14], "zma20_ratio_ratio": line[15]})
+            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS]})
 
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "zma10", "zma20", "delta_zma10", "delta_zma20", "delta_zma10_ma60", "delta_zma20_ma60", "ratio",  "zma_gap", "zma_gap_ratio", "time", "delta_zma20_ma60_ratio", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio"])
         return self.ret
 
-    def queryData(self, start = "2017-04-24 9:30:00", end = "2017-04-24 16:00:00"):
+    def addDayTestData(self, data):
+        len = 0
+        for index in data.iterrows():
+             len += 1
+        for i in range(0, len):
+             self.myop.dbop_add_day_data(self.mydb, data["No."][i], data["cur"][i], data["time"][i],
+                                        data["zma10"][i], data["zma20"][i],
+                                        data["zma10_ratio"][i], data["zma20_ratio"][i],
+                                        data["zma20_ratio_ratio"][i], data["zma_gap"][i], data["zma_gap_ratio"][i],
+                                        data["zma_gap_ratio_ratio"][i])
+
+##
+# Operation on Database: trend
+
+    ##
+    # Operation on Database: trend
+    def queryData(self, start, end ):
         self.count = self.op.dbop_read_ma_dur2(self.db, start, end)
         if self.count == 0:
             return -1
@@ -61,39 +83,15 @@ class daytest:
         pre_cur = 0
         for i in range(0, self.count):
             line = self.getNextData()
-            if line[3] == 0:
-                data.append({"No.": line[0], "cur": pre_cur, "time": line[8]})
+            if line[CUR_POS] == 0:
+                data.append({"No.": line[NO_POS], "cur": pre_cur, "time": line[TIME_POS]})
             else:
-                data.append({"No.": line[0], "cur": line[3], "time": line[8]})
+                data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time": line[TIME_POS]})
             pre_cur =line[3]
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "zma10", "zma20", "delta_zma10", "delta_zma20", "delta_zma10_ma60", "delta_zma20_ma60", "ratio",  "zma_gap", "zma_gap_ratio", "time", "delta_zma20_ma60_ratio", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio"])
         return self.ret
 
-## Conduct 4t times calculation
-    def least_square_method(self, start, end, column):
-        A = 0
-        B = 0
-        C = 0
-        D = 0
-        t = end - start +1
-        avr_x = 0
-        avr_y = 0
-        if self.count < start:
-            return -1, 0
-        for i in range(start, end + 1):
-            A += i * self.ret[column][i]
-            B += i * i
-            avr_x += i / t
-            avr_y += self.ret[column][i]/t
-        ratio = (A - t * avr_x * avr_y) / (B - t * avr_x * avr_x)
-        return 1, ratio
-
-    def simple_ratio(self, start, end, column):
-        if self.count < start:
-            return -1, 0
-        ratio = (self.ret[column][end] - self.ret[column][start])/(end - start)
-        return 1, ratio
-
+    ## MA
     def cal_zma10(self):
         len = 1200
         sum = 0
@@ -103,23 +101,13 @@ class daytest:
         for j in range(0, len):
             sum += self.ret["cur"][len - 1 - j]
         avr0 = sum / len
-        self.ret.iloc[start_pos, 2] = avr0
+        self.ret.iloc[start_pos, ZMA10_POS] = avr0
         starter = self.ret["cur"][0]
         for i in range(start_pos + 1, self.count):
             avr = avr0 - starter/len + self.ret["cur"][i]/len
-            self.ret.iloc[i, 2] = avr
+            self.ret.iloc[i, ZMA10_POS] = avr
             avr0 = avr
             starter = self.ret["cur"][i - len]
-        return 0
-
-    def cal_delta_zma10(self):
-        len = 1200
-        if self.count < len + 1:
-            return -1
-        for i in range(len, self.count):
-            delta = self.ret["zma10"][i] - self.ret["zma10"][i-1]
-            delta *= 1000
-            self.ret.iloc[i, 4] = delta
         return 0
 
     def cal_zma20(self):
@@ -131,13 +119,106 @@ class daytest:
         for j in range(0, len):
             sum += self.ret["cur"][len - 1 - j]
         avr0 = sum / len
-        self.ret.iloc[start_pos, 3] = avr0
+        self.ret.iloc[start_pos, ZMA20_POS] = avr0
         starter = self.ret["cur"][0]
         for i in range(start_pos + 1, self.count):
             avr = avr0 - starter/len + self.ret["cur"][i]/len
-            self.ret.iloc[i, 3] = avr
+            self.ret.iloc[i, ZMA20_POS] = avr
             avr0 = avr
             starter = self.ret["cur"][i - len]
+        return 0
+
+    ## MA Ratio
+    def cal_zma10_ratio(self):
+        len = 1200
+        t = 60
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma10")
+            if ret == -1:
+                val = 0
+            self.ret.iloc[i, ZMA10_RATIO_POS] = val
+        return 1
+
+    def cal_zma20_ratio(self):
+        len = 2400
+        t = 60
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma20")
+            if ret == -1:
+                val = 0
+            self.ret.iloc[i, ZMA20_RATIO_POS] = val
+        return 1
+
+    def cal_zma20_ratio_ratio(self):
+        len = 2400
+        t = 240
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma20_ratio")
+            if ret == -1:
+                val = 0
+            self.ret.iloc[i, ZMA20_RATIO_RATIO_POS] = val
+        return 1
+
+    ## MA GAP
+    def cal_zma_gap(self):
+        len = 2400
+        start_pos = len
+        if self.count < start_pos + 1:
+            return -1
+        for i in range(start_pos, self.count):
+            val = self.ret["zma10"][i] - self.ret["zma20"][i]
+            self.ret.iloc[i, ZMA_GAP_POS] = val
+        return 1
+
+    def cal_zma_gap_ratio(self):
+        len = 2400
+        t = 240
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma_gap")
+            if ret == -1:
+                val = 0
+            self.ret.iloc[i, ZMA_GAP_RATIO_POS] = float(val)
+        return 1
+
+    def cal_zma_gap_ratio_ratio(self):
+        len = 1200
+        t = 180
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma_gap_ratio")
+            if ret == -1:
+                val = 0
+            self.ret.iloc[i, ZMA_GAP_RATIO_RATIO_POS] = val
+        return 1
+
+    ## OLD
+    def cal_delta_zma10(self):
+        len = 1200
+        if self.count < len + 1:
+            return -1
+        for i in range(len, self.count):
+            delta = self.ret["zma10"][i] - self.ret["zma10"][i-1]
+            delta *= 1000
+            self.ret.iloc[i, 4] = delta
         return 0
 
     def cal_delta_zma20(self):
@@ -187,62 +268,6 @@ class daytest:
             starter = self.ret["delta_zma20"][i - len]
         return 0
 
-    def cal_ratio(self):
-        len = 2400
-        if self.count < len + 1 + 60:
-            return -1
-        for i in range(len + 60, self.count):
-            if self.ret["delta_zma10_ma60"][i] == 0 or self.ret["delta_zma20_ma60"][i] == 0:
-                ratio = 0
-            else:
-                ratio = self.ret["delta_zma10_ma60"][i]/self.ret["delta_zma20_ma60"][i]
-            self.ret.iloc[i, 8] = ratio
-        return 0
-
-    def cal_zma_gap(self):
-        len = 2400
-        start_pos = len
-        if self.count < start_pos + 1:
-            return -1
-        for i in range(start_pos, self.count):
-            val = self.ret["zma10"][i] - self.ret["zma20"][i]
-            self.ret.iloc[i, 9] = val
-        return 1
-
-    def cal_zma_gap_ratio(self):
-        len = 2400
-        t = 240
-        start_pos = len + t
-        if self.count < start_pos:
-            return -1
-        for i in range(start_pos, self.count):
-#        for i in range(7900, 7901):
-            max_val = abs(self.ret["zma_gap"][i])
-            max_pos = i
-            min_val = abs(self.ret["zma_gap"][i])
-            min_pos = i
-            for j in range(i - t + 1, i + 1):
-                if abs(self.ret["zma_gap"][j]) < min_val:
-                    min_val = abs(self.ret["zma_gap"][j])
-                    min_pos = j
-                if abs(self.ret["zma_gap"][j]) > max_val:
-                    max_val = abs(self.ret["zma_gap"][j])
-                    max_pos = j
-            if min_pos != i:
-                ret, val = self.simple_ratio(min_pos, i, "zma_gap")
-                if ret == -1:
-                    return -1
-            else:
-                if max_pos != i:
-                    ret, val = self.simple_ratio(max_pos, i, "zma_gap")
-                    if ret == -1:
-                        return -1
-                else:
-                    val = 0
-            self.ret.iloc[i, 10] = float(val)
-        return 1
-
-
     def cal_delta_zma20_ma60_ratio(self):
         len = 2400
         t = 60
@@ -257,75 +282,115 @@ class daytest:
             self.ret.iloc[i, 12] = val
         return 1
 
-    def cal_zma10_ratio(self):
-        len = 1200
-        t = 60
-        val =0
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            ret, val = self.least_square_method(i - t + 1, i, "zma10")
-            if ret == -1:
-                val = 0
-            self.ret.iloc[i, 13] = val
-        return 1
-
-    def cal_zma20_ratio(self):
+    def cal_ratio(self):
         len = 2400
-        t = 60
-        val =0
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            ret, val = self.least_square_method(i - t + 1, i, "zma20")
-            if ret == -1:
-                val = 0
-            self.ret.iloc[i, 14] = val
-        return 1
+        if self.count < len + 1 + 60:
+            return -1
+        for i in range(len + 60, self.count):
+            if self.ret["delta_zma10_ma60"][i] == 0 or self.ret["delta_zma20_ma60"][i] == 0:
+                ratio = 0
+            else:
+                ratio = self.ret["delta_zma10_ma60"][i]/self.ret["delta_zma20_ma60"][i]
+            self.ret.iloc[i, 8] = ratio
+        return 0
 
-    def cal_zma20_ratio_ratio(self):
-        len = 2400
-        t = 240
-        val =0
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            ret, val = self.least_square_method(i - t + 1, i, "zma20_ratio")
-            if ret == -1:
-                val = 0
-            self.ret.iloc[i, 15] = val
-        return 1
+    ## Math
+    def least_square_method(self, start, end, column):
+        A = 0
+        B = 0
+        C = 0
+        D = 0
+        t = end - start +1
+        avr_x = 0
+        avr_y = 0
+        if self.count < start:
+            return -1, 0
+        for i in range(start, end + 1):
+            A += i * self.ret[column][i]
+            B += i * i
+            avr_x += i / t
+            avr_y += self.ret[column][i]/t
+        ratio = (A - t * avr_x * avr_y) / (B - t * avr_x * avr_x)
+        return 1, ratio
 
+    def optimized_least_square_method(self, start, end, column):
+        A = 0
+        B = 0
+        xi = 0
+        t = end - start + 1
+        avr_x = 0
+        avr_y = 0
+        if self.count < start:
+            return -1, 0
+        B = (t - 1) * t
+        B /= 2
+        for i in range(start, end + 1):
+            cur = self.ret[column][i]
+            A += xi * cur
+            avr_x += xi / t
+            avr_y += cur/t
+            xi += 1
+        M = t * avr_x
+        ratio = (A - M * avr_y) / (B - M * avr_x)
+        return 1, ratio
+
+    def simple_ratio(self, start, end, column):
+        if self.count < start:
+            return -1, 0
+        ratio = (self.ret[column][end] - self.ret[column][start])/(end - start)
+        return 1, ratio
+
+
+    # Calculate all
     def cal_data(self):
         start_time = time.time()
-        print("cal_zma10")
+        print("cal_zma10 start")
         self.cal_zma10()
+        end_time = time.time()
+        print("cal_zma10 finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
         print("cal_zma20")
         self.cal_zma20()
-        print("cal_delta_zma10")
-        self.cal_delta_zma10()
-        print("cal_delta_zma20")
-        self.cal_delta_zma20()
-        print("cal_delta_zma10_ma60")
-        self.cal_delta_zma10_ma60()
-        print("cal_delta_zma20_ma60")
-        self.cal_delta_zma20_ma60()
-        print("cal_ratio")
-        self.cal_ratio()
-        print("cal_zma_gap")
-        self.cal_zma_gap()
-        print("cal_zma_gap_ratio")
-        self.cal_zma_gap_ratio()
-        print("delta_zma20_ma60_ratio")
-        self.cal_delta_zma20_ma60_ratio()
+        end_time = time.time()
+        print("cal_zma20 finished:" + str( end_time - start_time))
+
+        start_time = time.time()
+        print("cal_zma10_ratio")
         self.cal_zma10_ratio()
+        end_time = time.time()
+        print("cal_zma10_ratio finished:" + str( end_time - start_time))
+
+        start_time = time.time()
+        print("cal_zma20_ratio")
         self.cal_zma20_ratio()
+        end_time = time.time()
+        print("cal_zma20_ratio finished:" + str( end_time - start_time))
+
+        start_time = time.time()
+        print("cal_zma20_ratio_ratio")
         self.cal_zma20_ratio_ratio()
         end_time = time.time()
-        print("start from: " + str(start_time) + " to: " + str(end_time))
+        print("cal_zma20_ratio_ratio finished:" + str( end_time - start_time))
+
+        start_time = time.time()
+        print("cal_zma_gap")
+        self.cal_zma_gap()
+        end_time = time.time()
+        print("cal_zma_gap finished:" + str( end_time - start_time))
+
+        start_time = time.time()
+        print("cal_zma_gap_ratio")
+        self.cal_zma_gap_ratio()
+        end_time = time.time()
+        print("cal_zma_gap_ratio finished:" + str( end_time - start_time))
+
+        start_time = time.time()
+        print("cal_zma_gap_ratio_ratio")
+        self.cal_zma_gap_ratio_ratio()
+        end_time = time.time()
+        print("cal_zma_gap_ratio_ratio finished:" + str( end_time - start_time))
+
 
     def detectSignal(self, ma20_shrethold, ma10_ma20_ratio_threshold):
         start = 2400 + 60 + 1
@@ -505,7 +570,7 @@ class daytest:
         self.cal_data()
         print("Cal ret")
         print(self.ret)
-        self.addDayTestData(self.ret)
+ #       self.addDayTestData(self.ret)
 
     def read_history(self,start_time, end_time):
         self.queryDayTestData(start_time, end_time)
@@ -591,3 +656,36 @@ if __name__ == "__main__":
 #   else:
 #       val = 0
 # self.ret.iloc[i, 12] = float(val)
+'''
+    def cal_zma_gap_ratio(self):
+        len = 2400
+        t = 240
+        start_pos = len + t
+        if self.count < start_pos:
+            return -1
+        for i in range(start_pos, self.count):
+            max_val = abs(self.ret["zma_gap"][i])
+            max_pos = i
+            min_val = abs(self.ret["zma_gap"][i])
+            min_pos = i
+            for j in range(i - t + 1, i + 1):
+                if abs(self.ret["zma_gap"][j]) < min_val:
+                    min_val = abs(self.ret["zma_gap"][j])
+                    min_pos = j
+                if abs(self.ret["zma_gap"][j]) > max_val:
+                    max_val = abs(self.ret["zma_gap"][j])
+                    max_pos = j
+            if min_pos != i:
+                ret, val = self.simple_ratio(min_pos, i, "zma_gap")
+                if ret == -1:
+                    return -1
+            else:
+                if max_pos != i:
+                    ret, val = self.simple_ratio(max_pos, i, "zma_gap")
+                    if ret == -1:
+                        return -1
+                else:
+                    val = 0
+            self.ret.iloc[i, ZMA_GAP_RATIO_POS] = float(val)
+        return 1
+'''
