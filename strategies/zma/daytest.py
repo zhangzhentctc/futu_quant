@@ -16,6 +16,9 @@ ZMA_GAP_POS = 8
 ZMA_GAP_RATIO_POS = 9
 ZMA_GAP_RATIO_RATIO_POS = 10
 
+NO_SRC_POS = 0
+CUR_SRC_POS = 3
+TIME_SRC_POS = 8
 
 class daytest:
     def __init__(self):
@@ -83,11 +86,11 @@ class daytest:
         pre_cur = 0
         for i in range(0, self.count):
             line = self.getNextData()
-            if line[CUR_POS] == 0:
-                data.append({"No.": line[NO_POS], "cur": pre_cur, "time": line[TIME_POS]})
+            if line[CUR_SRC_POS] == 0:
+                data.append({"No.": line[NO_SRC_POS], "cur": pre_cur, "time": line[TIME_SRC_POS]})
             else:
-                data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time": line[TIME_POS]})
-            pre_cur =line[3]
+                data.append({"No.": line[NO_SRC_POS], "cur": line[CUR_SRC_POS], "time": line[TIME_SRC_POS]})
+            pre_cur =line[CUR_SRC_POS]
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio"])
         return self.ret
 
@@ -570,7 +573,7 @@ class daytest:
         self.cal_data()
         print("Cal ret")
         print(self.ret)
- #       self.addDayTestData(self.ret)
+        self.addDayTestData(self.ret)
 
     def read_history(self,start_time, end_time):
         self.queryDayTestData(start_time, end_time)
@@ -584,8 +587,9 @@ if __name__ == "__main__":
     end_time = "2017-04-27 16:00:00"
     test = daytest()
     test.Initialize()
-#    test.readData(start_time, end_time)
+    test.readData(start_time, end_time)
     test.store_history(start_time, end_time)
+
 
 #    test.read_history(start_time, end_time)
 #    test.daytestFuc()

@@ -1,6 +1,7 @@
 from openft.open_quant_context import *
 import time
 from data_src.ma.GetMovingAverage import *
+from data_src.stock_info.get_stock_quote import *
 from ui.TrendToast import *
 from init import *
 from db.store_control import *
@@ -8,6 +9,7 @@ from trade_api.hk_trade_api import *
 from trade_api.hk_trade_op import *
 from data_src.stock_info.stock_info import *
 from strategies.zma.daytest import *
+from strategies.zma.zma20_strategy import *
 from trade_api.hk_trader_placer import *
 
 # Examples for use the python functions
@@ -139,33 +141,41 @@ if __name__ == "__main__":
 
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
-    ma = MovingAverage(quote_context)
-    ma.start()
+    quote = get_stock_quote(quote_context)
+    quote.start()
 
-    detectMATrend = DetectMATrend(quote_context, ma)
-    detectMATrend.start()
-    detectMATrend5 = DetectMATrend(quote_context, ma, 5)
-    detectMATrend5.start()
+    zma_str = zma20_strategy(quote)
+    zma_str.start()
 
-    sc = store_control(detectMATrend, detectMATrend5, ma)
-    sc.start()
+#    ma = MovingAverage(quote_context)
+#    ma.start()
 
-    hk_trade = hk_trade_api()
-    hk_trade.initialize()
-    hk_trade.unlock_trade('88888888', '584679')
-    opt = hk_trade_opt(hk_trade)
-    placer_c = hk_trader_placer(ma, opt, "C")
-    placer_p = hk_trader_placer(ma, opt, "P")
+#    detectMATrend = DetectMATrend(quote_context, ma)
+#    detectMATrend.start()
+#    detectMATrend5 = DetectMATrend(quote_context, ma, 5)
+#    detectMATrend5.start()
+
+#    sc = store_control(detectMATrend, detectMATrend5, ma)
+#    sc.start()
+
+#    hk_trade = hk_trade_api()
+#    hk_trade.initialize()
+#    hk_trade.unlock_trade('88888888', '584679')
+#    opt = hk_trade_opt(hk_trade)
+#    placer_c = hk_trader_placer(ma, opt, "C")
+#    placer_p = hk_trader_placer(ma, opt, "P")
+
+
 #    placer.buy()
 #    localid = opt.buy(0.06, 10000, "67541")
- #   orderid = opt.get_order_id(localid)
+#    orderid = opt.get_order_id(localid)
  #   status = opt.check_order_status(orderid)
-  #  dealt = opt.get_dealt_qty(orderid)
-  #  print(dealt)
-  #  opt.disable_order(orderid)
+#    dealt = opt.get_dealt_qty(orderid)
+#    print(dealt)
+#    opt.disable_order(orderid)
 
-    trendToast = TrendToast(detectMATrend,detectMATrend5, placer_c, placer_p)
-    trendToast.display()
+#    trendToast = TrendToast(detectMATrend,detectMATrend5, placer_c, placer_p)
+#    trendToast.display()
 
 
 
