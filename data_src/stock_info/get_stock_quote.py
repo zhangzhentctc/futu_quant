@@ -14,6 +14,7 @@ class get_stock_quote(threading.Thread):
         self.data_time_index = "data_time"
         self.subscribe_trail = 3
         self.refresh = cycle
+        self.ready = 0
 
     def subscribe_stock(self):
         # subscribe "QUOTE"
@@ -63,8 +64,8 @@ class get_stock_quote(threading.Thread):
         if ret_status == RET_ERROR:
             print("subscribe fail 3 times")
             return -1
-
-        while(1):
+        i = 30
+        while(i):
             start = time.time()
             ret = self.get_cur_stock_quoto()
             if ret == RET_ERROR:
@@ -75,3 +76,5 @@ class get_stock_quote(threading.Thread):
             if dur < 0:
                 continue
             time.sleep(self.refresh - dur)
+            i -= 1
+        self.ready = 0

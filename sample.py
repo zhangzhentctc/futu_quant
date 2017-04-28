@@ -9,7 +9,7 @@ from trade_api.hk_trade_api import *
 from trade_api.hk_trade_op import *
 from data_src.stock_info.stock_info import *
 from strategies.zma.daytest import *
-from strategies.zma.zma20_strategy import *
+from strategies.zma.zma20_strategy_quote import *
 from trade_api.hk_trader_placer import *
 
 # Examples for use the python functions
@@ -136,17 +136,19 @@ def _example_stock_basic(quote_ctx):
 
 if __name__ == "__main__":
 #    test = daytest()
- #   test.daytest()
+#    test.daytest()
 
 
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
-    quote = get_stock_quote(quote_context)
-    quote.start()
 
-    zma_str = zma20_strategy(quote)
+    zma_str = zma20_strategy_quote(quote_context)
     zma_str.start()
-
+    while(1):
+        ret, data = zma_str.get_cur_zma_quote()
+        if ret == RET_OK:
+            print(data["time"][0])
+        time.sleep(0.5)
 #    ma = MovingAverage(quote_context)
 #    ma.start()
 
