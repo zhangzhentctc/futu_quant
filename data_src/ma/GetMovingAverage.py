@@ -270,7 +270,7 @@ class MovingAverage(threading.Thread):
         return ret
 
     def get_ask_bid(self):
-        stock_code_list = ["HK.65724"]
+        stock_code_list = ["HK.68021"]
 
         # subscribe "ORDER_BOOK"
         for stk_code in stock_code_list:
@@ -288,7 +288,7 @@ class MovingAverage(threading.Thread):
             self.bid = ret_data["Bid"][0][0]
 
     def get_p_ask_bid(self):
-        stock_code_list = ["HK.62263"]
+        stock_code_list = ["HK.63850"]
 
         # subscribe "ORDER_BOOK"
         for stk_code in stock_code_list:

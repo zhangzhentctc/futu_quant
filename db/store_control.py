@@ -23,17 +23,17 @@ class store_control(threading.Thread):
             cur_val = self.detectMATrend.get_cur_val()
 
             ask, bid = self.ma.get_get_ask_bid()
-            if ask == 0 or bid == 0:
-                continue
+#            if ask == 0 or bid == 0:
+#                continue
 
             p_ask, p_bid = self.ma.get_get_p_ask_bid()
-            if p_ask == 0 or p_bid == 0:
-                continue
+ #           if p_ask == 0 or p_bid == 0:
+ #               continue
 
             op.dbop_store_ma_dur2(db, ma10_rate, ma20_rate, cur_val, ask, bid, p_ask, p_bid)
             ma10_rate_5, ma20_rate_5 = self.detectMATrend5.get_ma_ch_rate()
-            if abs(ma10_rate_5) > 100 or abs(ma20_rate_5) > 100:
-                continue
+ #           if abs(ma10_rate_5) > 100 or abs(ma20_rate_5) > 100:
+ #               continue
             ma10_rate_5 = round(ma10_rate_5, 3)
             ma20_rate_5 = round(ma20_rate_5, 3)
             cur_val = self.detectMATrend.get_cur_val()

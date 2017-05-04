@@ -13,13 +13,13 @@ class TrendToast:
         self.top = Tk()
         self.text = Text(self.top)
         self.text.pack(expand=1, fill='both')
-        self.button_buy_c = Button(self.top, text = "BUY C on market", command = lambda : placer_c.buy_on_market_price(50000, "65724"))
+        self.button_buy_c = Button(self.top, text = "BUY C on market", command = lambda : placer_c.buy_on_market_price(50000, "68021"))
         self.button_buy_c.pack()
-        self.button_sell_c = Button(self.top, text = "SELL C on market", command = lambda : placer_c.sell_on_market_price(50000, "65724"))
+        self.button_sell_c = Button(self.top, text = "SELL C on market", command = lambda : placer_c.sell_on_market_price(50000, "68021"))
         self.button_sell_c.pack()
-        self.button_buy_p = Button(self.top, text = "BUY P on market", command = lambda : placer_p.buy_on_market_price(50000, "65151"))
+        self.button_buy_p = Button(self.top, text = "BUY P on market", command = lambda : placer_p.buy_on_market_price(50000, "63850"))
         self.button_buy_p.pack()
-        self.button_sell_p = Button(self.top, text = "SELL P on market", command = lambda : placer_p.sell_on_market_price(50000, "65151"))
+        self.button_sell_p = Button(self.top, text = "SELL P on market", command = lambda : placer_p.sell_on_market_price(50000, "63850"))
         self.button_sell_p.pack()
 
     def display(self):
