@@ -21,15 +21,34 @@ ZMA_GAP_RATIO_POS = 10
 ZMA_GAP_RATIO_RATIO_POS = 11
 ZMA_GAP_RATIO_RATIO_R_POS = 12
 TRADE_MARK_POS = 13
+CUR_RATIO_POS = 14
 
 NO_SRC_POS = 0
 CUR_SRC_POS = 3
 TIME_SRC_POS = 8
 
+
+class adjust_paras:
+    def __init__(self):
+        self.index = 0
+        self.zma10_ratio_sh = 0
+        self.zma20_ratio_sh = 0
+        self.zma10_ratio_ratio_sh = 0
+        self.zma20_ratio_ratio_sh = 0
+        self.zma_gap_min_sh = 0
+        self.zma_gap_max_sh = 9999
+        self.zma_gap_ratio_sh = 0
+        self.zma_gap_ratio_ratio_sh = 0
+
+
 class daytest:
     def __init__(self):
         self.count = 0
         self.daytestcount = 0
+        self.tmp = 0
+        self.trend_c_cnt = 0
+        self.trend = 0
+        self.trend_p_cnt = 0
 
     def Initialize(self):
         self.db = MySQLCommand("localhost", 3306, "root", "123456", "trend2")
@@ -42,7 +61,6 @@ class daytest:
     ##
     # Operation on Database: day_review_01
     def queryDayTestData(self,start, end):
-
         self.daytestcount = self.myop.dbop_read_day_data(self.mydb, start, end)
         if self.daytestcount == 0:
             return -1
@@ -56,9 +74,9 @@ class daytest:
         data = []
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
-            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS], "zma_gap_ratio_ratio_r": line[ZMA_GAP_RATIO_RATIO_R_POS], "trade_mark": line[TRADE_MARK_POS]})
+            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS], "zma_gap_ratio_ratio_r": line[ZMA_GAP_RATIO_RATIO_R_POS], "trade_mark": line[TRADE_MARK_POS], "cur_ratio": line[CUR_RATIO_POS]})
 
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
         return self.ret
 
     def addDayTestData(self, data):
@@ -71,7 +89,7 @@ class daytest:
                                         data["zma10_ratio"][i], data["zma20_ratio"][i],
                                         data["zma10_ratio_ratio"][i], data["zma20_ratio_ratio"][i], data["zma_gap"][i], data["zma_gap_ratio"][i],
                                         data["zma_gap_ratio_ratio"][i], data["zma_gap_ratio_ratio_r"][i],
-                                        data["trade_mark"][i])
+                                        data["trade_mark"][i], data["cur_ratio"])
 
     def updateDayTestData_trade_mark(self, data):
         len = 0
@@ -104,8 +122,24 @@ class daytest:
             else:
                 data.append({"No.": line[NO_SRC_POS], "cur": line[CUR_SRC_POS], "time": line[TIME_SRC_POS], "trade_mark": 0})
             pre_cur =line[CUR_SRC_POS]
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
         return self.ret
+
+    ## Cur Ratio
+    ## Dur = 3 min
+    def cal_cur_ratio(self):
+        len = 0
+        t = 360
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "cur")
+            if ret == -1:
+                val = 0
+            self.ret.iloc[i, CUR_RATIO_POS] = val
+        return 1
 
     ## MA
     def cal_zma10(self):
@@ -120,7 +154,7 @@ class daytest:
         self.ret.iloc[start_pos, ZMA10_POS] = avr0
         starter = self.ret["cur"][0]
         for i in range(start_pos + 1, self.count):
-            avr = avr0 - starter/len + self.ret["cur"][i]/len
+            avr = avr0 - starter / len + self.ret["cur"][i] / len
             self.ret.iloc[i, ZMA10_POS] = avr
             avr0 = avr
             starter = self.ret["cur"][i - len]
@@ -410,6 +444,12 @@ class daytest:
     # Calculate all
     def cal_data(self):
         start_time = time.time()
+        print("cal_cur_ratio start")
+        self.cal_cur_ratio()
+        end_time = time.time()
+        print("cal_cur_ratio finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
         print("cal_zma10 start")
         self.cal_zma10()
         end_time = time.time()
@@ -500,6 +540,222 @@ class daytest:
             position += 1
         return 1
 
+    ######
+    ##   Get Test Parameters from Database
+    ##     To: Dataframe: self.adj_paras
+    ######
+    def getAdjParas(self):
+        ret = self.queryAdjParas()
+        if ret == -1:
+            print("query fail")
+            return -1
+        self.parseAdjParas()
+
+    def queryAdjParas(self):
+        self.AdjParas = self.myop.dbop_read_adj_paras(self.mydb)
+        if self.AdjParas == 0:
+            return -1
+        return self.AdjParas
+
+    def getNextAdjParas(self):
+        ret = self.myop.dbop_read_adj_paras_next(self.mydb)
+        return ret
+
+    def parseAdjParas(self):
+        data = []
+        for i in range(0, self.AdjParas):
+            line = self.getNextAdjParas()
+            data.append({"para_index": line[0], "zma10_ratio":line[1],"zma20_ratio": line[2],  "zma10_ratio_ratio": line[3], "zma20_ratio_ratio": line[4],
+                         "zma_gap_min": line[5], "zma_gap_max": line[6], "zma_gap_ratio": line[7], "zma_gap_ratio_ratio": line[8]})
+
+        self.adj_paras = pd.DataFrame(data, columns=["para_index", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap_min", "zma_gap_max", "zma_gap_ratio", "zma_gap_ratio_ratio"])
+        return self.adj_paras
+
+    ######
+    ##   Get Test Trade Mark from Database
+    ##     To: Dataframe: self.trade_mark
+    ######
+    def getTradeMark(self):
+        ret = self.queryTradeMark()
+        if ret == -1:
+            print("query fail")
+            return -1
+        self.parseTradeMark()
+
+    def queryTradeMark(self):
+        self.tradeMark = self.myop.dbop_read_mark_trade(self.mydb)
+        if self.tradeMark == 0:
+            return -1
+        return self.tradeMark
+
+    def getNextTradeMark(self):
+        ret = self.myop.dbop_read_mark_trade_next(self.mydb)
+        return ret
+
+    def parseTradeMark(self):
+        data = []
+        for i in range(0, self.tradeMark):
+            line = self.getNextTradeMark()
+            data.append({"No.": line[1], "para_index":line[2],"trade_mark": line[3]})
+
+        self.trade_mark = pd.DataFrame(data, columns=["No.", "para_index", "trade_mark"])
+        return self.trade_mark
+
+    ####
+    ##    Mark Trade to DB by given Parameters
+    ####
+    def mark_trade_given_paras(self, No, index, mark):
+        self.myop.dbop_add_mark_trade(self.mydb, No, index, mark)
+
+
+    def strategy_func(self, adj_paras):
+        start = 2400 + 60 + 1
+        position = start
+        record_c_trend = -1
+        record_p_trend = -1
+        trend_c_cnt = 0
+        trend_p_cnt = 0
+        trend = 0
+        while position < self.count:
+            if self.ret["zma10_ratio"][position] > 0:
+                if trend != 1:
+                    trend = 1
+                    trend_c_cnt += 1
+            else:
+                if trend != -1:
+                    trend = -1
+                    trend_p_cnt += 1
+
+
+            if self.ret["zma_gap"][position] >= adj_paras.zma_gap_min_sh and self.ret["zma_gap"][position] <= adj_paras.zma_gap_max_sh and \
+                            self.ret["zma_gap_ratio"][position] > adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] > adj_paras.zma_gap_ratio_ratio_sh and abs(self.ret["zma_gap_ratio_ratio_r"][position]) > 0.3 and \
+                            self.ret["zma10_ratio"][position] > self.ret["zma20_ratio"][position] and \
+                            self.ret["zma20_ratio"][position] >= adj_paras.zma20_ratio_sh and self.ret["zma10_ratio_ratio"][position] > adj_paras.zma10_ratio_ratio_sh and self.ret["zma20_ratio_ratio"][position] > adj_paras.zma20_ratio_ratio_sh:
+                if record_c_trend != trend_c_cnt:
+                    self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index,  1)
+                    record_c_trend = trend_c_cnt
+
+            if self.ret["zma_gap"][position] <= -1 * adj_paras.zma_gap_min_sh and self.ret["zma_gap"][position] >= -1 * adj_paras.zma_gap_max_sh and \
+                            self.ret["zma_gap_ratio"][position] < -1 * adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] < -1 * adj_paras.zma_gap_ratio_ratio_sh and abs(self.ret["zma_gap_ratio_ratio_r"][position]) > 0.3 and \
+                            self.ret["zma10_ratio"][position] < self.ret["zma20_ratio"][position] and \
+                            self.ret["zma20_ratio"][position] <= -1 * adj_paras.zma20_ratio_sh and self.ret["zma10_ratio_ratio"][position] < -1 * adj_paras.zma10_ratio_ratio_sh and self.ret["zma20_ratio_ratio"][position] < -1 * adj_paras.zma20_ratio_ratio_sh:
+                if record_p_trend != trend_p_cnt:
+                    self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index,  -1)
+                    record_p_trend = trend_p_cnt
+            position += 1
+
+        return 1
+
+    ####
+    ##  Write judge result
+    ####
+    def judge_func(self, adj_paras_index):
+        # Get length
+        day_data_len = 0
+        for index in self.ret.iterrows():
+            day_data_len += 1
+
+        trade_mark_tol_len = 0
+        for index in self.trade_mark.iterrows():
+            trade_mark_tol_len += 1
+
+        # Find data. Filter adj_paras
+        trade_mark_len = 0
+        data = []
+        for i in range(0, trade_mark_tol_len):
+            if self.trade_mark["para_index"][i] == adj_paras_index:
+                data.append({"No.": self.trade_mark["No."][i], "para_index":self.trade_mark["para_index"][i],"trade_mark": self.trade_mark["trade_mark"][i]})
+                trade_mark_len += 1
+        indexed_trade_mark = pd.DataFrame(data, columns=["No.", "para_index", "trade_mark"])
+
+        print(indexed_trade_mark)
+        # Start judging
+        i = 0
+        j = 0
+        while( i < trade_mark_len ):
+            while indexed_trade_mark["No."][i] < self.ret["No."][j]:
+                i += 1
+                if i >= trade_mark_len - 1 or j >= day_data_len - 1:
+                    break
+            if i>= trade_mark_len - 1 or j >= day_data_len - 1:
+                break
+            while indexed_trade_mark["No."][i] != self.ret["No."][j]:
+                j += 1
+                if i >= trade_mark_len - 1 or j >= day_data_len - 1:
+                    break
+            if i >= trade_mark_len - 1 or j >= day_data_len - 1:
+                break
+            buy_pos = j
+            buy_val = self.ret["cur"][buy_pos]
+            max_pos = buy_pos
+            max_val = 0
+            turn_pos = buy_pos
+            turn_val = 0
+            # When zma10_ratio turns, break
+            while self.ret["zma10_ratio"][buy_pos] * self.ret["zma10_ratio"][j] > 0 and j < day_data_len:
+                # C, trend is up, value is over buy val
+                if self.ret["zma10_ratio"][buy_pos] >0:
+                    if self.ret["cur"][j] > buy_val:
+                        if self.ret["cur"][j] - buy_val > max_val:
+                            max_val = self.ret["cur"][j] - buy_val
+                            max_pos = j
+                # P, trend is down, value is below buy val
+                else:
+                    if self.ret["cur"][j] < buy_val:
+                        if buy_val - self.ret["cur"][j]  > max_val:
+                            max_val = buy_val - self.ret["cur"][j]
+                            max_pos = j
+
+                # Find cur when zma10 turns
+                turn_pos = j
+                turn_val = self.ret["cur"][j]
+
+                j+=1
+            passive_gap = self.ret["cur"][max_pos] - self.ret["cur"][buy_pos]
+            turn_gap = turn_val - self.ret["cur"][buy_pos]
+            self.write_judge_ret(self.ret["No."][buy_pos], indexed_trade_mark["trade_mark"][i], passive_gap, self.ret["No."][turn_pos], turn_gap, adj_paras_index)
+            i += 1
+
+    def write_judge_ret(self, No, mark, passive_gap, turn_pos, turn_gap, index):
+        self.myop.dbop_add_judge_result(self.mydb, No, mark, passive_gap, turn_pos, turn_gap, index)
+
+
+    ####
+    ##  1. Get Paras from DB
+    ##  2. Test Paras
+    ####
+    def testParameters(self):
+        self.getAdjParas()
+        len = 0
+        for index in self.adj_paras.iterrows():
+             len += 1
+        for i in range(0, len):
+            ## Get Parameters
+            para = adjust_paras()
+            para.index                  = self.adj_paras["para_index"][i]
+            para.zma10_ratio_sh         = self.adj_paras["zma10_ratio"][i]
+            para.zma20_ratio_sh         = self.adj_paras["zma20_ratio"][i]
+            para.zma10_ratio_ratio_sh   = self.adj_paras["zma10_ratio_ratio"][i]
+            para.zma20_ratio_ratio_sh   = self.adj_paras["zma20_ratio_ratio"][i]
+            para.zma_gap_min_sh         = self.adj_paras["zma_gap_min"][i]
+            para.zma_gap_max_sh         = self.adj_paras["zma_gap_max"][i]
+            para.zma_gap_ratio_sh       = self.adj_paras["zma_gap_ratio"][i]
+            para.zma_gap_ratio_ratio_sh = self.adj_paras["zma_gap_ratio_ratio"][i]
+
+            ## Test Paras
+            self.strategy_func(para)
+
+        self.getTradeMark()
+        for i in range(0, len):
+            ## Get Parameters
+            para = adjust_paras()
+            para.index = self.adj_paras["para_index"][i]
+
+            ## Judge
+            self.judge_func(para.index)
+
+
+
     def search_biggest(self, start, end, prod):
         max_value = 0
         value = 0
@@ -572,15 +828,20 @@ class daytest:
 
 if __name__ == "__main__":
 #    Usage
-    start_time = "2017-04-25 9:30:00"
-    end_time = "2017-04-25 16:00:00"
+    date_list = ["2017-04-26"]
+
     test = daytest()
     test.Initialize()
-    test.store_history(start_time, end_time)
+#    test.store_history(start_time, end_time)
 
+    for date in date_list:
+        start_time = date + " " + "9:30:00"
+        end_time = date + " " + "16:00:00"
+        test.store_history(start_time, end_time)
 
-#    test.read_history(start_time, end_time)
- #   test.daytestFuc()
+#        test.read_history(start_time, end_time)
+#        test.daytestFuc()
+#        test.testParameters()
 
 
 """
