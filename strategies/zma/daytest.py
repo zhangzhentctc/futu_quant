@@ -39,6 +39,8 @@ class adjust_paras:
         self.zma_gap_max_sh = 9999
         self.zma_gap_ratio_sh = 0
         self.zma_gap_ratio_ratio_sh = 0
+        self.zma20_sh = 0
+        self.cur_ratio_sh = 0
 
 
 class daytest:
@@ -74,7 +76,7 @@ class daytest:
         data = []
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
-            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS], "zma_gap_ratio_ratio_r": line[ZMA_GAP_RATIO_RATIO_R_POS], "trade_mark": line[TRADE_MARK_POS], "cur_ratio": line[CUR_RATIO_POS]})
+            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS], "zma_gap_ratio_ratio_r": line[ZMA_GAP_RATIO_RATIO_R_POS], "trade_mark": 0, "cur_ratio": line[CUR_RATIO_POS]})
 
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
         return self.ret
@@ -83,13 +85,13 @@ class daytest:
         len = 0
         for index in data.iterrows():
              len += 1
-        for i in range(0, len):
+        for i in range(2600, len):
              self.myop.dbop_add_day_data(self.mydb, data["No."][i], data["cur"][i], data["time"][i],
                                         data["zma10"][i], data["zma20"][i],
                                         data["zma10_ratio"][i], data["zma20_ratio"][i],
                                         data["zma10_ratio_ratio"][i], data["zma20_ratio_ratio"][i], data["zma_gap"][i], data["zma_gap_ratio"][i],
                                         data["zma_gap_ratio_ratio"][i], data["zma_gap_ratio_ratio_r"][i],
-                                        data["trade_mark"][i], data["cur_ratio"])
+                                        data["cur_ratio"][i])
 
     def updateDayTestData_trade_mark(self, data):
         len = 0
@@ -118,11 +120,12 @@ class daytest:
         for i in range(0, self.count):
             line = self.getNextData()
             if line[CUR_SRC_POS] == 0:
-                data.append({"No.": line[NO_SRC_POS], "cur": pre_cur, "time": line[TIME_SRC_POS], "trade_mark": 0})
+                data.append({"No.": line[NO_SRC_POS], "cur": pre_cur, "time": line[TIME_SRC_POS], "trade_mark": 0, "cur_ratio":0})
             else:
-                data.append({"No.": line[NO_SRC_POS], "cur": line[CUR_SRC_POS], "time": line[TIME_SRC_POS], "trade_mark": 0})
+                data.append({"No.": line[NO_SRC_POS], "cur": line[CUR_SRC_POS], "time": line[TIME_SRC_POS], "trade_mark": 0, "cur_ratio":0})
             pre_cur =line[CUR_SRC_POS]
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
+
         return self.ret
 
     ## Cur Ratio
@@ -138,6 +141,8 @@ class daytest:
             ret, val = self.optimized_least_square_method(i - t + 1, i, "cur")
             if ret == -1:
                 val = 0
+            val *= 1000000
+            val = round(val, 4)
             self.ret.iloc[i, CUR_RATIO_POS] = val
         return 1
 
@@ -430,7 +435,10 @@ class daytest:
             C += (xi - avr_x) * (xi - avr_x)
             D += (yi - avr_y) * (yi - avr_y)
             xi += 1
-        r = A / ( math.sqrt(C) * math.sqrt(D))
+        if  D == 0:
+            r = 1
+        else:
+            r = A / ( math.sqrt(C) * math.sqrt(D))
 
         return 1, r
 
@@ -566,9 +574,9 @@ class daytest:
         for i in range(0, self.AdjParas):
             line = self.getNextAdjParas()
             data.append({"para_index": line[0], "zma10_ratio":line[1],"zma20_ratio": line[2],  "zma10_ratio_ratio": line[3], "zma20_ratio_ratio": line[4],
-                         "zma_gap_min": line[5], "zma_gap_max": line[6], "zma_gap_ratio": line[7], "zma_gap_ratio_ratio": line[8]})
+                         "zma_gap_min": line[5], "zma_gap_max": line[6], "zma_gap_ratio": line[7], "zma_gap_ratio_ratio": line[8], "zma20": line[9], "cur_ratio":line[10]})
 
-        self.adj_paras = pd.DataFrame(data, columns=["para_index", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap_min", "zma_gap_max", "zma_gap_ratio", "zma_gap_ratio_ratio"])
+        self.adj_paras = pd.DataFrame(data, columns=["para_index", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap_min", "zma_gap_max", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma20", "cur_ratio"])
         return self.adj_paras
 
     ######
@@ -646,6 +654,43 @@ class daytest:
 
         return 1
 
+    def strategy_break_func(self, adj_paras):
+        start = 2400 + 60 + 1
+        position = start
+        record_c_trend = -1
+        record_p_trend = -1
+        trend_c_cnt = 0
+        trend_p_cnt = 0
+        trend = 0
+        while position < self.count:
+            if self.ret["zma10_ratio"][position] > 0:
+                if trend != 1:
+                    trend = 1
+                    trend_c_cnt += 1
+                    if record_c_trend != trend_c_cnt:
+                        if self.ret["cur_ratio"][position] > adj_paras.cur_ratio_sh and \
+                           self.ret["zma20_ratio"][position] < adj_paras.zma20_sh and \
+                           self.ret["zma10_ratio_ratio"][position] > adj_paras.zma10_ratio_ratio_sh and \
+                           self.ret["zma10_ratio_ratio"][position] * self.ret["zma20_ratio_ratio"][position] > 0:
+                            self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index, -1)
+                        record_c_trend = trend_c_cnt
+            else:
+                if trend != -1:
+                    trend = -1
+                    trend_p_cnt += 1
+                    if record_p_trend != trend_p_cnt:
+                        if self.ret["cur_ratio"][position] < -1 * adj_paras.cur_ratio_sh and \
+                           self.ret["zma20_ratio"][position] > -1 * adj_paras.zma20_sh and \
+                           self.ret["zma10_ratio_ratio"][position] < -1 * adj_paras.zma10_ratio_ratio_sh and \
+                           self.ret["zma10_ratio_ratio"][position] * self.ret["zma20_ratio_ratio"][position] > 0:
+                            self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index, 1)
+                        record_p_trend = trend_p_cnt
+
+            position += 1
+
+        return 1
+
+
     ####
     ##  Write judge result
     ####
@@ -668,7 +713,7 @@ class daytest:
                 trade_mark_len += 1
         indexed_trade_mark = pd.DataFrame(data, columns=["No.", "para_index", "trade_mark"])
 
-        print(indexed_trade_mark)
+#        print(indexed_trade_mark)
         # Start judging
         i = 0
         j = 0
@@ -726,6 +771,7 @@ class daytest:
     ####
     def testParameters(self):
         self.getAdjParas()
+
         len = 0
         for index in self.adj_paras.iterrows():
              len += 1
@@ -741,11 +787,16 @@ class daytest:
             para.zma_gap_max_sh         = self.adj_paras["zma_gap_max"][i]
             para.zma_gap_ratio_sh       = self.adj_paras["zma_gap_ratio"][i]
             para.zma_gap_ratio_ratio_sh = self.adj_paras["zma_gap_ratio_ratio"][i]
+            para.zma20_sh               = self.adj_paras["zma20"][i]
+            para.cur_ratio_sh           = self.adj_paras["cur_ratio"][i]
 
             ## Test Paras
+            print("TEST STRATEGY " + str(i))
             self.strategy_func(para)
 
+
         self.getTradeMark()
+        print(self.trade_mark)
         for i in range(0, len):
             ## Get Parameters
             para = adjust_paras()
@@ -763,7 +814,6 @@ class daytest:
             value = self.zmax(start, end)
         if prod == -1:
             value = self.zmin(start, end)
-        print(value)
         max_value = abs(self.ret["cur"][start] - value)
         return max_value
 
@@ -817,7 +867,7 @@ class daytest:
         self.parse_data()
         self.cal_data()
 
-        print(self.ret)
+#        print(self.ret)
         self.addDayTestData(self.ret)
 
     def read_history(self,start_time, end_time):
@@ -825,10 +875,22 @@ class daytest:
         self.parseDayTestData()
         self.count = self.daytestcount
 
+    def insert_para_test(self):
+        zma20_ratio_list = [0.001, 0.002, 0.003, 0.004]
+        zma10_ratio_ratio_list = [0.000005, 0.000008, 0.00001, 0.000012]
+        cur_ratio_list = [5000, 8000, 10000, 12000, 15000]
+
+        for zma20_r in zma20_ratio_list:
+            for zma10_r_r in zma10_ratio_ratio_list:
+                for cur_r in cur_ratio_list:
+                    self.myop.dbop_add_adj_paras(self.mydb,zma20_r,zma10_r_r,cur_r)
+
+
+
 
 if __name__ == "__main__":
 #    Usage
-    date_list = ["2017-04-26"]
+    date_list = ["2017-05-04"]
 
     test = daytest()
     test.Initialize()
@@ -837,11 +899,13 @@ if __name__ == "__main__":
     for date in date_list:
         start_time = date + " " + "9:30:00"
         end_time = date + " " + "16:00:00"
-        test.store_history(start_time, end_time)
+#        test.store_history(start_time, end_time)
 
-#        test.read_history(start_time, end_time)
+        test.read_history(start_time, end_time)
 #        test.daytestFuc()
-#        test.testParameters()
+        test.testParameters()
+
+
 
 
 """
