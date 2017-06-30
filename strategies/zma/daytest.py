@@ -74,7 +74,7 @@ class daytest:
         data = []
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
-            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS], "zma_gap_ratio_ratio_r": line[ZMA_GAP_RATIO_RATIO_R_POS], "trade_mark": line[TRADE_MARK_POS], "cur_ratio": line[CUR_RATIO_POS]})
+            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "zma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma20_ratio": line[ZMA20_RATIO_POS],  "zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma20_ratio_ratio": line[ZMA20_RATIO_RATIO_POS], "zma_gap": line[ZMA_GAP_POS], "zma_gap_ratio": line[ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": line[ZMA_GAP_RATIO_RATIO_POS], "zma_gap_ratio_ratio_r": line[ZMA_GAP_RATIO_RATIO_R_POS], "trade_mark": 0, "cur_ratio": line[CUR_RATIO_POS]})
 
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
         return self.ret
@@ -83,13 +83,13 @@ class daytest:
         len = 0
         for index in data.iterrows():
              len += 1
-        for i in range(0, len):
+        for i in range(2600, len):
              self.myop.dbop_add_day_data(self.mydb, data["No."][i], data["cur"][i], data["time"][i],
                                         data["zma10"][i], data["zma20"][i],
                                         data["zma10_ratio"][i], data["zma20_ratio"][i],
                                         data["zma10_ratio_ratio"][i], data["zma20_ratio_ratio"][i], data["zma_gap"][i], data["zma_gap_ratio"][i],
                                         data["zma_gap_ratio_ratio"][i], data["zma_gap_ratio_ratio_r"][i],
-                                        data["trade_mark"][i], data["cur_ratio"])
+                                        data["cur_ratio"][i])
 
     def updateDayTestData_trade_mark(self, data):
         len = 0
@@ -118,9 +118,9 @@ class daytest:
         for i in range(0, self.count):
             line = self.getNextData()
             if line[CUR_SRC_POS] == 0:
-                data.append({"No.": line[NO_SRC_POS], "cur": pre_cur, "time": line[TIME_SRC_POS], "trade_mark": 0})
+                data.append({"No.": line[NO_SRC_POS], "cur": pre_cur, "time": line[TIME_SRC_POS], "trade_mark": 0, "cur_ratio":0})
             else:
-                data.append({"No.": line[NO_SRC_POS], "cur": line[CUR_SRC_POS], "time": line[TIME_SRC_POS], "trade_mark": 0})
+                data.append({"No.": line[NO_SRC_POS], "cur": line[CUR_SRC_POS], "time": line[TIME_SRC_POS], "trade_mark": 0, "cur_ratio":0})
             pre_cur =line[CUR_SRC_POS]
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
         return self.ret
@@ -138,6 +138,8 @@ class daytest:
             ret, val = self.optimized_least_square_method(i - t + 1, i, "cur")
             if ret == -1:
                 val = 0
+            val *= 1000000
+            val = round(val, 4)
             self.ret.iloc[i, CUR_RATIO_POS] = val
         return 1
 
@@ -430,7 +432,10 @@ class daytest:
             C += (xi - avr_x) * (xi - avr_x)
             D += (yi - avr_y) * (yi - avr_y)
             xi += 1
-        r = A / ( math.sqrt(C) * math.sqrt(D))
+        if  D==0:
+            r = 1
+        else:
+            r = A / ( math.sqrt(C) * math.sqrt(D))
 
         return 1, r
 
@@ -628,7 +633,7 @@ class daytest:
 
 
             if self.ret["zma_gap"][position] >= adj_paras.zma_gap_min_sh and self.ret["zma_gap"][position] <= adj_paras.zma_gap_max_sh and \
-                            self.ret["zma_gap_ratio"][position] > adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] > adj_paras.zma_gap_ratio_ratio_sh and abs(self.ret["zma_gap_ratio_ratio_r"][position]) > 0.3 and \
+                            self.ret["zma_gap_ratio"][position] > adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] > adj_paras.zma_gap_ratio_ratio_sh  and \
                             self.ret["zma10_ratio"][position] > self.ret["zma20_ratio"][position] and \
                             self.ret["zma20_ratio"][position] >= adj_paras.zma20_ratio_sh and self.ret["zma10_ratio_ratio"][position] > adj_paras.zma10_ratio_ratio_sh and self.ret["zma20_ratio_ratio"][position] > adj_paras.zma20_ratio_ratio_sh:
                 if record_c_trend != trend_c_cnt:
@@ -636,7 +641,7 @@ class daytest:
                     record_c_trend = trend_c_cnt
 
             if self.ret["zma_gap"][position] <= -1 * adj_paras.zma_gap_min_sh and self.ret["zma_gap"][position] >= -1 * adj_paras.zma_gap_max_sh and \
-                            self.ret["zma_gap_ratio"][position] < -1 * adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] < -1 * adj_paras.zma_gap_ratio_ratio_sh and abs(self.ret["zma_gap_ratio_ratio_r"][position]) > 0.3 and \
+                            self.ret["zma_gap_ratio"][position] < -1 * adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] < -1 * adj_paras.zma_gap_ratio_ratio_sh  and \
                             self.ret["zma10_ratio"][position] < self.ret["zma20_ratio"][position] and \
                             self.ret["zma20_ratio"][position] <= -1 * adj_paras.zma20_ratio_sh and self.ret["zma10_ratio_ratio"][position] < -1 * adj_paras.zma10_ratio_ratio_sh and self.ret["zma20_ratio_ratio"][position] < -1 * adj_paras.zma20_ratio_ratio_sh:
                 if record_p_trend != trend_p_cnt:
@@ -668,7 +673,7 @@ class daytest:
                 trade_mark_len += 1
         indexed_trade_mark = pd.DataFrame(data, columns=["No.", "para_index", "trade_mark"])
 
-        print(indexed_trade_mark)
+#        print(indexed_trade_mark)
         # Start judging
         i = 0
         j = 0
@@ -746,6 +751,7 @@ class daytest:
             self.strategy_func(para)
 
         self.getTradeMark()
+
         for i in range(0, len):
             ## Get Parameters
             para = adjust_paras()
@@ -763,7 +769,6 @@ class daytest:
             value = self.zmax(start, end)
         if prod == -1:
             value = self.zmin(start, end)
-        print(value)
         max_value = abs(self.ret["cur"][start] - value)
         return max_value
 
@@ -817,7 +822,7 @@ class daytest:
         self.parse_data()
         self.cal_data()
 
-        print(self.ret)
+#        print(self.ret)
         self.addDayTestData(self.ret)
 
     def read_history(self,start_time, end_time):
@@ -834,14 +839,15 @@ if __name__ == "__main__":
     test.Initialize()
 #    test.store_history(start_time, end_time)
 
+
     for date in date_list:
         start_time = date + " " + "9:30:00"
         end_time = date + " " + "16:00:00"
         test.store_history(start_time, end_time)
 
-#        test.read_history(start_time, end_time)
+#       test.read_history(start_time, end_time)
 #        test.daytestFuc()
-#        test.testParameters()
+ #       test.testParameters()
 
 
 """

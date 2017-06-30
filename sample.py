@@ -10,6 +10,7 @@ from trade_api.hk_trade_op import *
 from data_src.stock_info.stock_info import *
 from strategies.zma.daytest import *
 from strategies.zma.zma20_strategy_quote import *
+from ui.PlaySound import *
 from trade_api.hk_trader_placer import *
 
 # Examples for use the python functions
@@ -138,35 +139,36 @@ if __name__ == "__main__":
 #    test = daytest()
 #    test.daytest()
 
-
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
 
-#    zma_str = zma20_strategy_quote(quote_context)
-#    zma_str.start()
-#    while(1):
-#        ret, data = zma_str.get_cur_zma_quote()
- #       if ret == RET_OK:
- #           print(data["time"][0])
- #       time.sleep(0.5)
+    zma_str = zma20_strategy_quote(quote_context)
+    zma_str.start()
+    while(1):
+        ret, data = zma_str.get_cur_zma_quote()
+        if ret == RET_OK:
+            print("")
+#            print(str(data["time"][0]) + "Attack: zma10_r_r:" + str(data["zma10_ratio_ratio"][0]) + " cur_r: " + str(data["cur_ratio"][0]))
+#            print("         Defend: zma20_r:" + str(data["zma20_ratio"][0]) + " zma20_r_r " + str(data["zma20_ratio_ratio"][0]))
+        time.sleep(0.5)
 
-    ma = MovingAverage(quote_context)
-    ma.start()
+#    ma = MovingAverage(quote_context)
+#    ma.start()
 
-    detectMATrend = DetectMATrend(quote_context, ma)
-    detectMATrend.start()
-    detectMATrend5 = DetectMATrend(quote_context, ma, 5)
-    detectMATrend5.start()
+#    detectMATrend = DetectMATrend(quote_context, ma)
+#    detectMATrend.start()
+#    detectMATrend5 = DetectMATrend(quote_context, ma, 5)
+#    detectMATrend5.start()
 
-    sc = store_control(detectMATrend, detectMATrend5, ma)
-    sc.start()
+#    sc = store_control(detectMATrend, detectMATrend5, ma)
+ #   sc.start()
 
-    hk_trade = hk_trade_api()
-    hk_trade.initialize()
-    hk_trade.unlock_trade('88888888', '584679')
-    opt = hk_trade_opt(hk_trade)
-    placer_c = hk_trader_placer(ma, opt, "C")
-    placer_p = hk_trader_placer(ma, opt, "P")
+ #   hk_trade = hk_trade_api()
+#   hk_trade.initialize()
+#    hk_trade.unlock_trade('88888888', '584679')
+#    opt = hk_trade_opt(hk_trade)
+ #   placer_c = hk_trader_placer(ma, opt, "C")
+#    placer_p = hk_trader_placer(ma, opt, "P")
 
 
 #    placer.buy()
@@ -177,8 +179,8 @@ if __name__ == "__main__":
 #    print(dealt)
 #    opt.disable_order(orderid)
 
-    trendToast = TrendToast(detectMATrend,detectMATrend5, placer_c, placer_p)
-    trendToast.display()
+ #   trendToast = TrendToast(detectMATrend,detectMATrend5, placer_c, placer_p)
+ #   trendToast.display()
 
 
 
