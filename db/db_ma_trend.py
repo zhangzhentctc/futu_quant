@@ -35,11 +35,19 @@ class dbop_ma_trand:
     #  Table day_data_new2
     ###
     # "No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio",
+<<<<<<< HEAD
     def dbop_add_day_data(self, db_basic, id, cur, time, zma10, zma20, zma10_ratio, zma20_ratio, zma10_ratio_ratio, zma20_ratio_ratio, zma_gap, zma_gap_ratio, zma_gap_ratio_ratio, zma_gap_ratio_ratio_r, cur_ratio):
         sql = "insert into day_data_new2(id,cur,time, zma10,zma20, zma10_ratio, zma20_ratio, zma10_ratio_ratio, zma20_ratio_ratio, zma_gap, zma_gap_ratio, zma_gap_ratio_ratio, zma_gap_ratio_ratio_r, cur_ratio) values(" + \
               str(id) + "," + str(cur) + ", '" + str(time) + "' ," + str(zma10) + "," + str(zma20) + "," + \
               str(zma10_ratio) + "," + str(zma20_ratio) + "," + str(zma10_ratio_ratio) + "," + str(zma20_ratio_ratio) + "," + \
               str(zma_gap) + "," + str(zma_gap_ratio) + "," + str(zma_gap_ratio_ratio) + "," + str(zma_gap_ratio_ratio_r) + ","  + str(cur_ratio) + ");"
+=======
+    def dbop_add_day_data(self, db_basic, id, cur, time, zma10, zma20, zma10_ratio, zma20_ratio, zma10_ratio_ratio, zma20_ratio_ratio, zma_gap, zma_gap_ratio, zma_gap_ratio_ratio, zma_gap_ratio_ratio_r,  cur_ratio):
+        sql = "insert into day_data_new2(id,cur,time, zma10,zma20, zma10_ratio, zma20_ratio, zma10_ratio_ratio, zma20_ratio_ratio, zma_gap, zma_gap_ratio, zma_gap_ratio_ratio, zma_gap_ratio_ratio_r, cur_ratio) values(" + \
+              str(id) + "," + str(cur) + ", '" + str(time) + "' ," + str(zma10) + "," + str(zma20) + "," + \
+              str(zma10_ratio) + "," + str(zma20_ratio) + "," + str(zma10_ratio_ratio) + "," + str(zma20_ratio_ratio) + "," + \
+              str(zma_gap) + "," + str(zma_gap_ratio) + "," + str(zma_gap_ratio_ratio) + "," + str(zma_gap_ratio_ratio_r) + "," + str(cur_ratio) + ");"
+>>>>>>> 20d668a19703578be065249f77ae92a7e7445bb6
         db_basic.insertMysql(sql)
 
     def dbop_read_day_data(self, db_basic, time_start, time_end):
@@ -83,8 +91,11 @@ class dbop_ma_trand:
         self.position += 1
         return ret
 
-    def dbop_add_adj_paras(self):
-        pass
+######## TBD
+    def dbop_add_adj_paras(self, db_basic, zma20_r, zma10_r_r, cur_r):
+        sql = "insert into adjust_parameters( zma20_ratio, zma10_ratio_ratio, cur_ratio) values(" + \
+              str(zma20_r) + "," + str(zma10_r_r) + ", " + str(cur_r) + ");"
+        db_basic.insertMysql(sql)
 
     ###
     ## Table trade_mark
