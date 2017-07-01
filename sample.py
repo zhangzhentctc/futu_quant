@@ -141,8 +141,9 @@ if __name__ == "__main__":
 
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
-
-    zma_str = zma20_strategy_quote(quote_context)
+    play = PlaySound()
+    play.start()
+    zma_str = zma20_strategy_quote(quote_context, play)
     zma_str.start()
     while(1):
         ret, data = zma_str.get_cur_zma_quote()

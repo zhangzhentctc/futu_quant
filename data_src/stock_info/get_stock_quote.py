@@ -16,14 +16,13 @@ class get_stock_quote(threading.Thread):
         self.refresh = cycle
         self.ready = 0
 
-    def subscribe_stock(self):
+    def subscribe_stock(self, type):
         # subscribe "QUOTE"
         for stk_code in self.stock_code_list:
-            ret_status, ret_data = self.__quote_ctx.subscribe(stk_code, "QUOTE")
+            ret_status, ret_data = self.__quote_ctx.subscribe(stk_code, type)
             if ret_status != RET_OK:
                 print("%s %s: %s" % (stk_code, "QUOTE", ret_data))
                 return RET_ERROR, ret_data
-
         ret_status, ret_data = self.__quote_ctx.query_subscription()
         if ret_status == RET_ERROR:
             print(ret_status)
@@ -108,7 +107,7 @@ class get_stock_quote(threading.Thread):
         ret_status = RET_OK
         ret_data = ""
         for i in range (0, self.subscribe_trail):
-            ret_status, ret_data = self.subscribe_stock()
+            ret_status, ret_data = self.subscribe_stock("QUOTE")
             if ret_status == RET_OK:
                 break
             print("subscribe fail. Retry.")
@@ -117,6 +116,18 @@ class get_stock_quote(threading.Thread):
         if ret_status == RET_ERROR:
             print("subscribe fail 3 times")
             return -1
+
+        for i in range (0, self.subscribe_trail):
+            ret_status, ret_data = self.subscribe_stock("K_1M")
+            if ret_status == RET_OK:
+                break
+            print("subscribe fail. Retry.")
+            time.sleep(0.5)
+
+        if ret_status == RET_ERROR:
+            print("subscribe fail 3 times")
+            return -1
+
         i = 30
         while(i):
             start = time.time()

@@ -19,7 +19,7 @@ CUR_RATIO_RATIO_POS = 12
 
 
 class zma20_strategy_quote(threading.Thread):
-    def __init__(self, qc, interval = 0.5):
+    def __init__(self, qc, play, interval = 0.5 ):
         super(zma20_strategy_quote, self).__init__()
         self.__quote_ctx = qc
         self.deposit = 0
@@ -28,6 +28,7 @@ class zma20_strategy_quote(threading.Thread):
         self.interval = 0.5
         self.count = 0
         self.is_available = 0
+        self.play = play
         data= []
         for i in range(0, 50000):
             data.append({"No.": 0})
@@ -203,28 +204,44 @@ class zma20_strategy_quote(threading.Thread):
 
     def guard_bear(self):
         print(self.ma_1m_table)
+        value = 3
         if self.deposit == 0:
             sub = self.ma_1m_table.iloc[3,3] - self.ma_1m_table.iloc[3,2]
             if sub <= 0:
                 self.deposit = 0
                 self.deposit_bottom = 0
+                self.play.stop()
+                print("reset")
                 return
             else:
                 self.deposit = sub
-                if self.deposit >= 2:
-                    p = PlaySound()
-                    p.playSound()
+                if self.deposit >= value:
+                    print(self.deposit)
+                    print(value)
+                    self.play.add_cnt()
                     self.deposit = 0
                     self.deposit_bottom = 0
+                    print("warn")
                 else:
                     self.deposit_bottom = self.ma_1m_table.iloc[3,2]
+                    print("wait")
                     return
         else:
+        # we have a Green K bar that is less than VALUE
             new_deposit = self.cur - self.deposit_bottom
-            if new_deposit >= 2:
-                p = PlaySound()
-                p.playSound()
+            if new_deposit >= value:
+                self.play.add_cnt()
+                self.deposit = 0
+                self.deposit_bottom = 0
+                print("warn")
             else:
+                sub = self.ma_1m_table.iloc[3, 3] - self.ma_1m_table.iloc[3, 2]
+                if sub < 0:
+                    if self.ma_1m_table.iloc[3, 3] <= self.deposit_bottom:
+                        self.deposit = 0
+                        self.deposit_bottom = 0
+                        print("reset")
+                print("wait")
                 return
 
 

@@ -435,11 +435,8 @@ class daytest:
             C += (xi - avr_x) * (xi - avr_x)
             D += (yi - avr_y) * (yi - avr_y)
             xi += 1
-<<<<<<< HEAD
-        if  D==0:
-=======
+
         if  D == 0:
->>>>>>> 20d668a19703578be065249f77ae92a7e7445bb6
             r = 1
         else:
             r = A / ( math.sqrt(C) * math.sqrt(D))
@@ -800,11 +797,8 @@ class daytest:
 
 
         self.getTradeMark()
-<<<<<<< HEAD
-
-=======
         print(self.trade_mark)
->>>>>>> 20d668a19703578be065249f77ae92a7e7445bb6
+
         for i in range(0, len):
             ## Get Parameters
             para = adjust_paras()
@@ -894,8 +888,6 @@ class daytest:
                     self.myop.dbop_add_adj_paras(self.mydb,zma20_r,zma10_r_r,cur_r)
 
 
-
-
 if __name__ == "__main__":
 #    Usage
     date_list = ["2017-05-04"]
@@ -910,17 +902,11 @@ if __name__ == "__main__":
         end_time = date + " " + "16:00:00"
 #        test.store_history(start_time, end_time)
 
-<<<<<<< HEAD
-#       test.read_history(start_time, end_time)
-#        test.daytestFuc()
- #       test.testParameters()
-=======
+
         test.read_history(start_time, end_time)
 #        test.daytestFuc()
         test.testParameters()
 
-
->>>>>>> 20d668a19703578be065249f77ae92a7e7445bb6
 
 
 """
