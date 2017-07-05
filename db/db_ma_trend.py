@@ -127,3 +127,9 @@ class dbop_ma_trand:
         sql = "insert into judge_result(id, action, result, turn_pos, turn_gap, para_index) values(" + \
             str(No) + "," + str(action) + "," + str(passive_gap) + "," + str(turn_pos) + "," + str(turn_gap) + "," + str(index) + ");"
         db_basic.insertMysql(sql)
+
+    def dbop_add_ch_rates(self, db_basic, cur, cur_gap_5s, cur_gap_10s, cur_gap_20s):
+        sql = "insert into ch_rates(cur, cur_gap_5s, cur_gap_10s, cur_gap_20s) values(" + \
+            str(cur) + "," + str(cur_gap_5s) + "," + str(cur_gap_10s) + "," + str(cur_gap_20s) + ");"
+        db_basic.insertMysql(sql)
+

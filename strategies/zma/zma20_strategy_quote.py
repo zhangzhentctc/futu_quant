@@ -98,7 +98,7 @@ class zma20_strategy_quote(threading.Thread):
         ret, val = self.optimized_least_square_method(position - t + 1, position, "zma10")
         if ret == -1:
             val = 0
-        self.ret.iloc[position, ZMA10_RATIO_POS] = val  * 10000
+        self.ret.iloc[position, ZMA10_RATIO_POS] = val  * 120
         return 1
 
     def cal_zma20_ratio(self, position):
@@ -111,7 +111,7 @@ class zma20_strategy_quote(threading.Thread):
         ret, val = self.optimized_least_square_method(position - t + 1, position, "zma20")
         if ret == -1:
             val = 0
-        self.ret.iloc[position, ZMA20_RATIO_POS] = val * 10000
+        self.ret.iloc[position, ZMA20_RATIO_POS] = val * 120
         return 1
 
     def cal_zma20_ratio_ratio(self, position):
@@ -203,15 +203,16 @@ class zma20_strategy_quote(threading.Thread):
         return 1, ratio
 
     def guard_bear(self):
-        print(self.ma_1m_table)
-        value = 3
+#        print(self.ma_1m_table)
+        count = 26
+        value = 10
         if self.deposit == 0:
-            sub = self.ma_1m_table.iloc[3,3] - self.ma_1m_table.iloc[3,2]
+            sub = self.ma_1m_table.iloc[count - 2 ,3] - self.ma_1m_table.iloc[count - 2 ,2]
             if sub <= 0:
                 self.deposit = 0
                 self.deposit_bottom = 0
                 self.play.stop()
-                print("reset")
+                print("reset red")
                 return
             else:
                 self.deposit = sub
@@ -221,10 +222,10 @@ class zma20_strategy_quote(threading.Thread):
                     self.play.add_cnt()
                     self.deposit = 0
                     self.deposit_bottom = 0
-                    print("warn")
+                    print("warn directly")
                 else:
-                    self.deposit_bottom = self.ma_1m_table.iloc[3,2]
-                    print("wait")
+                    self.deposit_bottom = self.ma_1m_table.iloc[count - 2,2]
+                    print("wait, find deposit")
                     return
         else:
         # we have a Green K bar that is less than VALUE
@@ -233,15 +234,16 @@ class zma20_strategy_quote(threading.Thread):
                 self.play.add_cnt()
                 self.deposit = 0
                 self.deposit_bottom = 0
-                print("warn")
+                print("warn with deposit")
             else:
-                sub = self.ma_1m_table.iloc[3, 3] - self.ma_1m_table.iloc[3, 2]
+                sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
                 if sub < 0:
-                    if self.ma_1m_table.iloc[3, 3] <= self.deposit_bottom:
+                    if self.ma_1m_table.iloc[count - 2, 3] <= self.deposit_bottom:
                         self.deposit = 0
                         self.deposit_bottom = 0
-                        print("reset")
-                print("wait")
+                        self.play.stop()
+                        print("reset with deposit")
+                print("wait with deposit " + str(self.deposit_bottom))
                 return
 
 
@@ -275,6 +277,8 @@ class zma20_strategy_quote(threading.Thread):
         return RET_OK, zma_quote
 
 
+
+
     def run(self):
         stock_quote = get_stock_quote(self.__quote_ctx)
         stock_quote.start()
@@ -296,7 +300,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.ret.iloc[self.count, TIME_POS] = data_time
                 self.cal_zma10(self.count)
                 self.cal_zma20(self.count)
-                self.cal_cur_ratio(self.count)
+#                self.cal_cur_ratio(self.count)
                 self.cal_zma10_ratio(self.count)
                 self.cal_zma20_ratio(self.count)
 #                self.cal_zma10_ratio_ratio(self.count)
@@ -324,7 +328,22 @@ class zma20_strategy_quote(threading.Thread):
                     data_time = stock_quote.get_data_time()
                     cur_stock_quoto = stock_quote.get_stock_quoto()
                     self.cur = cur_stock_quoto
-                    self.ma_1m_table = stock_quote.get_1mK_line()
+                    ret, tmp = stock_quote.get_1mK_line()
+                    if ret == 1:
+                        self.ma_1m_table = tmp
+                    self.deltaMA20_cur = stock_quote.get_deltaMA20_cur()
+                    self.deltaMA20_cur = round(self.deltaMA20_cur, 2)
+                    self.deltaMA20_ma3 = stock_quote.get_deltaMA20_ma3()
+                    self.deltaMA20_ma3 = round(self.deltaMA20_ma3, 2)
+                    self.deltaMA20_ma5 = stock_quote.get_deltaMA20_ma5()
+                    self.deltaMA20_ma5 = round(self.deltaMA20_ma5, 2)
+                    self.deltaMA10_cur = stock_quote.get_deltaMA10_cur()
+                    self.deltaMA10_cur = round(self.deltaMA10_cur, 2)
+                    self.deltaMA10_ma3 = stock_quote.get_deltaMA10_ma3()
+                    self.deltaMA10_ma3 = round(self.deltaMA10_ma3, 2)
+                    self.deltaMA10_ma5 = stock_quote.get_deltaMA10_ma5()
+                    self.deltaMA10_ma5 = round(self.deltaMA10_ma5, 2)
+
                 else:
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
@@ -334,7 +353,16 @@ class zma20_strategy_quote(threading.Thread):
                 data_time = stock_quote.get_data_time()
             self.guard_bear()
             print(self.ret.iloc[self.count,])
-
+            print("delta MA20")
+            print(str(self.deltaMA20_cur) + " " +str(self.deltaMA20_ma3) +" " + str(self.deltaMA20_ma5))
+            print("delta MA10")
+            print(str(self.deltaMA10_cur) + " " +str(self.deltaMA10_ma3) +" " + str(self.deltaMA10_ma5))
+            if self.count > 40:
+                print("Changes in last 5s,10s,20s")
+                self.cur_gap_5s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 10, CUR_POS])/5
+                self.cur_gap_10s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 20, CUR_POS])/10
+                self.cur_gap_20s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 40, CUR_POS])/20
+                print(str(self.cur_gap_5s) + " " + str(self.cur_gap_10s) + " " + str(self.cur_gap_20s))
 
 
 

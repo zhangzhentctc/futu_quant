@@ -12,6 +12,7 @@ from strategies.zma.daytest import *
 from strategies.zma.zma20_strategy_quote import *
 from ui.PlaySound import *
 from trade_api.hk_trader_placer import *
+from db.store_ch_rate import *
 
 # Examples for use the python functions
 #
@@ -139,12 +140,15 @@ if __name__ == "__main__":
 #    test = daytest()
 #    test.daytest()
 
+    print("111111111111111111111")
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
     play = PlaySound()
     play.start()
     zma_str = zma20_strategy_quote(quote_context, play)
     zma_str.start()
+    store_ch_rate = store_ch_rate(zma_str)
+    store_ch_rate.start()
     while(1):
         ret, data = zma_str.get_cur_zma_quote()
         if ret == RET_OK:

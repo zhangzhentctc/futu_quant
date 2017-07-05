@@ -15,6 +15,11 @@ class get_stock_quote(threading.Thread):
         self.subscribe_trail = 3
         self.refresh = cycle
         self.ready = 0
+        self.deltaMA20_cur = 0
+        self.deltaMA20_ma3 = 0
+        self.deltaMA20_ma5 = 0
+
+        global ma_1m_table_lock
 
     def subscribe_stock(self, type):
         # subscribe "QUOTE"
@@ -50,7 +55,14 @@ class get_stock_quote(threading.Thread):
         return self.cur_stock_quoto
 
     def get_1mK_line(self):
-        return self.ma_1m_table
+        ret = 0
+        try:
+            table = self.ma_1m_table
+            ret = 1
+        except:
+            ret = 0
+            table = []
+        return ret, table
 
     def get_ma_1m(self, number):
         stock_code_list = ["HK_FUTURE.999010"]
@@ -65,44 +77,41 @@ class get_stock_quote(threading.Thread):
                 kline_table = ret_data
 #                print(kline_table)
                 # Make Data List
-                ma1_open_list= []
-                for unit in kline_table["open"]:
-                    if unit == 0:
-                        return
-                    ma1_open_list.append(unit)
-
-                ma1_close_list = []
-                for unit in kline_table["close"]:
-                    if unit == 0:
-                        return
-                    ma1_close_list.append(unit)
-
-                ma1_high_list = []
-                for unit in kline_table["high"]:
-                    if unit == 0:
-                        return
-                    ma1_high_list.append(unit)
-
-                ma1_low_list = []
-                for unit in kline_table["low"]:
-                    if unit == 0:
-                        return
-                    ma1_low_list.append(unit)
-
-               # make time list
-                time_list = []
-                for unit in kline_table["time_key"]:
-                    time_list.append(unit)
-
-                # Combine data
-                data = []
-                for i in range(0, number ):
-                    data.append({"open": ma1_open_list[i], "close": ma1_open_list[i], "high": ma1_high_list[i], "low": ma1_low_list[i], "time_key": time_list[i]})
-                self.ma_1m_table = pd.DataFrame(data, columns=["open", "close", "high", "low", "time_key"])
                 self.ma_1m_table = kline_table
                 return self.ma_1m_table
 
+    def cal_delta_ma(self):
+        try:
+            kline = self.ma_1m_table
+        except:
+            return
+        self.deltaMA20_cur = (kline.iloc[24, 3] - kline.iloc[4, 3])/20
+        self.deltaMA20_ma3 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3]- kline.iloc[4, 3] - kline.iloc[3, 3] - kline.iloc[2, 3])/60
+        self.deltaMA20_ma5 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3] + kline.iloc[21, 3] + kline.iloc[20, 3] - kline.iloc[4, 3] - kline.iloc[3, 3] - kline.iloc[2, 3] - kline.iloc[1, 3] - kline.iloc[0, 3]) / 100
+        self.deltaMA10_cur = (kline.iloc[24, 3] - kline.iloc[14, 3])/10
+        self.deltaMA10_ma3 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3]- kline.iloc[14, 3] - kline.iloc[13, 3] - kline.iloc[12, 3])/30
+        self.deltaMA10_ma5 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3] + kline.iloc[21, 3] + kline.iloc[20, 3] - kline.iloc[14, 3] - kline.iloc[13, 3] - kline.iloc[12, 3] - kline.iloc[11, 3] - kline.iloc[10, 3]) / 50
+
+    def get_deltaMA20_cur(self):
+        return self.deltaMA20_cur
+
+    def get_deltaMA20_ma3(self):
+        return self.deltaMA20_ma3
+
+    def get_deltaMA20_ma5(self):
+        return self.deltaMA20_ma5
+
+    def get_deltaMA10_cur(self):
+        return self.deltaMA10_cur
+
+    def get_deltaMA10_ma3(self):
+        return self.deltaMA10_ma3
+
+    def get_deltaMA10_ma5(self):
+        return self.deltaMA10_ma5
+
     def run(self):
+
         self.ready = 0
         ret_status = RET_OK
         ret_data = ""
@@ -134,7 +143,8 @@ class get_stock_quote(threading.Thread):
             ret = self.get_cur_stock_quoto()
             if ret == RET_ERROR:
                 continue
-            self.get_ma_1m(5)
+            self.get_ma_1m(26)
+            self.cal_delta_ma()
             self.ready = 1
             end = time.time()
             dur = end - start
