@@ -133,3 +133,8 @@ class dbop_ma_trand:
             str(cur) + "," + str(cur_gap_5s) + "," + str(cur_gap_10s) + "," + str(cur_gap_20s) + ");"
         db_basic.insertMysql(sql)
 
+    def dbop_add_standard_quo(self, db_basic, cur, MA10_cur, MA20_cur, deltaMA10_ma3, deltaMA20_ma3):
+        sql = "insert into standard_quo(cur, MA10, MA20, delta_ma10_ma3, delta_ma20_ma3) values(" + \
+            str(cur) + "," + str(MA10_cur) + "," + str(MA20_cur) + "," + str(deltaMA10_ma3) + "," + str(deltaMA20_ma3) + ");"
+        db_basic.insertMysql(sql)
+

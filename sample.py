@@ -140,7 +140,7 @@ if __name__ == "__main__":
 #    test = daytest()
 #    test.daytest()
 
-    print("111111111111111111111")
+
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
     play = PlaySound()

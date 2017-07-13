@@ -22,9 +22,14 @@ class store_ch_rate(threading.Thread):
                 cur_gap_5s = self.zma_str.cur_gap_5s
                 cur_gap_10s = self.zma_str.cur_gap_10s
                 cur_gap_20s = self.zma_str.cur_gap_20s
+                MA10_cur =  self.zma_str.MA10_cur
+                MA20_cur = self.zma_str.MA20_cur
+                deltaMA10_ma3 = self.zma_str.deltaMA10_ma3
+                deltaMA20_ma3 = self.zma_str.deltaMA20_ma3
             except:
+                print("Get Val fail")
                 time.sleep(0.5)
                 continue
-            print("Get numbers")
+            op.dbop_add_standard_quo(db, cur, MA10_cur, MA20_cur, deltaMA10_ma3, deltaMA20_ma3)
             op.dbop_add_ch_rates(db, cur, cur_gap_5s, cur_gap_10s, cur_gap_20s)
             time.sleep(0.5)

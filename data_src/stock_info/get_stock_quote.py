@@ -81,16 +81,40 @@ class get_stock_quote(threading.Thread):
                 return self.ma_1m_table
 
     def cal_delta_ma(self):
+        K_NO = 26
         try:
             kline = self.ma_1m_table
         except:
             return
-        self.deltaMA20_cur = (kline.iloc[24, 3] - kline.iloc[4, 3])/20
-        self.deltaMA20_ma3 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3]- kline.iloc[4, 3] - kline.iloc[3, 3] - kline.iloc[2, 3])/60
-        self.deltaMA20_ma5 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3] + kline.iloc[21, 3] + kline.iloc[20, 3] - kline.iloc[4, 3] - kline.iloc[3, 3] - kline.iloc[2, 3] - kline.iloc[1, 3] - kline.iloc[0, 3]) / 100
-        self.deltaMA10_cur = (kline.iloc[24, 3] - kline.iloc[14, 3])/10
-        self.deltaMA10_ma3 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3]- kline.iloc[14, 3] - kline.iloc[13, 3] - kline.iloc[12, 3])/30
-        self.deltaMA10_ma5 = (kline.iloc[24, 3] + kline.iloc[23, 3] + kline.iloc[22, 3] + kline.iloc[21, 3] + kline.iloc[20, 3] - kline.iloc[14, 3] - kline.iloc[13, 3] - kline.iloc[12, 3] - kline.iloc[11, 3] - kline.iloc[10, 3]) / 50
+        self.deltaMA20_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 22, 3])/20
+        self.deltaMA20_ma3 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] - kline.iloc[K_NO - 22, 3] - kline.iloc[K_NO - 23, 3] - kline.iloc[K_NO - 24, 3])/60
+        self.deltaMA20_ma5 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] + kline.iloc[K_NO - 5, 3] + kline.iloc[K_NO - 6, 3] - kline.iloc[K_NO - 22, 3] - kline.iloc[K_NO - 23, 3] - kline.iloc[K_NO - 24, 3] - kline.iloc[K_NO - 25, 3] - kline.iloc[K_NO - 26, 3]) / 100
+
+        self.deltaMA10_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 12, 3])/10
+        self.deltaMA10_ma3 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] - kline.iloc[K_NO - 12, 3] - kline.iloc[K_NO - 13, 3] - kline.iloc[K_NO - 14, 3])/30
+        self.deltaMA10_ma5 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] + kline.iloc[K_NO - 5, 3] + kline.iloc[K_NO - 6, 3] - kline.iloc[K_NO - 12, 3] - kline.iloc[K_NO - 13, 3] - kline.iloc[K_NO - 14, 3] - kline.iloc[K_NO - 15, 3] - kline.iloc[K_NO - 16, 3]) / 50
+
+        tmp = 0
+        for i in range(0, 10):
+            tmp += kline.iloc[K_NO - 2 - i, 3]
+        self.MA10_cur = tmp/10
+
+        tmp = 0
+        for i in range(0, 10):
+            tmp += kline.iloc[K_NO - 4 - i, 3]
+        self.MA10_3 = tmp/10
+
+        tmp = 0
+        for i in range(0, 20):
+            tmp += kline.iloc[K_NO - 2 - i, 3]
+        self.MA20_cur = tmp/20
+
+        tmp = 0
+        for i in range(0, 20):
+            tmp += kline.iloc[K_NO - 4 - i, 3]
+        self.MA20_3 = tmp/20
+
+        return
 
     def get_deltaMA20_cur(self):
         return self.deltaMA20_cur
@@ -109,6 +133,18 @@ class get_stock_quote(threading.Thread):
 
     def get_deltaMA10_ma5(self):
         return self.deltaMA10_ma5
+
+    def get_MA10_cur(self):
+        return self.MA10_cur
+
+    def get_MA10_3(self):
+        return self.MA10_3
+
+    def get_MA20_cur(self):
+        return self.MA20_cur
+
+    def get_MA20_3(self):
+        return self.MA20_3
 
     def run(self):
 

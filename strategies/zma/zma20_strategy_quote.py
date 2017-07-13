@@ -246,7 +246,154 @@ class zma20_strategy_quote(threading.Thread):
                 print("wait with deposit " + str(self.deposit_bottom))
                 return
 
+    def empty_head(self):
+        K_NO = 26
+        MA10_THRESHOLD = 1.4
+        MA20_THRESHOLD = 0.7
+        GAP_DOWN = 3
+        GAP_UP = 20
+        K_GROW_THRESHOLD = 10
+        # MA Conditions
+        if self.deltaMA10_ma3 < 0 and \
+                        self.deltaMA20_ma3 < 0 and \
+                        self.MA10_cur < self.MA20_cur and \
+                        self.MA10_3 < self.MA20_3:
+            if abs(self.deltaMA10_ma3) > MA10_THRESHOLD and \
+                    abs(self.deltaMA20_ma3) > MA20_THRESHOLD:
+                gap = self.MA20_3 - self.MA10_3
+                if gap > GAP_DOWN and gap < GAP_UP:
+                    ret_0 = 0
+                else:
+                    # GAP problem
+                    ret_0 = 3
+            else:
+                # Rates are too small
+                ret_0 = 2
+        else:
+            # Not goes down together
+            ret_0 = 1
 
+        # K-line conditions
+        key_values = [self.ma_1m_table.iloc[K_NO - 3, 2], self.ma_1m_table.iloc[K_NO - 3, 3], self.ma_1m_table.iloc[K_NO - 2, 3], self.ma_1m_table.iloc[K_NO - 1, 3]]
+        color = [0, 0, 0]
+        if key_values[1] - key_values[0] > 0:
+            color[0] = 1
+
+        if key_values[2] - key_values[1] > 0:
+            color[1] = 1
+
+        if key_values[3] - key_values[2] > 0:
+            color[2] = 1
+
+        increase = 0
+        if color[1] == 1 and color[1] == 1 and color[2] == 1:
+            increase = key_values[3] - key_values[0]
+
+        if color[1] == 1 and color[1] == 1 and color[2] == 0:
+            increase = key_values[2] - key_values[0]
+
+        if color[1] == 1 and color[1] == 0 and color[2] == 1:
+            if key_values[0] > key_values[2]:
+                val1 = key_values[1] - key_values[0]
+                val2 = key_values[3] - key_values[2]
+                if val1 > val2:
+                    increase = val1
+                else:
+                    increase = val2
+            else:
+                increase = key_values[3] - key_values[0]
+
+        if color[1] == 1 and color[1] == 0 and color[2] == 0:
+            increase = key_values[1] - key_values[0]
+
+        if color[0] == 0 and color[1] == 1 and color[2] == 1:
+            increase = key_values[3] - key_values[1]
+
+        if color[0] == 0 and color[1] == 1 and color[2] == 0:
+            increase = key_values[2] - key_values[1]
+
+        if color[0] == 0 and color[1] == 0 and color[2] == 1:
+            increase = key_values[3] - key_values[2]
+
+        if color[0] == 0 and color[1] == 0 and color[2] == 0:
+            increase = 0
+
+        if increase >= K_GROW_THRESHOLD:
+            ret_1 = 1
+        else:
+            ret_1 = 0
+
+        if ret_0 == 0:
+            str_0 = "MA is OK```````````````````"
+        if ret_0 == 1:
+            str_0 = "MA do not go down``````````"
+        if ret_0 == 2:
+            str_0 = "MA changes rate are not big"
+        if ret_0 == 3:
+            str_0 = "MA Gap is not proper```````"
+        if ret_1 == 0:
+            str_1 = "K-Line is OK"
+        if ret_1 == 1:
+            str_1 = "K-Line is bad"
+        if ret_0 == 0 and ret_1 == 0:
+            ret = "GO GO GO"
+        else:
+            ret = "XX XX XX"
+        print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
+        return
+
+    def many_head(self):
+        K_NO = 26
+        MA10_THRESHOLD = 1.8
+        MA20_THRESHOLD = 1.4
+        GAP_DOWN = 3
+        GAP_UP = 20
+        K_MA10_THRESHOLD = 2
+        # MA Conditions
+        if self.deltaMA10_ma3 > 0 and \
+                        self.deltaMA20_ma3 > 0 and \
+                        self.MA10_cur > self.MA20_cur and \
+                        self.MA10_3 > self.MA20_3:
+            if abs(self.deltaMA10_ma3) > MA10_THRESHOLD and \
+                    abs(self.deltaMA20_ma3) > MA20_THRESHOLD:
+                gap = self.MA10_3 - self.MA20_3
+                if gap > GAP_DOWN and gap < GAP_UP:
+                    ret_0 = 0
+                else:
+                    # GAP problem
+                    ret_0 = 3
+            else:
+                # Rates are too small
+                ret_0 = 2
+        else:
+            # Not goes down together
+            ret_0 = 1
+
+        k_ma10_gap = self.ma_1m_table.iloc[K_NO - 2, 3] - self.MA10_cur
+
+        if abs(k_ma10_gap) <= K_MA10_THRESHOLD:
+            ret_1 = 0
+        else:
+            ret_1 = 1
+
+        if ret_0 == 0:
+            str_0 = "MA is OK```````````````````"
+        if ret_0 == 1:
+            str_0 = "MA do not go down``````````"
+        if ret_0 == 2:
+            str_0 = "MA changes rate are not big"
+        if ret_0 == 3:
+            str_0 = "MA Gap is not proper```````"
+        if ret_1 == 0:
+            str_1 = "K-Line is OK"
+        if ret_1 == 1:
+            str_1 = "K-Line is bad"
+        if ret_0 == 0 and ret_1 == 0:
+            ret = "GO GO GO"
+        else:
+            ret = "XX XX XX"
+        print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
+        return
 
     def is_trade_time(self, data_time):
         return 1
@@ -343,7 +490,14 @@ class zma20_strategy_quote(threading.Thread):
                     self.deltaMA10_ma3 = round(self.deltaMA10_ma3, 2)
                     self.deltaMA10_ma5 = stock_quote.get_deltaMA10_ma5()
                     self.deltaMA10_ma5 = round(self.deltaMA10_ma5, 2)
-
+                    self.MA10_cur = stock_quote.get_MA10_cur()
+                    self.MA10_cur = round(self.MA10_cur, 2)
+                    self.MA10_3 = stock_quote.get_MA10_3()
+                    self.MA10_3 = round(self.MA10_3, 2)
+                    self.MA20_cur = stock_quote.get_MA20_cur()
+                    self.MA20_cur = round(self.MA20_cur, 2)
+                    self.MA20_3 = stock_quote.get_MA20_3()
+                    self.MA20_3 = round(self.MA20_3, 2)
                 else:
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
@@ -352,11 +506,17 @@ class zma20_strategy_quote(threading.Thread):
                 time.sleep(self.interval)
                 data_time = stock_quote.get_data_time()
             self.guard_bear()
+            self.empty_head()
+            self.many_head()
             print(self.ret.iloc[self.count,])
             print("delta MA20")
             print(str(self.deltaMA20_cur) + " " +str(self.deltaMA20_ma3) +" " + str(self.deltaMA20_ma5))
             print("delta MA10")
             print(str(self.deltaMA10_cur) + " " +str(self.deltaMA10_ma3) +" " + str(self.deltaMA10_ma5))
+            print("MA10")
+            print(str(self.MA10_cur) + " " + str(self.MA10_3))
+            print("MA20")
+            print(str(self.MA20_cur) + " " + str(self.MA20_3))
             if self.count > 40:
                 print("Changes in last 5s,10s,20s")
                 self.cur_gap_5s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 10, CUR_POS])/5
