@@ -211,7 +211,8 @@ class zma20_strategy_quote(threading.Thread):
             if sub <= 0:
                 self.deposit = 0
                 self.deposit_bottom = 0
-                self.play.stop()
+#                self.play.stop()
+                self.play.stop_play_stop_lossing_bear()
                 print("reset red")
                 return
             else:
@@ -219,7 +220,8 @@ class zma20_strategy_quote(threading.Thread):
                 if self.deposit >= value:
                     print(self.deposit)
                     print(value)
-                    self.play.add_cnt()
+#                    self.play.add_cnt()
+                    self.play.play_stop_lossing_bear()
                     self.deposit = 0
                     self.deposit_bottom = 0
                     print("warn directly")
@@ -231,7 +233,8 @@ class zma20_strategy_quote(threading.Thread):
         # we have a Green K bar that is less than VALUE
             new_deposit = self.cur - self.deposit_bottom
             if new_deposit >= value:
-                self.play.add_cnt()
+#                self.play.add_cnt()
+                self.play.play_stop_lossing_bear()
                 self.deposit = 0
                 self.deposit_bottom = 0
                 print("warn with deposit")
@@ -241,7 +244,8 @@ class zma20_strategy_quote(threading.Thread):
                     if self.ma_1m_table.iloc[count - 2, 3] <= self.deposit_bottom:
                         self.deposit = 0
                         self.deposit_bottom = 0
-                        self.play.stop()
+#                        self.play.stop()
+                        self.play.stop_play_stop_lossing_bear()
                         print("reset with deposit")
                 print("wait with deposit " + str(self.deposit_bottom))
                 return
@@ -337,8 +341,10 @@ class zma20_strategy_quote(threading.Thread):
             str_1 = "K-Line is bad"
         if ret_0 == 0 and ret_1 == 0:
             ret = "GO GO GO"
+            self.play.play_start_bear()
         else:
             ret = "XX XX XX"
+            self.play.stop_play_start_bear()
         print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
@@ -348,7 +354,7 @@ class zma20_strategy_quote(threading.Thread):
         MA20_THRESHOLD = 1.4
         GAP_DOWN = 3
         GAP_UP = 20
-        K_MA10_THRESHOLD = 2
+        K_MA10_THRESHOLD = 4
         # MA Conditions
         if self.deltaMA10_ma3 > 0 and \
                         self.deltaMA20_ma3 > 0 and \
@@ -379,7 +385,7 @@ class zma20_strategy_quote(threading.Thread):
         if ret_0 == 0:
             str_0 = "MA is OK```````````````````"
         if ret_0 == 1:
-            str_0 = "MA do not go down``````````"
+            str_0 = "MA do not go up````````````"
         if ret_0 == 2:
             str_0 = "MA changes rate are not big"
         if ret_0 == 3:
@@ -390,8 +396,10 @@ class zma20_strategy_quote(threading.Thread):
             str_1 = "K-Line is bad"
         if ret_0 == 0 and ret_1 == 0:
             ret = "GO GO GO"
+            self.play.play_start_bull()
         else:
             ret = "XX XX XX"
+            self.play.stop_play_start_bull()
         print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
