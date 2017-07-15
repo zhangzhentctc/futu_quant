@@ -145,18 +145,19 @@ if __name__ == "__main__":
     quote_context = init.initialize()
     play = PlaySound()
     play.start()
-    time.sleep(2590)
+
     zma_str = zma20_strategy_quote(quote_context, play)
     zma_str.start()
     store_ch_rate = store_ch_rate(zma_str)
     store_ch_rate.start()
-    while(1):
-        ret, data = zma_str.get_cur_zma_quote()
-        if ret == RET_OK:
-            print("")
+
+
 #            print(str(data["time"][0]) + "Attack: zma10_r_r:" + str(data["zma10_ratio_ratio"][0]) + " cur_r: " + str(data["cur_ratio"][0]))
 #            print("         Defend: zma20_r:" + str(data["zma20_ratio"][0]) + " zma20_r_r " + str(data["zma20_ratio_ratio"][0]))
-        time.sleep(0.5)
+
+#       time_list = cur_time.split(":")
+#        print(time_list)
+
 
 #    ma = MovingAverage(quote_context)
 #    ma.start()

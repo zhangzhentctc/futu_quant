@@ -87,32 +87,42 @@ class get_stock_quote(threading.Thread):
         except:
             return
         self.deltaMA20_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 22, 3])/20
+        self.deltaMA20_cur = round(self.deltaMA20_cur, 2)
         self.deltaMA20_ma3 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] - kline.iloc[K_NO - 22, 3] - kline.iloc[K_NO - 23, 3] - kline.iloc[K_NO - 24, 3])/60
+        self.deltaMA20_ma3 = round(self.deltaMA20_ma3, 2)
         self.deltaMA20_ma5 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] + kline.iloc[K_NO - 5, 3] + kline.iloc[K_NO - 6, 3] - kline.iloc[K_NO - 22, 3] - kline.iloc[K_NO - 23, 3] - kline.iloc[K_NO - 24, 3] - kline.iloc[K_NO - 25, 3] - kline.iloc[K_NO - 26, 3]) / 100
+        self.deltaMA20_ma5 = round(self.deltaMA20_ma5, 2)
 
         self.deltaMA10_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 12, 3])/10
+        self.deltaMA10_cur = round(self.deltaMA10_cur, 2)
         self.deltaMA10_ma3 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] - kline.iloc[K_NO - 12, 3] - kline.iloc[K_NO - 13, 3] - kline.iloc[K_NO - 14, 3])/30
+        self.deltaMA10_ma3 = round(self.deltaMA10_ma3, 2)
         self.deltaMA10_ma5 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] + kline.iloc[K_NO - 5, 3] + kline.iloc[K_NO - 6, 3] - kline.iloc[K_NO - 12, 3] - kline.iloc[K_NO - 13, 3] - kline.iloc[K_NO - 14, 3] - kline.iloc[K_NO - 15, 3] - kline.iloc[K_NO - 16, 3]) / 50
+        self.deltaMA10_ma5 = round(self.deltaMA10_ma5, 2)
 
         tmp = 0
         for i in range(0, 10):
             tmp += kline.iloc[K_NO - 2 - i, 3]
         self.MA10_cur = tmp/10
+        self.MA10_cur = round(self.MA10_cur, 2)
 
         tmp = 0
         for i in range(0, 10):
             tmp += kline.iloc[K_NO - 4 - i, 3]
         self.MA10_3 = tmp/10
+        self.MA10_3 = round(self.MA10_3, 2)
 
         tmp = 0
         for i in range(0, 20):
             tmp += kline.iloc[K_NO - 2 - i, 3]
         self.MA20_cur = tmp/20
+        self.MA20_cur = round(self.MA20_cur, 2)
 
         tmp = 0
         for i in range(0, 20):
             tmp += kline.iloc[K_NO - 4 - i, 3]
         self.MA20_3 = tmp/20
+        self.MA20_3 = round(self.MA20_3, 2)
 
         return
 
@@ -173,8 +183,8 @@ class get_stock_quote(threading.Thread):
             print("subscribe fail 3 times")
             return -1
 
-        i = 30
-        while(i):
+ #       i = 30
+        while(1):
             start = time.time()
             ret = self.get_cur_stock_quoto()
             if ret == RET_ERROR:
@@ -187,5 +197,5 @@ class get_stock_quote(threading.Thread):
             if dur < 0:
                 continue
             time.sleep(self.refresh - dur)
-            i -= 1
+ #           i -= 1
         self.ready = 0

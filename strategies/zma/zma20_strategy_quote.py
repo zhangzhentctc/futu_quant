@@ -403,16 +403,26 @@ class zma20_strategy_quote(threading.Thread):
         print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
-    def is_trade_time(self, data_time):
+
+    def is_trade_time(self, cur_time):
+        morning_end = "11:59:58"
+        noon_start = "13:00:01"
+
+        morning_end_list = morning_end.split(":")
+        morning_end_second = int(morning_end_list[0]) * 3600 + int(morning_end_list[1]) * 60 + int(morning_end_list[2])
+
+        noon_start_list = noon_start.split(":")
+        noon_start_second = int(noon_start_list[0]) * 3600 + int(noon_start_list[1]) * 60 + int(noon_start_list[2])
+
+        cur_time_list = cur_time.split(":")
+        cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+        if cur_time_second > morning_end_second and \
+                        cur_time_second < noon_start_second:
+            return 0
+
         return 1
-        if data_time > "9:30:00" and data_time < "12;00:00":
-            print("time ok" + str(data_time))
-            return 1
-        if data_time > "13:00:00" and data_time < "16;00:00":
-            print("time ok" + str(data_time))
-            return 1
-        print("time not ok" + str(data_time))
-        return 0
+
 
     def get_cur_zma_quote(self):
         if self.count <= 1:
@@ -431,8 +441,23 @@ class zma20_strategy_quote(threading.Thread):
                                       "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
         return RET_OK, zma_quote
 
+    def print_ma(self):
+        print("delta MA20")
+        print(str(self.deltaMA20_cur) + " " + str(self.deltaMA20_ma3) + " " + str(self.deltaMA20_ma5))
+        print("delta MA10")
+        print(str(self.deltaMA10_cur) + " " + str(self.deltaMA10_ma3) + " " + str(self.deltaMA10_ma5))
+        print("MA10")
+        print(str(self.MA10_cur) + " " + str(self.MA10_3))
+        print("MA20")
+        print(str(self.MA20_cur) + " " + str(self.MA20_3))
 
-
+    def cal_cur_speed(self):
+        if self.count > 40:
+            print("Changes in last 5s,10s,20s")
+            self.cur_gap_5s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 10, CUR_POS]) / 5
+            self.cur_gap_10s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 20, CUR_POS]) / 10
+            self.cur_gap_20s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 40, CUR_POS]) / 20
+            print(str(self.cur_gap_5s) + " " + str(self.cur_gap_10s) + " " + str(self.cur_gap_20s))
 
     def run(self):
         stock_quote = get_stock_quote(self.__quote_ctx)
@@ -440,97 +465,75 @@ class zma20_strategy_quote(threading.Thread):
         while stock_quote.ready != 1:
             time.sleep(1)
 
-        data_time = stock_quote.get_data_time()
+        self.data_time = stock_quote.get_data_time()
         cur_stock_quoto = stock_quote.get_stock_quoto()
         self.cur = cur_stock_quoto
         ma_1m_table = stock_quote.get_1mK_line()
 
         while(1):
-            if self.is_trade_time(data_time) == 1:
+            if self.is_trade_time(self.data_time) == 1:
+            ## In Trade Time
                 start = time.time()
                 self.is_available = 0
                 self.count += 1
                 self.ret.iloc[self.count, NO_POS] = self.count
                 self.ret.iloc[self.count, CUR_POS] = cur_stock_quoto
-                self.ret.iloc[self.count, TIME_POS] = data_time
+                self.ret.iloc[self.count, TIME_POS] = self.data_time
                 self.cal_zma10(self.count)
                 self.cal_zma20(self.count)
-#                self.cal_cur_ratio(self.count)
                 self.cal_zma10_ratio(self.count)
                 self.cal_zma20_ratio(self.count)
-#                self.cal_zma10_ratio_ratio(self.count)
-#                self.cal_zma20_ratio_ratio(self.count)
                 self.cal_zma_gap(self.count)
-#                self.cal_zma_gap_ratio(self.count)
-#                self.cal_zma_gap_ratio_ratio(self.count)
 
                 self.is_available = 1
-                end = time.time()
-                dur = end - start
-#                print(dur)
-#                print(self.ret.iloc[[self.count]])
-                if dur > self.interval:
-                    time.sleep(0)
-                else:
-                    time.sleep(self.interval - dur)
 
-                # If stock_quote dies. Restart it
-                # Use previous Value as Current one
-                if stock_quote.is_alive() == False:
-                    stock_quote = get_stock_quote(self.__quote_ctx)
-                    stock_quote.start()
                 if stock_quote.ready == 1:
-                    data_time = stock_quote.get_data_time()
+                    self.data_time = stock_quote.get_data_time()
                     cur_stock_quoto = stock_quote.get_stock_quoto()
                     self.cur = cur_stock_quoto
                     ret, tmp = stock_quote.get_1mK_line()
                     if ret == 1:
                         self.ma_1m_table = tmp
                     self.deltaMA20_cur = stock_quote.get_deltaMA20_cur()
-                    self.deltaMA20_cur = round(self.deltaMA20_cur, 2)
                     self.deltaMA20_ma3 = stock_quote.get_deltaMA20_ma3()
-                    self.deltaMA20_ma3 = round(self.deltaMA20_ma3, 2)
                     self.deltaMA20_ma5 = stock_quote.get_deltaMA20_ma5()
-                    self.deltaMA20_ma5 = round(self.deltaMA20_ma5, 2)
                     self.deltaMA10_cur = stock_quote.get_deltaMA10_cur()
-                    self.deltaMA10_cur = round(self.deltaMA10_cur, 2)
                     self.deltaMA10_ma3 = stock_quote.get_deltaMA10_ma3()
-                    self.deltaMA10_ma3 = round(self.deltaMA10_ma3, 2)
                     self.deltaMA10_ma5 = stock_quote.get_deltaMA10_ma5()
-                    self.deltaMA10_ma5 = round(self.deltaMA10_ma5, 2)
                     self.MA10_cur = stock_quote.get_MA10_cur()
-                    self.MA10_cur = round(self.MA10_cur, 2)
                     self.MA10_3 = stock_quote.get_MA10_3()
-                    self.MA10_3 = round(self.MA10_3, 2)
                     self.MA20_cur = stock_quote.get_MA20_cur()
-                    self.MA20_cur = round(self.MA20_cur, 2)
                     self.MA20_3 = stock_quote.get_MA20_3()
-                    self.MA20_3 = round(self.MA20_3, 2)
                 else:
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
+
+                self.guard_bear()
+                self.empty_head()
+                self.many_head()
+                self.print_ma()
+                self.cal_cur_speed()
+
+                print(self.ret.iloc[self.count,])
+                end = time.time()
+                dur = end - start
+                if dur > self.interval:
+                    time.sleep(0)
+                else:
+                    time.sleep(self.interval - dur)
             else:
+                ## Not in Trade Time
                 self.is_available = 0
                 time.sleep(self.interval)
-                data_time = stock_quote.get_data_time()
-            self.guard_bear()
-            self.empty_head()
-            self.many_head()
-            print(self.ret.iloc[self.count,])
-            print("delta MA20")
-            print(str(self.deltaMA20_cur) + " " +str(self.deltaMA20_ma3) +" " + str(self.deltaMA20_ma5))
-            print("delta MA10")
-            print(str(self.deltaMA10_cur) + " " +str(self.deltaMA10_ma3) +" " + str(self.deltaMA10_ma5))
-            print("MA10")
-            print(str(self.MA10_cur) + " " + str(self.MA10_3))
-            print("MA20")
-            print(str(self.MA20_cur) + " " + str(self.MA20_3))
-            if self.count > 40:
-                print("Changes in last 5s,10s,20s")
-                self.cur_gap_5s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 10, CUR_POS])/5
-                self.cur_gap_10s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 20, CUR_POS])/10
-                self.cur_gap_20s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 40, CUR_POS])/20
-                print(str(self.cur_gap_5s) + " " + str(self.cur_gap_10s) + " " + str(self.cur_gap_20s))
+                self.data_time = stock_quote.get_data_time()
+
+            ## Check Quote Status
+            if stock_quote.is_alive() == False:
+                stock_quote = get_stock_quote(self.__quote_ctx)
+                print("quote dies. Restart")
+                stock_quote.start()
+
+
 
 
 

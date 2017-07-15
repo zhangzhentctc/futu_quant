@@ -10,11 +10,9 @@ class store_ch_rate(threading.Thread):
 
 
     def run(self):
-        print("Run store ch rate")
+
         db = MySQLCommand("localhost", 3306, "root", "123456", "trend2")
-        print("connect DB")
         db.connectMysql()
-        print("Init")
         op = dbop_ma_trand()
         while(1):
             try:
@@ -27,7 +25,6 @@ class store_ch_rate(threading.Thread):
                 deltaMA10_ma3 = self.zma_str.deltaMA10_ma3
                 deltaMA20_ma3 = self.zma_str.deltaMA20_ma3
             except:
-                print("Get Val fail")
                 time.sleep(0.5)
                 continue
             op.dbop_add_standard_quo(db, cur, MA10_cur, MA20_cur, deltaMA10_ma3, deltaMA20_ma3)
