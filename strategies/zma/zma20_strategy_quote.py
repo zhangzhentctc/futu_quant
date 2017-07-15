@@ -22,13 +22,17 @@ class zma20_strategy_quote(threading.Thread):
     def __init__(self, qc, play, interval = 0.5 ):
         super(zma20_strategy_quote, self).__init__()
         self.__quote_ctx = qc
-        self.deposit = 0
+        self.deposit_bear = 0
         self.deposit_bottom = 0
+        self.deposit_bull = 0
+        self.deposit_top = 0
+
         self.ret= []
         self.interval = 0.5
         self.count = 0
         self.is_available = 0
         self.play = play
+        self.direction = 0
         data= []
         for i in range(0, 50000):
             data.append({"No.": 0})
@@ -202,53 +206,108 @@ class zma20_strategy_quote(threading.Thread):
         ratio = (A - M * avr_y) / (B - M * avr_x) *(-1)
         return 1, ratio
 
+
+    def determine_direction(self):
+        UP_THRESHOLD = 0.3
+        DOWN_THRESHOLD = -0.3
+        try:
+            deltaMA20 = self.deltaMA20_ma3
+        except:
+            return
+
+        if deltaMA20 > UP_THRESHOLD:
+            self.direction = 1
+        else:
+            if deltaMA20 < DOWN_THRESHOLD:
+                self.direction = -1
+            else:
+                self.direction = 0
+        return
+
+
     def guard_bear(self):
-#        print(self.ma_1m_table)
         count = 26
-        value = 10
-        if self.deposit == 0:
-            sub = self.ma_1m_table.iloc[count - 2 ,3] - self.ma_1m_table.iloc[count - 2 ,2]
+        GROWTH_THRESHOLD = 10
+        if self.deposit_bear == 0:
+            sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
             if sub <= 0:
-                self.deposit = 0
+                self.deposit_bear = 0
                 self.deposit_bottom = 0
-#                self.play.stop()
                 self.play.stop_play_stop_lossing_bear()
-                print("reset red")
+                print("Guard Bear: reset red")
                 return
             else:
-                self.deposit = sub
-                if self.deposit >= value:
-                    print(self.deposit)
-                    print(value)
-#                    self.play.add_cnt()
+                self.deposit_bear = sub
+                if self.deposit_bear >= GROWTH_THRESHOLD:
                     self.play.play_stop_lossing_bear()
-                    self.deposit = 0
+                    self.deposit_bear = 0
                     self.deposit_bottom = 0
-                    print("warn directly")
+                    print("Guard Bear: warn directly")
                 else:
-                    self.deposit_bottom = self.ma_1m_table.iloc[count - 2,2]
-                    print("wait, find deposit")
+                    self.deposit_bottom = self.ma_1m_table.iloc[count - 2, 2]
+                    print("Guard Bear: wait, find deposit")
                     return
         else:
         # we have a Green K bar that is less than VALUE
             new_deposit = self.cur - self.deposit_bottom
-            if new_deposit >= value:
-#                self.play.add_cnt()
+            if new_deposit >= GROWTH_THRESHOLD:
                 self.play.play_stop_lossing_bear()
-                self.deposit = 0
+                self.deposit_bear = 0
                 self.deposit_bottom = 0
-                print("warn with deposit")
+                print("Guard Bear: warn with deposit")
             else:
                 sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
                 if sub < 0:
                     if self.ma_1m_table.iloc[count - 2, 3] <= self.deposit_bottom:
-                        self.deposit = 0
+                        self.deposit_bear = 0
                         self.deposit_bottom = 0
-#                        self.play.stop()
                         self.play.stop_play_stop_lossing_bear()
-                        print("reset with deposit")
-                print("wait with deposit " + str(self.deposit_bottom))
+                        print("Guard Bear: reset with deposit")
+                print("Guard Bear: wait with deposit " + str(self.deposit_bottom))
                 return
+
+
+    def guard_bull(self):
+        count = 26
+        DECREASE_THRESHOLD = 10
+        if self.deposit_bull == 0:
+            sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
+            if sub >= 0:
+                self.deposit_bull = 0
+                self.deposit_top = 0
+                self.play.stop_play_stop_lossing_bull()
+                print("Guard Bull: reset green")
+                return
+            else:
+                self.deposit_bull = abs(sub)
+                if self.deposit_bull >= DECREASE_THRESHOLD:
+                    self.play.play_stop_lossing_bull()
+                    self.deposit_bull = 0
+                    self.deposit_top = 0
+                    print("Guard Bull: warn directly")
+                else:
+                    self.deposit_top = self.ma_1m_table.iloc[count - 2, 2]
+                    print("Guard Bull: wait, find deposit")
+                    return
+        else:
+        # we have a Green K bar that is less than VALUE
+            new_deposit = abs(self.cur - self.deposit_top)
+            if new_deposit >= DECREASE_THRESHOLD:
+                self.play.play_stop_lossing_bull()
+                self.deposit_bull = 0
+                self.deposit_top = 0
+                print("Guard Bull: warn with deposit")
+            else:
+                sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
+                if sub > 0:
+                    if self.ma_1m_table.iloc[count - 2, 3] >= self.deposit_top:
+                        self.deposit_bull = 0
+                        self.deposit_top = 0
+                        self.play.stop_play_stop_lossing_bull()
+                        print("Guard Bull: reset with deposit")
+                print("Guard Bull: wait with deposit " + str(self.deposit_top))
+                return
+
 
     def empty_head(self):
         K_NO = 26
@@ -257,6 +316,11 @@ class zma20_strategy_quote(threading.Thread):
         GAP_DOWN = 3
         GAP_UP = 20
         K_GROW_THRESHOLD = 10
+
+        ret_0 = 99
+        str_0 = "ERROR``````````````````````"
+        ret_1 = 99
+        str_1 = "ERROR````````"
         # MA Conditions
         if self.deltaMA10_ma3 < 0 and \
                         self.deltaMA20_ma3 < 0 and \
@@ -278,6 +342,8 @@ class zma20_strategy_quote(threading.Thread):
             ret_0 = 1
 
         # K-line conditions
+
+        ### Increase Calculation
         key_values = [self.ma_1m_table.iloc[K_NO - 3, 2], self.ma_1m_table.iloc[K_NO - 3, 3], self.ma_1m_table.iloc[K_NO - 2, 3], self.ma_1m_table.iloc[K_NO - 1, 3]]
         color = [0, 0, 0]
         if key_values[1] - key_values[0] > 0:
@@ -322,6 +388,7 @@ class zma20_strategy_quote(threading.Thread):
         if color[0] == 0 and color[1] == 0 and color[2] == 0:
             increase = 0
 
+        #### Compare with Threshold
         if increase >= K_GROW_THRESHOLD:
             ret_1 = 1
         else:
@@ -336,7 +403,7 @@ class zma20_strategy_quote(threading.Thread):
         if ret_0 == 3:
             str_0 = "MA Gap is not proper```````"
         if ret_1 == 0:
-            str_1 = "K-Line is OK"
+            str_1 = "K-Line is OK`"
         if ret_1 == 1:
             str_1 = "K-Line is bad"
         if ret_0 == 0 and ret_1 == 0:
@@ -347,6 +414,7 @@ class zma20_strategy_quote(threading.Thread):
             self.play.stop_play_start_bear()
         print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
+
 
     def many_head(self):
         K_NO = 26
@@ -377,7 +445,7 @@ class zma20_strategy_quote(threading.Thread):
 
         k_ma10_gap = self.ma_1m_table.iloc[K_NO - 2, 3] - self.MA10_cur
 
-        if abs(k_ma10_gap) <= K_MA10_THRESHOLD:
+        if (k_ma10_gap <= K_MA10_THRESHOLD and k_ma10_gap >= 0) or k_ma10_gap < 0:
             ret_1 = 0
         else:
             ret_1 = 1
@@ -391,7 +459,7 @@ class zma20_strategy_quote(threading.Thread):
         if ret_0 == 3:
             str_0 = "MA Gap is not proper```````"
         if ret_1 == 0:
-            str_1 = "K-Line is OK"
+            str_1 = "K-Line is OK`"
         if ret_1 == 1:
             str_1 = "K-Line is bad"
         if ret_0 == 0 and ret_1 == 0:
@@ -417,8 +485,7 @@ class zma20_strategy_quote(threading.Thread):
         cur_time_list = cur_time.split(":")
         cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
 
-        if cur_time_second > morning_end_second and \
-                        cur_time_second < noon_start_second:
+        if cur_time_second > morning_end_second and cur_time_second < noon_start_second:
             return 0
 
         return 1
@@ -451,6 +518,7 @@ class zma20_strategy_quote(threading.Thread):
         print("MA20")
         print(str(self.MA20_cur) + " " + str(self.MA20_3))
 
+
     def cal_cur_speed(self):
         if self.count > 40:
             print("Changes in last 5s,10s,20s")
@@ -458,6 +526,7 @@ class zma20_strategy_quote(threading.Thread):
             self.cur_gap_10s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 20, CUR_POS]) / 10
             self.cur_gap_20s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 40, CUR_POS]) / 20
             print(str(self.cur_gap_5s) + " " + str(self.cur_gap_10s) + " " + str(self.cur_gap_20s))
+
 
     def run(self):
         stock_quote = get_stock_quote(self.__quote_ctx)
@@ -508,7 +577,9 @@ class zma20_strategy_quote(threading.Thread):
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
 
+                self.determine_direction()
                 self.guard_bear()
+                self.guard_bull()
                 self.empty_head()
                 self.many_head()
                 self.print_ma()
@@ -532,8 +603,6 @@ class zma20_strategy_quote(threading.Thread):
                 stock_quote = get_stock_quote(self.__quote_ctx)
                 print("quote dies. Restart")
                 stock_quote.start()
-
-
 
 
 

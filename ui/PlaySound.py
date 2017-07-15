@@ -14,6 +14,8 @@ class PlaySound(threading.Thread):
         self.stop_lossing_bear_path = r"D:\quant\\test0\\futu_quant\stop_lossing_bear.wav"
         self.start_bull = 0
         self.start_bull_path = r"D:\quant\\test0\\futu_quant\start_bull.wav"
+        self.stop_lossing_bull = 0
+        self.stop_lossing_bull_path = r"D:\quant\\test0\\futu_quant\stop_lossing_bull.wav"
 
     def add_cnt(self):
         self.cnt += 1
@@ -29,6 +31,9 @@ class PlaySound(threading.Thread):
             else:
                 time.sleep(0.2)
 
+    def play_stop_lossing_bull(self):
+        self.stop_lossing_bull += 1
+
     def play_stop_lossing_bear(self):
         self.stop_lossing_bear += 1
 
@@ -37,6 +42,9 @@ class PlaySound(threading.Thread):
 
     def play_start_bull(self):
         self.start_bull += 1
+
+    def stop_play_stop_lossing_bull(self):
+        self.stop_lossing_bull = 0
 
     def stop_play_stop_lossing_bear(self):
         self.stop_lossing_bear = 0
@@ -52,6 +60,10 @@ class PlaySound(threading.Thread):
             if self.stop_lossing_bear > 0:
                 playsound.playsound(self.stop_lossing_bear_path)
                 self.stop_lossing_bear -= 1
+
+            if self.stop_lossing_bull > 0:
+                playsound.playsound(self.stop_lossing_bull_path)
+                self.stop_lossing_bull -= 1
 
             if self.start_bear > 0:
                 playsound.playsound(self.start_bear_path)
