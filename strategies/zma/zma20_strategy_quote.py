@@ -554,8 +554,9 @@ class zma20_strategy_quote(threading.Thread):
         self.data_time = stock_quote.get_data_time()
         cur_stock_quoto = stock_quote.get_stock_quoto()
         self.cur = cur_stock_quoto
-        ma_1m_table = stock_quote.get_1mK_line()
-
+        ret, tmp = stock_quote.get_1mK_line()
+        if ret == 1:
+            self.ma_1m_table = tmp
         while(1):
             if self.is_trade_time(self.data_time) == 1:
             ## In Trade Time
