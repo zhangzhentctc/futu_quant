@@ -224,6 +224,23 @@ class zma20_strategy_quote(threading.Thread):
                 self.direction = 0
         return
 
+    def guard_burst(self):
+        UP_BURST_THRESHOLD = 1
+        DOWN_BURST_THRESHOLD = -1
+        try:
+            gap_20s = self.cur_gap_20s
+        except:
+            return
+        if gap_20s > UP_BURST_THRESHOLD:
+            self.play.play_burst_up()
+        else:
+            self.play.stop_burst_up()
+
+        if gap_20s < DOWN_BURST_THRESHOLD:
+            self.play.play_burst_down()
+        else:
+            self.play.stop_burst_down()
+
 
     def guard_bear(self):
         count = 26

@@ -4,32 +4,27 @@ import threading
 
 
 class PlaySound(threading.Thread):
-    def __init__(self, path = r"D:\quant\\test0\\futu_quant\Stop.wav"):
+    def __init__(self):
         super(PlaySound, self).__init__()
-        self.path = path
-        self.cnt = 0
-        self.start_bear = 0
-        self.start_bear_path = r"D:\quant\\test0\\futu_quant\start_bear.wav"
-        self.stop_lossing_bear = 0
-        self.stop_lossing_bear_path = r"D:\quant\\test0\\futu_quant\stop_lossing_bear.wav"
-        self.start_bull = 0
-        self.start_bull_path = r"D:\quant\\test0\\futu_quant\start_bull.wav"
-        self.stop_lossing_bull = 0
-        self.stop_lossing_bull_path = r"D:\quant\\test0\\futu_quant\stop_lossing_bull.wav"
+        STOP = 0
+        self.start_bear = STOP
+        self.stop_lossing_bear = STOP
+        self.start_bull = STOP
+        self.stop_lossing_bull = STOP
+        self.burst_down = STOP
+        self.burst_up = STOP
+        self.start_bear_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bear.wav"
+        self.start_bull_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bull.wav"
+        self.stop_lossing_bear_path = r"D:\quant\\test0\\futu_quant\\sounds\stop_lossing_bear.wav"
+        self.stop_lossing_bull_path = r"D:\quant\\test0\\futu_quant\\sounds\stop_lossing_bull.wav"
+        self.burst_down_path =        r"D:\quant\\test0\\futu_quant\\sounds\burst_down.wav"
+        self.burst_up_path =          r"D:\quant\\test0\\futu_quant\\sounds\burst_up.wav"
 
-    def add_cnt(self):
-        self.cnt += 1
+    def play_burst_up(self):
+        self.burst_up += 1
 
-    def stop(self):
-        self.cnt = 0
-
-    def run3(self):
-        while(1):
-            if self.cnt > 0:
-                playsound.playsound(self.path)
-                self.cnt -= 1
-            else:
-                time.sleep(0.2)
+    def play_burst_down(self):
+        self.burst_down += 1
 
     def play_stop_lossing_bull(self):
         self.stop_lossing_bull += 1
@@ -55,8 +50,23 @@ class PlaySound(threading.Thread):
     def stop_play_start_bull(self):
         self.start_bull = 0
 
+    def stop_burst_up(self):
+        self.burst_up = 0
+
+    def stop_burst_down(self):
+        self.burst_down = 0
+
+
     def run(self):
         while(1):
+            if self.burst_up > 0:
+                playsound.playsound(self.burst_up_path)
+                self.burst_up -= 1
+
+            if self.burst_down > 0:
+                playsound.playsound(self.burst_down_path)
+                self.burst_down -= 1
+
             if self.stop_lossing_bear > 0:
                 playsound.playsound(self.stop_lossing_bear_path)
                 self.stop_lossing_bear -= 1
