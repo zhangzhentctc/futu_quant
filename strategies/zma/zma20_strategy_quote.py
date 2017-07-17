@@ -308,8 +308,8 @@ class zma20_strategy_quote(threading.Thread):
                     return
         else:
         # we have a Green K bar that is less than VALUE
-            new_deposit = abs(self.cur - self.deposit_top)
-            if new_deposit >= DECREASE_THRESHOLD:
+            new_deposit = self.cur - self.deposit_top
+            if new_deposit <= DECREASE_THRESHOLD * (-1):
                 self.play.play_stop_lossing_bull()
                 self.deposit_bull = 0
                 self.deposit_top = 0
@@ -317,7 +317,7 @@ class zma20_strategy_quote(threading.Thread):
             else:
                 sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
                 if sub > 0:
-                    if self.ma_1m_table.iloc[count - 2, 3] >= self.deposit_top:
+                    if self.ma_1m_table.iloc[count - 2, 3] <= self.deposit_top:
                         self.deposit_bull = 0
                         self.deposit_top = 0
                         self.play.stop_play_stop_lossing_bull()
@@ -479,7 +479,7 @@ class zma20_strategy_quote(threading.Thread):
             str_1 = "K-Line is OK`"
         if ret_1 == 1:
             str_1 = "K-Line is bad"
-        if ret_0 == 0 and ret_1 == 0:
+        if ret_0 == 0:
             ret = "GO GO GO"
             self.play.play_start_bull()
         else:

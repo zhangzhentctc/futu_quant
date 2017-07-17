@@ -73,7 +73,7 @@ class get_stock_quote(threading.Thread):
                 ret_code, ret_data = self.__quote_ctx.get_cur_kline(code, number, ktype)
                 if ret_code == RET_ERROR:
                     print(code, ktype, ret_data)
-                    exit()
+                    return
                 kline_table = ret_data
 #                print(kline_table)
                 # Make Data List

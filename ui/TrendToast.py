@@ -1,5 +1,5 @@
 from tkinter import *
-from sample import *
+from main import *
 from strategies.ma.detectSignal import *
 
 class TrendToast:

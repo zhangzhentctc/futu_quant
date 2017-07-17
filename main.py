@@ -137,7 +137,6 @@ if __name__ == "__main__":
 #    test = daytest()
 #    test.daytest()
 
-
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()
     play = PlaySound()
@@ -147,7 +146,6 @@ if __name__ == "__main__":
     zma_str.start()
     store_ch_rate = store_ch_rate(zma_str)
     store_ch_rate.start()
-
 
 #            print(str(data["time"][0]) + "Attack: zma10_r_r:" + str(data["zma10_ratio_ratio"][0]) + " cur_r: " + str(data["cur_ratio"][0]))
 #            print("         Defend: zma20_r:" + str(data["zma20_ratio"][0]) + " zma20_r_r " + str(data["zma20_ratio_ratio"][0]))
