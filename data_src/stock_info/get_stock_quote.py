@@ -183,7 +183,7 @@ class get_stock_quote(threading.Thread):
             print("subscribe fail 3 times")
             return -1
 
- #       i = 30
+        i = 600
         while(1):
             start = time.time()
             ret = self.get_cur_stock_quoto()
@@ -197,5 +197,5 @@ class get_stock_quote(threading.Thread):
             if dur < 0:
                 continue
             time.sleep(self.refresh - dur)
- #           i -= 1
+            i -= 1
         self.ready = 0

@@ -206,6 +206,24 @@ class zma20_strategy_quote(threading.Thread):
         ratio = (A - M * avr_y) / (B - M * avr_x) *(-1)
         return 1, ratio
 
+    def first_10min_warning(self):
+        try:
+            cur_time = self.data_time
+        except:
+            return
+        morning_danger = "9:40:00"
+        morning_danger_list = morning_danger.split(":")
+        morning_danger_second = int(morning_danger_list[0]) * 3600 + int(morning_danger_list[1]) * 60 + int(morning_danger_list[2])
+
+        cur_time_list = cur_time.split(":")
+        cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+        if cur_time_second < morning_danger_second:
+            self.play.play_morning_warn()
+        else:
+            self.play.stop_play_morning_warn()
+        return
+
 
     def determine_direction(self):
         UP_THRESHOLD = 0.3
@@ -596,12 +614,14 @@ class zma20_strategy_quote(threading.Thread):
                     self.cur = cur_stock_quoto
 
                 self.determine_direction()
+                self.guard_burst()
                 self.guard_bear()
                 self.guard_bull()
                 self.empty_head()
                 self.many_head()
                 self.print_ma()
                 self.cal_cur_speed()
+                self.first_10min_warning()
 
                 print(self.ret.iloc[self.count,])
                 end = time.time()

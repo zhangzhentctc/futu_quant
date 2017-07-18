@@ -15,6 +15,7 @@ class PlaySound(threading.Thread):
         self.stop_lossing_bull = STOP
         self.burst_down =        STOP
         self.burst_up =          STOP
+        self.morning_warn =      STOP
 
         self.start_bear_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bear.wav"
         self.start_bull_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bull.wav"
@@ -22,6 +23,7 @@ class PlaySound(threading.Thread):
         self.stop_lossing_bull_path = r"D:\quant\\test0\\futu_quant\\sounds\stop_lossing_bull.wav"
         self.burst_down_path =        r"D:\quant\\test0\\futu_quant\\sounds\burst_down.wav"
         self.burst_up_path =          r"D:\quant\\test0\\futu_quant\\sounds\burst_up.wav"
+        self.morning_warn_path =      r"D:\quant\\test0\\futu_quant\\sounds\morning_warn.wav"
 
 # PLAY Signal
     def play_burst_up(self):
@@ -42,6 +44,9 @@ class PlaySound(threading.Thread):
     def play_start_bull(self):
         self.start_bull += 1
 
+    def play_morning_warn(self):
+        self.morning_warn += 1
+
 # STOP Signal
     def stop_play_stop_lossing_bull(self):
         self.stop_lossing_bull = STOP
@@ -61,6 +66,8 @@ class PlaySound(threading.Thread):
     def stop_burst_down(self):
         self.burst_down = STOP
 
+    def stop_play_morning_warn(self):
+        self.morning_warn = STOP
 
     def run(self):
         while(1):
@@ -87,5 +94,9 @@ class PlaySound(threading.Thread):
             if self.start_bull != STOP:
                 playsound.playsound(self.start_bull_path)
                 self.start_bull -= 1
+
+            if self.morning_warn != STOP:
+                playsound.playsound(self.morning_warn_path)
+                self.morning_warn -= 1
 
             time.sleep(0.2)
