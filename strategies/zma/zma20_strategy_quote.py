@@ -303,6 +303,11 @@ class zma20_strategy_quote(threading.Thread):
     def guard_bear(self):
         count = 26
         GROWTH_THRESHOLD = 10
+        PRIV_THRESHOLD = -2
+        try:
+            deltaMA20 = self.deltaMA20_ma3
+        except:
+            return
         if self.deposit_bear == 0:
             sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
             if sub <= 0:
@@ -314,7 +319,10 @@ class zma20_strategy_quote(threading.Thread):
             else:
                 self.deposit_bear = sub
                 if self.deposit_bear >= GROWTH_THRESHOLD:
-                    self.play.play_stop_lossing_bear()
+                    if deltaMA20 < PRIV_THRESHOLD:
+                        self.play.play_stop_lossing_bear_inst()
+                    else:
+                        self.play.play_stop_lossing_bear()
                     self.deposit_bear = 0
                     self.deposit_bottom = 0
                     print("Guard Bear: warn directly")
@@ -326,7 +334,10 @@ class zma20_strategy_quote(threading.Thread):
         # we have a Green K bar that is less than VALUE
             new_deposit = self.cur - self.deposit_bottom
             if new_deposit >= GROWTH_THRESHOLD:
-                self.play.play_stop_lossing_bear()
+                if deltaMA20 > PRIV_THRESHOLD:
+                    self.play.play_stop_lossing_bear_inst()
+                else:
+                    self.play.play_stop_lossing_bear()
                 self.deposit_bear = 0
                 self.deposit_bottom = 0
                 print("Guard Bear: warn with deposit")
@@ -661,7 +672,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.print_ma()
                 self.cal_cur_speed()
                 self.first_10min_warning()
-                self.pre_warn_recover_bull()
+                self.warn_bull_recover()
                 print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start
