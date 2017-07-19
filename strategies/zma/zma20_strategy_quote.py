@@ -91,9 +91,9 @@ class zma20_strategy_quote(threading.Thread):
         return 1
 
     ## MA Ratio
-    def cal_zma10_ratio(self, position):
+    def cal_zma10_ratio(self, position, sample = 60):
         len = 1200
-        t = 60
+        t = sample
         val =0
         start_pos = len + t
         if position < start_pos:
@@ -105,9 +105,9 @@ class zma20_strategy_quote(threading.Thread):
         self.ret.iloc[position, ZMA10_RATIO_POS] = val  * 120
         return 1
 
-    def cal_zma20_ratio(self, position):
+    def cal_zma20_ratio(self, position, sample = 60):
         len = 2400
-        t = 60
+        t = sample
         val =0
         start_pos = len + t
         if position < start_pos:
@@ -226,8 +226,8 @@ class zma20_strategy_quote(threading.Thread):
 
 
     def determine_direction(self):
-        UP_THRESHOLD = 0.3
-        DOWN_THRESHOLD = -0.3
+        UP_THRESHOLD = 0.5
+        DOWN_THRESHOLD = -0.5
         try:
             deltaMA20 = self.deltaMA20_ma3
         except:
@@ -240,6 +240,17 @@ class zma20_strategy_quote(threading.Thread):
                 self.direction = -1
             else:
                 self.direction = 0
+        return
+
+    def guard_direction(self):
+        try:
+            direction = self.direction
+        except:
+            return
+        if direction == 0:
+            self.play.play_no_trend()
+        else:
+            self.play.stop_play_no_trend()
         return
 
     def guard_burst(self):
@@ -258,6 +269,35 @@ class zma20_strategy_quote(threading.Thread):
             self.play.play_burst_down()
         else:
             self.play.stop_burst_down()
+
+    def warn_bull_recover(self):
+        REVOVER_THRESHOLD = 0.6
+        #print(self.ma_1m_table)
+        try:
+            deltaMA20 = self.deltaMA20_ma3
+            cur_ma20 = self.MA20_cur
+        except:
+            return
+        ## Condition 1: MA20 Changes fast
+        if deltaMA20 <= REVOVER_THRESHOLD:
+            self.play.stop_play_warn_bull_recover()
+            return
+        else:
+            count = 26
+            sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
+            ## Condition 2: Latest bar is red
+            if sub >= 0:
+                self.play.stop_play_warn_bull_recover()
+                return
+            else:
+                high = self.ma_1m_table.iloc[count - 2, 4]
+                low = self.ma_1m_table.iloc[count - 2, 5]
+                ## Condition 3: MA20 Value is surrounded by Latest bar
+                if cur_ma20 < high and cur_ma20 > low:
+                    self.play.play_warn_bull_recover()
+                else:
+                    self.play.stop_play_warn_bull_recover()
+        return
 
 
     def guard_bear(self):
@@ -348,7 +388,7 @@ class zma20_strategy_quote(threading.Thread):
         K_NO = 26
         MA10_THRESHOLD = 1.4
         MA20_THRESHOLD = 0.7
-        GAP_DOWN = 3
+        GAP_DOWN = 0.5
         GAP_UP = 20
         K_GROW_THRESHOLD = 10
 
@@ -359,8 +399,7 @@ class zma20_strategy_quote(threading.Thread):
         # MA Conditions
         if self.deltaMA10_ma3 < 0 and \
                         self.deltaMA20_ma3 < 0 and \
-                        self.MA10_cur < self.MA20_cur and \
-                        self.MA10_3 < self.MA20_3:
+                        self.MA10_cur < self.MA20_cur:
             if abs(self.deltaMA10_ma3) > MA10_THRESHOLD and \
                     abs(self.deltaMA20_ma3) > MA20_THRESHOLD:
                 gap = self.MA20_3 - self.MA10_3
@@ -586,8 +625,8 @@ class zma20_strategy_quote(threading.Thread):
                 self.ret.iloc[self.count, TIME_POS] = self.data_time
                 self.cal_zma10(self.count)
                 self.cal_zma20(self.count)
-                self.cal_zma10_ratio(self.count)
-                self.cal_zma20_ratio(self.count)
+                self.cal_zma10_ratio(self.count, 360)
+                self.cal_zma20_ratio(self.count, 360)
                 self.cal_zma_gap(self.count)
 
                 self.is_available = 1
@@ -622,10 +661,11 @@ class zma20_strategy_quote(threading.Thread):
                 self.print_ma()
                 self.cal_cur_speed()
                 self.first_10min_warning()
-
+                self.pre_warn_recover_bull()
                 print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start
+                print(dur)
                 if dur > self.interval:
                     time.sleep(0)
                 else:
