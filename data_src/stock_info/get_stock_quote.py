@@ -4,7 +4,7 @@ import time
 
 
 class get_stock_quote(threading.Thread):
-    def __init__(self, qc, stock_code="HK_FUTURE.999010", cycle= 0.2):
+    def __init__(self, qc, stock_code="HK_FUTURE.999010", cycle= 0.25):
         super(get_stock_quote, self).__init__()
         self.__quote_ctx = qc
         self.stock_code_list = [stock_code]
@@ -183,7 +183,7 @@ class get_stock_quote(threading.Thread):
             print("subscribe fail 3 times")
             return -1
 
-        i = 600
+        i = 300
         while(1):
             start = time.time()
             ret = self.get_cur_stock_quoto()
@@ -196,6 +196,9 @@ class get_stock_quote(threading.Thread):
             dur = end - start
             if dur < 0:
                 continue
-            time.sleep(self.refresh - dur)
+            if self.refresh < dur:
+                continue
+            else:
+                time.sleep(self.refresh - dur)
             i -= 1
         self.ready = 0

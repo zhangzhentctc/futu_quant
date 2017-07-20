@@ -271,7 +271,7 @@ class zma20_strategy_quote(threading.Thread):
             self.play.stop_burst_down()
 
     def warn_bull_recover(self):
-        REVOVER_THRESHOLD = 0.6
+        REVOVER_THRESHOLD = 0.5
         #print(self.ma_1m_table)
         try:
             deltaMA20 = self.deltaMA20_ma3
@@ -556,6 +556,43 @@ class zma20_strategy_quote(threading.Thread):
         print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
+    def warn_recover_bull_down_trend(self):
+        K_NO = 26
+        MA10_THRESHOLD = 1.5
+        MA20_THRESHOLD = 1
+
+        ret_0 = 99
+        str_0 = "ERROR``````````````````````"
+        ret_1 = 99
+        str_1 = "ERROR````````"
+        # MA Conditions
+        if self.deltaMA20_ma3 < 0 and \
+                        self.MA10_cur < self.MA20_cur:
+            if abs(self.deltaMA10_ma3) < MA10_THRESHOLD and \
+                abs(self.deltaMA20_ma3) > MA20_THRESHOLD and \
+                    self.deltaMA10_ma3 < self.deltaMA20_ma3:
+                ret_0 = 0
+            else:
+                # Rates are too small
+                ret_0 = 2
+        else:
+            # Not goes down together
+            ret_0 = 1
+
+        if ret_0 == 0:
+            str_0 = "MA is OK```````````````````"
+        if ret_0 == 1:
+            str_0 = "MA do not go up````````````"
+        if ret_0 == 2:
+            str_0 = "MA changes rate bad````````"
+        if ret_0 == 0:
+            ret = "GO GO GO"
+            self.play.play_bull_recover_down_trend()
+        else:
+            ret = "XX XX XX"
+            self.play.stop_play_bull_recover_down_trend()
+        print("BullRecover" + " | " + ret + " | " + str_0 + " | " + str_1)
+        return
 
     def is_trade_time(self, cur_time):
         morning_end = "11:59:58"
@@ -663,20 +700,19 @@ class zma20_strategy_quote(threading.Thread):
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
 
+                self.print_ma()
+                self.cal_cur_speed()
                 self.determine_direction()
                 self.guard_burst()
                 self.guard_bear()
                 self.guard_bull()
                 self.empty_head()
                 self.many_head()
-                self.print_ma()
-                self.cal_cur_speed()
                 self.first_10min_warning()
                 self.warn_bull_recover()
                 print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start
-                print(dur)
                 if dur > self.interval:
                     time.sleep(0)
                 else:
