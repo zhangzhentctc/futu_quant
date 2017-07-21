@@ -34,7 +34,7 @@ class zma20_strategy_quote(threading.Thread):
         self.play = play
         self.direction = 0
         data= []
-        for i in range(0, 50000):
+        for i in range(0, 60000):
             data.append({"No.": 0})
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio",
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
@@ -594,6 +594,47 @@ class zma20_strategy_quote(threading.Thread):
         print("BullRecover" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
+    def warn_bogus_break(self):
+        MA20_THRESHOLD = -0.6
+        CH_RATE_THRESHOLD = -0.5
+        try:
+            ch_rate_20s = self.cur_gap_20s
+            deltaMA20 = self.deltaMA20_ma3
+        except:
+            return
+
+        if deltaMA20 > MA20_THRESHOLD and ch_rate_20s < CH_RATE_THRESHOLD:
+            self.play.play_warn_bogus_break()
+        else:
+            self.play.stop_play_warn_bogus_break()
+        return
+
+    def warn_low_amplitude(self):
+        try:
+            cur_time = self.data_time
+            cur_amplitude = self.cur_amplitude
+        except:
+            return
+        AMPLITUDE_THRESHOLD = 0.4
+        warn_seconds = 60
+        alarm_time = "10:00:00"
+        alarm_time_list = alarm_time.split(":")
+        alarm_time_second = int(alarm_time_list[0]) * 3600 + int(alarm_time_list[1]) * 60 + int(alarm_time_list[2])
+        cur_time_list = cur_time.split(":")
+        cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+        if cur_time_second > alarm_time_second and \
+                        cur_time_second < alarm_time_second + warn_seconds:
+            if cur_amplitude < AMPLITUDE_THRESHOLD:
+                self.play.play_warn_low_amplitude()
+            else:
+                self.play.stop_play_warn_low_amplitude()
+
+        return
+
+
+
+
     def is_trade_time(self, cur_time):
         morning_end = "11:59:58"
         noon_start = "13:00:01"
@@ -659,6 +700,8 @@ class zma20_strategy_quote(threading.Thread):
         self.data_time = stock_quote.get_data_time()
         cur_stock_quoto = stock_quote.get_stock_quoto()
         self.cur = cur_stock_quoto
+        cur_amplitude = stock_quote.get_stock_amplitude()
+        self.cur_amplitude = cur_amplitude
         ret, tmp = stock_quote.get_1mK_line()
         if ret == 1:
             self.ma_1m_table = tmp
@@ -683,6 +726,8 @@ class zma20_strategy_quote(threading.Thread):
                     self.data_time = stock_quote.get_data_time()
                     cur_stock_quoto = stock_quote.get_stock_quoto()
                     self.cur = cur_stock_quoto
+                    cur_amplitude = stock_quote.get_stock_amplitude()
+                    self.cur_amplitude = cur_amplitude
                     ret, tmp = stock_quote.get_1mK_line()
                     if ret == 1:
                         self.ma_1m_table = tmp
@@ -710,6 +755,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.many_head()
                 self.first_10min_warning()
                 self.warn_bull_recover()
+                self.warn_recover_bull_down_trend()
                 print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start

@@ -12,6 +12,8 @@ class get_stock_quote(threading.Thread):
         self.cur_stock_quoto_index = "last_price"
         self.data_time = ""
         self.data_time_index = "data_time"
+        self.amplitude_index = "amplitude"
+        self.cur_amplitude = 0
         self.subscribe_trail = 3
         self.refresh = cycle
         self.ready = 0
@@ -41,11 +43,13 @@ class get_stock_quote(threading.Thread):
         quote_table = ret_data
         val = quote_table[self.cur_stock_quoto_index][0]
         cur_time = quote_table[self.data_time_index][0]
+        cur_amplitude = quote_table[self.amplitude_index][0]
         if val == 0:
             print("Get Val = 0 skip")
             return RET_ERROR
         self.cur_stock_quoto = val
         self.data_time = cur_time
+        self.cur_amplitude = cur_amplitude
         return RET_OK
 
     def get_data_time(self):
@@ -53,6 +57,9 @@ class get_stock_quote(threading.Thread):
 
     def get_stock_quoto(self):
         return self.cur_stock_quoto
+
+    def get_stock_amplitude(self):
+        return self.cur_amplitude
 
     def get_1mK_line(self):
         ret = 0

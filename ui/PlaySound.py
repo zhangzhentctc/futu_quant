@@ -20,6 +20,8 @@ class PlaySound(threading.Thread):
         self.no_trend =          STOP
         self.warn_bull_revover = STOP
         self.bull_recover_down_trend= STOP
+        self.warn_bogus_break =  STOP
+        self.warn_low_amplitude = STOP
 
         self.start_bear_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bear.wav"
         self.start_bull_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bull.wav"
@@ -32,6 +34,8 @@ class PlaySound(threading.Thread):
         self.no_trend_path =          r"D:\quant\\test0\\futu_quant\\sounds\no_trend.wav"
         self.warn_bull_revover_path = r"D:\quant\\test0\\futu_quant\\sounds\warn_bull_revover.wav"
         self.bull_recover_down_trend_path= r"D:\quant\\test0\\futu_quant\\sounds\bull_recover_down_trend.wav"
+        self.warn_bogus_break_path =  r"D:\quant\\test0\\futu_quant\\sounds\warn_bogus_break.wav"
+        self.warn_low_amplitude_path = r"D:\quant\\test0\\futu_quant\\sounds\warn_low_amplitude.wav"
 
 # PLAY Signal
     def play_burst_up(self):
@@ -67,6 +71,12 @@ class PlaySound(threading.Thread):
     def play_bull_recover_down_trend(self):
         self.bull_recover_down_trend += 1
 
+    def play_warn_bogus_break(self):
+        self.warn_bogus_break += 1
+
+    def play_warn_low_amplitude(self):
+        self.warn_low_amplitude += 1
+
 # STOP Signal
     def stop_play_stop_lossing_bull(self):
         self.stop_lossing_bull = STOP
@@ -98,6 +108,12 @@ class PlaySound(threading.Thread):
 
     def stop_play_bull_recover_down_trend(self):
         self.bull_recover_down_trend = STOP
+
+    def stop_play_warn_bogus_break(self):
+        self.warn_bogus_break = STOP
+
+    def stop_play_warn_low_amplitude(self):
+        self.warn_low_amplitude = STOP
 
     def run(self):
         while(1):
@@ -144,5 +160,13 @@ class PlaySound(threading.Thread):
             if self.bull_recover_down_trend != STOP:
                 playsound.playsound(self.bull_recover_down_trend_path)
                 self.bull_recover_down_trend -= 1
+
+            if self.warn_bogus_break != STOP:
+                playsound.playsound(self.warn_bogus_break_path)
+                self.warn_bogus_break -= 1
+
+            if self.warn_low_amplitude != STOP:
+                playsound.playsound(self.warn_low_amplitude_path)
+                self.warn_low_amplitude -= 1
 
             time.sleep(0.2)
