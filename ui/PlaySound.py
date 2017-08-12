@@ -22,6 +22,8 @@ class PlaySound(threading.Thread):
         self.bull_recover_down_trend= STOP
         self.warn_bogus_break =  STOP
         self.warn_low_amplitude = STOP
+        self.general_warn = 1
+        self.warn_ma_low = STOP
 
         self.start_bear_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bear.wav"
         self.start_bull_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bull.wav"
@@ -36,6 +38,8 @@ class PlaySound(threading.Thread):
         self.bull_recover_down_trend_path= r"D:\quant\\test0\\futu_quant\\sounds\bull_recover_down_trend.wav"
         self.warn_bogus_break_path =  r"D:\quant\\test0\\futu_quant\\sounds\warn_bogus_break.wav"
         self.warn_low_amplitude_path = r"D:\quant\\test0\\futu_quant\\sounds\warn_low_amplitude.wav"
+        self.general_warn_path =      r"D:\quant\\test0\\futu_quant\\sounds\general_warn.wav"
+        self.warn_ma_low_path =       r"D:\quant\\test0\\futu_quant\\sounds\warn_ma_low.wav"
 
 # PLAY Signal
     def play_burst_up(self):
@@ -77,6 +81,12 @@ class PlaySound(threading.Thread):
     def play_warn_low_amplitude(self):
         self.warn_low_amplitude += 1
 
+    def play_general_warn(self):
+        self.general_warn += 1
+
+    def play_warn_ma_low(self):
+        self.warn_ma_low += 1
+
 # STOP Signal
     def stop_play_stop_lossing_bull(self):
         self.stop_lossing_bull = STOP
@@ -115,58 +125,78 @@ class PlaySound(threading.Thread):
     def stop_play_warn_low_amplitude(self):
         self.warn_low_amplitude = STOP
 
+    def stop_play_general_warn(self):
+        self.general_warn = STOP
+
+    def stop_play_warn_ma_low(self):
+        self.warn_ma_low = STOP
+
+
+    def play_sound(self, path):
+        try:
+            playsound.playsound(path)
+        except:
+            print("WARN: Play Sound Fail")
+        return
+
     def run(self):
         while(1):
             if self.burst_up != STOP:
-                playsound.playsound(self.burst_up_path)
+                self.play_sound(self.burst_up_path)
                 self.burst_up -= 1
 
             if self.burst_down != STOP:
-                playsound.playsound(self.burst_down_path)
+                self.play_sound(self.burst_down_path)
                 self.burst_down -= 1
 
             if self.stop_lossing_bear != STOP:
-                playsound.playsound(self.stop_lossing_bear_path)
+                self.play_sound(self.stop_lossing_bear_path)
                 self.stop_lossing_bear -= 1
 
             if self.stop_lossing_bear_inst != STOP:
-                playsound.playsound(self.stop_lossing_bear_inst_path)
+                self.play_sound(self.stop_lossing_bear_inst_path)
                 self.stop_lossing_bear_inst -= 1
 
             if self.stop_lossing_bull != STOP:
-                playsound.playsound(self.stop_lossing_bull_path)
+                self.play_sound(self.stop_lossing_bull_path)
                 self.stop_lossing_bull -= 1
 
             if self.start_bear != STOP:
-                playsound.playsound(self.start_bear_path)
+                self.play_sound(self.start_bear_path)
                 self.start_bear -= 1
 
             if self.start_bull != STOP:
-                playsound.playsound(self.start_bull_path)
+                self.play_sound(self.start_bull_path)
                 self.start_bull -= 1
 
             if self.no_trend != STOP:
-                playsound.playsound(self.no_trend_path)
+                self.play_sound(self.no_trend_path)
                 self.no_trend -= 1
 
             if self.morning_warn != STOP:
-                playsound.playsound(self.morning_warn_path)
+                self.play_sound(self.morning_warn_path)
                 self.morning_warn -= 1
 
             if self.warn_bull_revover != STOP:
-                playsound.playsound(self.warn_bull_revover_path)
+                self.play_sound(self.warn_bull_revover_path)
                 self.warn_bull_revover -= 1
 
             if self.bull_recover_down_trend != STOP:
-                playsound.playsound(self.bull_recover_down_trend_path)
+                self.play_sound(self.bull_recover_down_trend_path)
                 self.bull_recover_down_trend -= 1
 
             if self.warn_bogus_break != STOP:
-                playsound.playsound(self.warn_bogus_break_path)
+                self.play_sound(self.warn_bogus_break_path)
                 self.warn_bogus_break -= 1
 
             if self.warn_low_amplitude != STOP:
-                playsound.playsound(self.warn_low_amplitude_path)
+                self.play_sound(self.warn_low_amplitude_path)
                 self.warn_low_amplitude -= 1
+
+            if self.general_warn != STOP:
+                self.play_sound(self.general_warn_path)
+
+            if self.warn_ma_low != STOP:
+                self.play_sound(self.warn_ma_low_path)
 
             time.sleep(0.2)

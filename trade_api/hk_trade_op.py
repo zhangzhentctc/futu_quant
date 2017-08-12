@@ -74,6 +74,30 @@ class hk_trade_opt:
         orderid = ret_data["orderid"][position]
         return orderid
 
+    def disble_order_stock_code(self, stock_code):
+        position = -1
+        count = 0
+        ret_code, ret_data = self.hk_trade_api.order_list_query("123", self.envtype)
+        if ret_code == -1:
+            return -1
+        print(ret_data)
+        for i in ret_data["stock_code"]:
+            if str(i) == str(stock_code) and (int(ret_data["status"][count]) == 1 or int(ret_data["status"][count]) == 2):
+                position = count
+                print("Find Order")
+                break
+            count += 1
+        if position == -1:
+            print("No Such Order")
+            return -1
+        else:
+            print("Disable Order")
+            orderid = ret_data["orderid"][position]
+            self.disable_order(orderid)
+        return orderid
+
+
+
     def check_order_status(self, orderid):
         cookie = "123"
         position = -1

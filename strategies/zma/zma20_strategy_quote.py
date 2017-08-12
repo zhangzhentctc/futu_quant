@@ -3,6 +3,9 @@ import threading
 import time
 import pandas as pd
 from ui.PlaySound import *
+from trade_api.hk_trade_op import *
+
+
 NO_POS = 0
 CUR_POS = 1
 TIME_POS = 2
@@ -38,6 +41,21 @@ class zma20_strategy_quote(threading.Thread):
             data.append({"No.": 0})
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio",
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
+        self.hk_trade = hk_trade_api()
+        self.hk_trade.initialize()
+        self.hk_trade.unlock_trade('88888888', '584679')
+        self.opt = hk_trade_opt(self.hk_trade)
+        self.bear_code = 67863
+        self.bull_code = 69512
+
+        # self.opt.disble_order_stock_code(67863)
+        #    localid = opt.buy(0.06, 10000, "67541")
+        #    orderid = opt.get_order_id(localid)
+        #    status = opt.check_order_status(orderid)
+        #    dealt = opt.get_dealt_qty(orderid)
+        #    print(dealt)
+        #    opt.disable_order(orderid)
+
 
 
 
@@ -300,6 +318,23 @@ class zma20_strategy_quote(threading.Thread):
         return
 
 
+    def warn_ma_low(self):
+        LOWMA10_THRESHOLD = 0.7
+        LOWMA20_THRESHOLD = 0.5
+        try:
+            deltaMA20 = self.deltaMA20_ma3
+            deltaMA10 = self.deltaMA10_ma3
+        except:
+            return
+
+        ## Condition 1: MA20 Changes fast
+        if abs(deltaMA20) <= LOWMA20_THRESHOLD and abs(deltaMA10) <= LOWMA10_THRESHOLD:
+            self.play.play_warn_ma_low()
+        else:
+             self.play.stop_play_warn_ma_low()
+        return
+
+
     def guard_bear(self):
         count = 26
         GROWTH_THRESHOLD = 10
@@ -559,7 +594,7 @@ class zma20_strategy_quote(threading.Thread):
     def warn_recover_bull_down_trend(self):
         K_NO = 26
         MA10_THRESHOLD = 1.5
-        MA20_THRESHOLD = 1
+        MA20_THRESHOLD = 0.8
 
         ret_0 = 99
         str_0 = "ERROR``````````````````````"
@@ -570,7 +605,7 @@ class zma20_strategy_quote(threading.Thread):
                         self.MA10_cur < self.MA20_cur:
             if abs(self.deltaMA10_ma3) < MA10_THRESHOLD and \
                 abs(self.deltaMA20_ma3) > MA20_THRESHOLD and \
-                    self.deltaMA10_ma3 < self.deltaMA20_ma3:
+                    abs(self.deltaMA10_ma3) < abs(self.deltaMA20_ma3):
                 ret_0 = 0
             else:
                 # Rates are too small
@@ -582,7 +617,7 @@ class zma20_strategy_quote(threading.Thread):
         if ret_0 == 0:
             str_0 = "MA is OK```````````````````"
         if ret_0 == 1:
-            str_0 = "MA do not go up````````````"
+            str_0 = "MA do not go down``````````"
         if ret_0 == 2:
             str_0 = "MA changes rate bad````````"
         if ret_0 == 0:
@@ -591,7 +626,7 @@ class zma20_strategy_quote(threading.Thread):
         else:
             ret = "XX XX XX"
             self.play.stop_play_bull_recover_down_trend()
-        print("BullRecover" + " | " + ret + " | " + str_0 + " | " + str_1)
+        print("BullRecover" + "| " + ret + " | " + str_0 + " | " + str_1)
         return
 
     def warn_bogus_break(self):
@@ -745,17 +780,21 @@ class zma20_strategy_quote(threading.Thread):
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
 
+
                 self.print_ma()
                 self.cal_cur_speed()
                 self.determine_direction()
                 self.guard_burst()
                 self.guard_bear()
-                self.guard_bull()
+                #self.guard_bull()
                 self.empty_head()
                 self.many_head()
                 self.first_10min_warning()
                 self.warn_bull_recover()
                 self.warn_recover_bull_down_trend()
+                self.warn_bogus_break()
+                self.warn_low_amplitude()
+                self.warn_ma_low()
                 print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start
