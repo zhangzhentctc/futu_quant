@@ -387,6 +387,80 @@ class zma20_strategy_quote(threading.Thread):
                 print("Guard Bear: wait with deposit " + str(self.deposit_bottom))
                 return
 
+    def guard_bear2(self):
+        count = 26
+
+        open_pos = 2
+        high_pos = 3
+        close_pos = 4
+        low_pos = 5
+        check_value = 10000
+
+        observe_num = 5
+        current_weight = 0.5
+        score = 0
+        tolerance = 0
+        limit = 10
+        extra_tolerance = 2
+        ## Check K-1M quality
+        for i in range(observe_num, 0, -1):
+            if self.ma_1m_table["open"][count - i] < check_value:
+                return
+            if self.ma_1m_table["high"][count - i] < check_value:
+                return
+            if self.ma_1m_table["close"][count - i] < check_value:
+                return
+            if self.ma_1m_table["low"][count - i] < check_value:
+                return
+
+        ### Get Latest 5 Bars
+        data = []
+        for i in range(observe_num, 0, -1):
+                data.append({"code": self.ma_1m_table["code"][count - i], "time_key": self.ma_1m_table["time_key"][count - i], \
+                             "open": self.ma_1m_table["open"][count - i], "high": self.ma_1m_table["high"][count - i], "close": self.ma_1m_table["close"][count - i], "low": self.ma_1m_table["low"][count - i], \
+                             "volume": self.ma_1m_table["volume"][count - i], "turnover": self.ma_1m_table["turnover"][count - i]})
+        ma_1m_table = pd.DataFrame(data, columns=["code", "time_key", "open", "high", "close", "low", "volume", "turnover"])
+
+        ## Fix Open value, = older close
+        for i in range(1, observe_num):
+            ma_1m_table.iloc[i,open_pos] = ma_1m_table.iloc[i - 1, close_pos]
+            # if new open > high, new high =  new open
+            if ma_1m_table.iloc[i, open_pos] > ma_1m_table.iloc[i, high_pos]:
+                ma_1m_table.iloc[i, high_pos] = ma_1m_table.iloc[i, open_pos]
+            # if new open < low, new low = new open
+            if ma_1m_table.iloc[i, open_pos] < ma_1m_table.iloc[i, low_pos]:
+                ma_1m_table.iloc[i, low_pos] = ma_1m_table.iloc[i, open_pos]
+
+        ## Find the lowest low
+        lowest_pos = 0
+        for i in range(1, observe_num):
+            if ma_1m_table.iloc[i, low_pos] < ma_1m_table.iloc[lowest_pos, low_pos]:
+                lowest_pos = i
+
+        ## If lowest is the latest one
+        pointer = lowest_pos
+        while(pointer < observe_num):
+            if pointer == observe_num - 1:
+                if ma_1m_table.iloc[pointer, close_pos] > ma_1m_table.iloc[pointer, open_pos]:
+                    score += (ma_1m_table.iloc[pointer, close_pos] - ma_1m_table.iloc[pointer, open_pos]) * current_weight
+                if tolerance > 0:
+                    if (ma_1m_table.iloc[pointer, high_pos] - ma_1m_table.iloc[pointer, open_pos]) > tolerance:
+                        print("WARN!!!! SELL BEAR!!!")
+                else:
+                    if score > limit:
+                        print("WARN!!!! SELL BEAR!!!")
+                pointer += 1
+            else:
+                long_gap = ma_1m_table.iloc[observe_num - 2, close_pos] - ma_1m_table.iloc[lowest_pos, low_pos]
+                if long_gap < 0:
+                    print("ERROR!!! LONG GAP ERROR!!!")
+                score += long_gap
+                if score > limit:
+                    tolerance = extra_tolerance
+                pointer = observe_num - 1
+        print("SCORE: " + str(score))
+        return
+
 
     def guard_bull(self):
         count = 26
@@ -786,6 +860,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.determine_direction()
                 self.guard_burst()
                 self.guard_bear()
+                self.guard_bear2()
                 #self.guard_bull()
                 self.empty_head()
                 self.many_head()
