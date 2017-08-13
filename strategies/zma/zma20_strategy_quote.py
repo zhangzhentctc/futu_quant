@@ -421,6 +421,7 @@ class zma20_strategy_quote(threading.Thread):
                              "volume": self.ma_1m_table["volume"][count - i], "turnover": self.ma_1m_table["turnover"][count - i]})
         ma_1m_table = pd.DataFrame(data, columns=["code", "time_key", "open", "high", "close", "low", "volume", "turnover"])
 
+
         ## Fix Open value, = older close
         for i in range(1, observe_num):
             ma_1m_table.iloc[i,open_pos] = ma_1m_table.iloc[i - 1, close_pos]
@@ -431,21 +432,25 @@ class zma20_strategy_quote(threading.Thread):
             if ma_1m_table.iloc[i, open_pos] < ma_1m_table.iloc[i, low_pos]:
                 ma_1m_table.iloc[i, low_pos] = ma_1m_table.iloc[i, open_pos]
 
+        print(ma_1m_table)
         ## Find the lowest low
         lowest_pos = 0
         for i in range(1, observe_num):
-            if ma_1m_table.iloc[i, low_pos] < ma_1m_table.iloc[lowest_pos, low_pos]:
+            if (ma_1m_table.iloc[i, low_pos] < ma_1m_table.iloc[lowest_pos, low_pos]) or (ma_1m_table.iloc[i, low_pos] == ma_1m_table.iloc[lowest_pos, low_pos]):
                 lowest_pos = i
 
         ## If lowest is the latest one
         pointer = lowest_pos
         while(pointer < observe_num):
             if pointer == observe_num - 1:
-                if ma_1m_table.iloc[pointer, close_pos] > ma_1m_table.iloc[pointer, open_pos]:
-                    score += (ma_1m_table.iloc[pointer, close_pos] - ma_1m_table.iloc[pointer, open_pos]) * current_weight
+                if lowest_pos == observe_num - 1:
+                    score += (ma_1m_table.iloc[pointer, close_pos] - ma_1m_table.iloc[pointer, low_pos]) * current_weight
+                else:
+                    if ma_1m_table.iloc[pointer, close_pos] > ma_1m_table.iloc[pointer, open_pos]:
+                        score += (ma_1m_table.iloc[pointer, close_pos] - ma_1m_table.iloc[pointer, open_pos]) * current_weight
                 if tolerance > 0:
                     if (ma_1m_table.iloc[pointer, high_pos] - ma_1m_table.iloc[pointer, open_pos]) > tolerance:
-                        print("WARN!!!! SELL BEAR!!!")
+                        print("WARN!!!! SELL BEAR!!! Over Tolerance")
                 else:
                     if score > limit:
                         print("WARN!!!! SELL BEAR!!!")
@@ -457,8 +462,9 @@ class zma20_strategy_quote(threading.Thread):
                 score += long_gap
                 if score > limit:
                     tolerance = extra_tolerance
+                    print("Assign Tollerance")
                 pointer = observe_num - 1
-        print("SCORE: " + str(score))
+        print("@@@@@@@@@@@@@@@@@@@@@@@@SCORE: " + str(score))
         return
 
 
@@ -745,6 +751,7 @@ class zma20_strategy_quote(threading.Thread):
 
 
     def is_trade_time(self, cur_time):
+#        return 1
         morning_end = "11:59:58"
         noon_start = "13:00:01"
 
