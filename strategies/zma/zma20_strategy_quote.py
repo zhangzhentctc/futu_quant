@@ -402,6 +402,7 @@ class zma20_strategy_quote(threading.Thread):
         tolerance = 0
         limit = 10
         extra_tolerance = 2
+        sell_bear = 0
         ## Check K-1M quality
         for i in range(observe_num, 0, -1):
             if self.ma_1m_table["open"][count - i] < check_value:
@@ -451,9 +452,11 @@ class zma20_strategy_quote(threading.Thread):
                 if tolerance > 0:
                     if (ma_1m_table.iloc[pointer, high_pos] - ma_1m_table.iloc[pointer, open_pos]) > tolerance:
                         print("WARN!!!! SELL BEAR!!! Over Tolerance")
+                        sell_bear = 1
                 else:
                     if score > limit:
                         print("WARN!!!! SELL BEAR!!!")
+                        sell_bear = 1
                 pointer += 1
             else:
                 long_gap = ma_1m_table.iloc[observe_num - 2, close_pos] - ma_1m_table.iloc[lowest_pos, low_pos]
@@ -464,7 +467,12 @@ class zma20_strategy_quote(threading.Thread):
                     tolerance = extra_tolerance
                     print("Assign Tollerance")
                 pointer = observe_num - 1
-        print("@@@@@@@@@@@@@@@@@@@@@@@@SCORE: " + str(score))
+        print("SCORE: " + str(score))
+        if sell_bear == 1:
+            self.play.play_stop_lossing_bear_inst()
+        else:
+            self.play.stop_play_stop_lossing_bear()
+
         return
 
 
@@ -866,7 +874,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.cal_cur_speed()
                 self.determine_direction()
                 self.guard_burst()
-                self.guard_bear()
+                #self.guard_bear()
                 self.guard_bear2()
                 #self.guard_bull()
                 self.empty_head()
