@@ -45,7 +45,7 @@ class zma20_strategy_quote(threading.Thread):
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '584679')
         self.opt = hk_trade_opt(self.hk_trade)
-        self.bear_code = 67863
+        self.bear_code = 62162
         self.bull_code = 69512
 
         # self.opt.disble_order_stock_code(67863)
@@ -435,7 +435,6 @@ class zma20_strategy_quote(threading.Thread):
             if ma_1m_table.iloc[i, open_pos] < ma_1m_table.iloc[i, low_pos]:
                 ma_1m_table.iloc[i, low_pos] = ma_1m_table.iloc[i, open_pos]
 
-        print(ma_1m_table)
         ## Find the lowest low
         lowest_pos = 0
         for i in range(1, observe_num):
@@ -759,7 +758,7 @@ class zma20_strategy_quote(threading.Thread):
 
     def disable_adverse_bull(self):
         # Disable Bull when MA20 decreases sharply
-        MA20_THRESHOLD = -1
+        MA20_THRESHOLD = -2
         try:
             deltaMA20 = self.deltaMA20_ma3
         except:
@@ -847,9 +846,9 @@ class zma20_strategy_quote(threading.Thread):
 
 
     def run(self):
-        stock_quote = get_stock_quote(self.__quote_ctx)
+        stock_quote = get_stock_quote(self.__quote_ctx, "HK."+str(self.bull_code), "HK."+str(self.bear_code))
         stock_quote.start()
-        while stock_quote.ready != 1:
+        while stock_quote.ready != 1 :
             time.sleep(1)
 
         self.data_time = stock_quote.get_data_time()
@@ -900,7 +899,6 @@ class zma20_strategy_quote(threading.Thread):
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
 
-
                 self.print_ma()
                 self.cal_cur_speed()
                 self.determine_direction()
@@ -916,6 +914,10 @@ class zma20_strategy_quote(threading.Thread):
                 self.warn_bogus_break()
                 self.warn_low_amplitude()
                 self.warn_ma_low()
+                #self.disable_adverse_bull()
+                #self.disable_adverse_bear()
+
+
                 print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start

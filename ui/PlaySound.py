@@ -22,7 +22,7 @@ class PlaySound(threading.Thread):
         self.bull_recover_down_trend= STOP
         self.warn_bogus_break =  STOP
         self.warn_low_amplitude = STOP
-        self.general_warn = 1
+        self.general_warn = STOP
         self.warn_ma_low = STOP
 
         self.start_bear_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bear.wav"

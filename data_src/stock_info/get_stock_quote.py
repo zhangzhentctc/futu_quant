@@ -4,10 +4,10 @@ import time
 
 
 class get_stock_quote(threading.Thread):
-    def __init__(self, qc, stock_code="HK_FUTURE.999010", cycle= 0.25):
+    def __init__(self, qc,  bull_code, bear_code, stock_code="HK_FUTURE.999010", cycle= 0.25):
         super(get_stock_quote, self).__init__()
         self.__quote_ctx = qc
-        self.stock_code_list = [stock_code]
+        self.stock_code_list = [stock_code, bull_code, bear_code]
         self.cur_stock_quoto = 0
         self.cur_stock_quoto_index = "last_price"
         self.data_time = ""
@@ -20,6 +20,10 @@ class get_stock_quote(threading.Thread):
         self.deltaMA20_cur = 0
         self.deltaMA20_ma3 = 0
         self.deltaMA20_ma5 = 0
+        self.bull_bid = -1
+        self.bull_ask = -1
+        self.bear_bid = -1
+        self.bear_ask = -1
 
         global ma_1m_table_lock
 
@@ -51,6 +55,54 @@ class get_stock_quote(threading.Thread):
         self.data_time = cur_time
         self.cur_amplitude = cur_amplitude
         return RET_OK
+
+    def find_seller(self, ask_or_bid, seller_ident):
+        max_val = seller_ident * 1000000
+        count = 0
+        pos = -1
+        for item in ask_or_bid:
+            if item[1] > max_val:
+                pos = count
+                break
+            count += 1
+        return pos
+
+    def get_ask_bid(self):
+        seller_ident = 10
+
+        ret_status, ret_data = self.__quote_ctx.get_order_book(self.stock_code_list[1])
+        if ret_status == RET_ERROR:
+            return RET_ERROR
+        pos = self.find_seller(ret_data["Bid"], seller_ident)
+        if pos != -1:
+            self.bull_bid = ret_data["Bid"][pos][0]
+        else:
+            self.bull_bid = -1
+
+        pos = self.find_seller(ret_data["Ask"], seller_ident)
+        if pos != -1:
+            self.bull_ask = ret_data["Ask"][pos][0]
+        else:
+            self.bull_ask = -1
+
+        ret_status, ret_data = self.__quote_ctx.get_order_book(self.stock_code_list[2])
+        if ret_status == RET_ERROR:
+            return RET_ERROR
+
+        pos = self.find_seller(ret_data["Bid"], seller_ident)
+        if pos != -1:
+            self.bear_bid = ret_data["Bid"][pos][0]
+        else:
+            self.bear_bid = -1
+
+        pos = self.find_seller(ret_data["Ask"], seller_ident)
+        if pos != -1:
+            self.bear_ask = ret_data["Ask"][pos][0]
+        else:
+            self.bear_ask = -1
+
+        return RET_OK
+
 
     def get_data_time(self):
         return self.data_time
@@ -164,7 +216,6 @@ class get_stock_quote(threading.Thread):
         return self.MA20_3
 
     def run(self):
-
         self.ready = 0
         ret_status = RET_OK
         ret_data = ""
@@ -190,12 +241,28 @@ class get_stock_quote(threading.Thread):
             print("subscribe fail 3 times")
             return -1
 
+        for i in range (0, self.subscribe_trail):
+            ret_status, ret_data = self.subscribe_stock("ORDER_BOOK")
+            if ret_status == RET_OK:
+                break
+            print("subscribe fail. Retry.")
+            time.sleep(0.5)
+
+        if ret_status == RET_ERROR:
+            print("subscribe fail 3 times")
+            return -1
+
         i = 180
         while(1):
             start = time.time()
             ret = self.get_cur_stock_quoto()
             if ret == RET_ERROR:
                 continue
+
+            ret = self.get_ask_bid()
+            if ret == RET_ERROR:
+                continue
+
             self.get_ma_1m(26)
             self.cal_delta_ma()
             self.ready = 1
