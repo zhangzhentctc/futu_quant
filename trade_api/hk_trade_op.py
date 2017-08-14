@@ -80,11 +80,22 @@ class hk_trade_opt:
         pos_qty = 0
         pos_qty = self.query_position_stock_qty(stock_code)
         if int(pos_qty) == 0 or int(pos_qty) == -1:
-            return
+            return -1
         else:
             print(pos_qty, "!!!!!!!!!!")
-            ret = self.sell(price, pos_qty, stock_code)
-        return
+            localid = self.sell(price, pos_qty, stock_code)
+        return localid
+
+    def sell_stock_code_qty(self, stock_code, price, qty):
+        pos_qty = 0
+        pos_qty = self.query_position_stock_qty(stock_code)
+        if int(pos_qty) < qty or int(pos_qty) == -1:
+            print("Not Enough Position")
+            return -1
+        else:
+            print(qty, "!!!!!!!!!!")
+            localid = self.sell(price, qty, stock_code)
+        return localid
 
     def modify_order_price(self, localid, price, qty, direction):
         position = -1
@@ -116,6 +127,26 @@ class hk_trade_opt:
             else:
                 localid = self.buy(price, new_qty, stock_code)
         return localid
+
+    def get_dealt_qty_localid_and_delete(self, localid):
+        position = -1
+        count = 0
+        ret_code, ret_data = self.hk_trade_api.order_list_query("3467", self.envtype)
+        if ret_code == -1:
+            return -1
+        for i in ret_data["localid"]:
+            if str(i) == str(localid):
+                position = count
+                break
+            count += 1
+
+        if position == -1:
+            return -1
+        else:
+            orderid = ret_data["orderid"][position]
+            dealt_qty = ret_data["dealt_qty"][position]
+            self.delete_order(orderid)
+        return dealt_qty
 
     def disble_order_stock_code(self, stock_code):
         position = -1
@@ -218,13 +249,13 @@ class hk_trade_opt:
             count += 1
         if position == -1:
             print("No Such stock position")
-            return 0
+            return -1
         else:
             status = ret_data["status"][position]
         if status == 3:
-            return 1
-        else:
             return 0
+        else:
+            return -1
 
     def get_dealt_qty(self, orderid):
         cookie = "654"

@@ -45,7 +45,7 @@ class zma20_strategy_quote(threading.Thread):
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '584679')
         self.opt = hk_trade_opt(self.hk_trade)
-        self.bear_code = 62162
+        self.bear_code = 67863
         self.bull_code = 69512
 
         # self.opt.disble_order_stock_code(67863)
@@ -471,6 +471,7 @@ class zma20_strategy_quote(threading.Thread):
         print("SCORE: " + str(score))
         if sell_bear == 1:
             self.play.play_stop_lossing_bear_inst()
+            self.opt.clear_stock_code(self.bear_code, self.bear_bid_seller)
         else:
             self.play.stop_play_stop_lossing_bear()
 
@@ -877,6 +878,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.is_available = 1
 
                 if stock_quote.ready == 1:
+                    self.stock_quote = stock_quote
                     self.data_time = stock_quote.get_data_time()
                     cur_stock_quoto = stock_quote.get_stock_quoto()
                     self.cur = cur_stock_quoto
@@ -895,6 +897,10 @@ class zma20_strategy_quote(threading.Thread):
                     self.MA10_3 = stock_quote.get_MA10_3()
                     self.MA20_cur = stock_quote.get_MA20_cur()
                     self.MA20_3 = stock_quote.get_MA20_3()
+                    self.bull_bid_seller = stock_quote.get_bull_bid_seller()
+                    self.bull_ask_seller = stock_quote.get_bull_ask_seller()
+                    self.bear_bid_seller = stock_quote.get_bear_bid_seller()
+                    self.bear_ask_seller = stock_quote.get_bear_ask_seller()
                 else:
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
@@ -913,7 +919,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.warn_recover_bull_down_trend()
                 self.warn_bogus_break()
                 self.warn_low_amplitude()
-                self.warn_ma_low()
+                #self.warn_ma_low()
                 #self.disable_adverse_bull()
                 #self.disable_adverse_bear()
 
