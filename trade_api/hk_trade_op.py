@@ -13,6 +13,9 @@ class hk_trade_opt:
 # Buy return:
 # {'SvrResult': '0', 'Cookie': '888888', 'EnvType': '1', 'LocalID': '1425263522639675'}
     def buy(self, price, qty, strcode):
+        if qty <= 0:
+            print("Bad Quantity")
+            return -1
         cookie = "333"
         ret_code, ret_data = self.hk_trade_api.place_order(cookie, price, qty, strcode, 0, 0, self.envtype)
         if ret_code == -1:
@@ -28,6 +31,9 @@ class hk_trade_opt:
         return ret_data["LocalID"]
 
     def sell(self,  price, qty, strcode):
+        if qty <= 0:
+            print("Bad Quantity")
+            return -1
         cookie = "444"
         ret_code, ret_data = self.hk_trade_api.place_order(cookie, price, qty, strcode, 1, 0, self.envtype)
         if ret_code == -1:
@@ -89,7 +95,8 @@ class hk_trade_opt:
     def sell_stock_code_qty(self, stock_code, price, qty):
         pos_qty = 0
         pos_qty = self.query_position_stock_qty(stock_code)
-        if int(pos_qty) < qty or int(pos_qty) == -1:
+        print(pos_qty, "  ", qty)
+        if int(pos_qty) == 0 or int(pos_qty) == -1 or int(pos_qty) < qty:
             print("Not Enough Position")
             return -1
         else:
@@ -121,14 +128,14 @@ class hk_trade_opt:
             if new_qty <= 0:
                 print("Already Dealt")
                 return -1
-            self.delete_order(orderid)
+            self.recall_order(orderid)
             if direction == 1:
                 localid = self.sell(price, new_qty, stock_code)
             else:
                 localid = self.buy(price, new_qty, stock_code)
         return localid
 
-    def get_dealt_qty_localid_and_delete(self, localid):
+    def get_dealt_qty_localid_and_recall(self, localid):
         position = -1
         count = 0
         ret_code, ret_data = self.hk_trade_api.order_list_query("3467", self.envtype)
@@ -145,7 +152,7 @@ class hk_trade_opt:
         else:
             orderid = ret_data["orderid"][position]
             dealt_qty = ret_data["dealt_qty"][position]
-            self.delete_order(orderid)
+            self.recall_order(orderid)
         return dealt_qty
 
     def disble_order_stock_code(self, stock_code):
@@ -190,6 +197,23 @@ class hk_trade_opt:
             pos_qty = ret_data["can_sell_qty"][position]
         return pos_qty
 
+    def query_position_stock_cost(self, stock_code):
+        position = -1
+        count = 0
+        cost_price = -1
+        ret_code, ret_data = self.hk_trade_api.position_list_query("3467", self.envtype)
+        if ret_code == -1:
+            return -1
+        for i in ret_data["stock_code"]:
+            if str(i) == str(stock_code):
+                position = count
+                break
+            count += 1
+        if position == -1:
+            print("No Such stock position")
+        else:
+            cost_price = ret_data["cost_price"][position]
+        return cost_price
 
     def check_order_status(self, orderid):
         cookie = "123"
@@ -221,9 +245,9 @@ class hk_trade_opt:
             return -1
         return 1
 
-    def delete_order(self, orderid):
+    def recall_order(self, orderid):
         cookie = "444"
-        ret_code, ret_data = self.hk_trade_api.set_order_status(cookie, 3, 0, orderid, self.envtype)
+        ret_code, ret_data = self.hk_trade_api.set_order_status(cookie, 0, 0, orderid, self.envtype)
         if ret_code == -1:
             return -1
         if ret_data["SvrResult"] == -1:
