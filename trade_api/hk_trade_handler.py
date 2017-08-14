@@ -3,10 +3,11 @@ import time
 
 
 class hk_trade_handler(threading.Thread):
-    def __init__(self, hk_trade_opt, stock_quote, stock_code, qty, cmd, type):
+    def __init__(self, hk_trade_opt, stock_quote, stock_code,  cmd = 0, type = 0, qty = -1):
+        super(hk_trade_handler, self).__init__()
         self.hk_trade_opt = hk_trade_opt
         self.stock_quote = stock_quote
-        self.stock_quote = stock_code
+        self.stock_code = stock_code
         self.qty = qty
         self.cmd = cmd
         self.type = type
@@ -32,7 +33,7 @@ class hk_trade_handler(threading.Thread):
                 ret = self.hk_trade_opt.check_dealt_all(localid)
                 if ret == -1:
                     # if not all dealt, get dealt and delete order
-                    dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_delete(localid)
+                    dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
                     if dealt_qty == -1:
                         return -1
                     # new qty
@@ -46,4 +47,10 @@ class hk_trade_handler(threading.Thread):
                 time.sleep(0.5)
 
     def run(self):
+        if self.qty == -1:
+            qty = self.hk_trade_opt.query_position_stock_qty(self.stock_quote)
+            if qty == -1 or qty == 0:
+                print("No Position")
+            self.qty = qty
         self.sell_bear_force(self.stock_quote, self.qty)
+

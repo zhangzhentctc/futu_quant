@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from ui.PlaySound import *
 from trade_api.hk_trade_op import *
-
+from trade_api.hk_trade_handler import *
 
 NO_POS = 0
 CUR_POS = 1
@@ -41,13 +41,15 @@ class zma20_strategy_quote(threading.Thread):
             data.append({"No.": 0})
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio",
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
+
+        self.bear_code = 67863
+        self.bull_code = 69512
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '584679')
         self.opt = hk_trade_opt(self.hk_trade)
-        self.bear_code = 67863
-        self.bull_code = 69512
-
+        self.stock_quote = get_stock_quote(self.__quote_ctx, "HK." + str(self.bull_code), "HK." + str(self.bear_code))
+        self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
         # self.opt.disble_order_stock_code(67863)
         #    localid = opt.buy(0.06, 10000, "67541")
         #    orderid = opt.get_order_id(localid)
@@ -471,9 +473,13 @@ class zma20_strategy_quote(threading.Thread):
         print("SCORE: " + str(score))
         if sell_bear == 1:
             self.play.play_stop_lossing_bear_inst()
-            self.opt.clear_stock_code(self.bear_code, self.bear_bid_seller)
+            #self.opt.clear_stock_code(self.bear_code, self.bear_bid_seller)
+            if self.hk_trade_handler_bear.is_alive() == False:
+                self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
+                self.hk_trade_handler_bear.start()
         else:
             self.play.stop_play_stop_lossing_bear()
+
 
         return
 
@@ -847,7 +853,7 @@ class zma20_strategy_quote(threading.Thread):
 
 
     def run(self):
-        stock_quote = get_stock_quote(self.__quote_ctx, "HK."+str(self.bull_code), "HK."+str(self.bear_code))
+        stock_quote = self.stock_quote
         stock_quote.start()
         while stock_quote.ready != 1 :
             time.sleep(1)
@@ -939,7 +945,8 @@ class zma20_strategy_quote(threading.Thread):
 
             ## Check Quote Status
             if stock_quote.is_alive() == False:
-                stock_quote = get_stock_quote(self.__quote_ctx)
+                self.stock_quote = get_stock_quote(self.__quote_ctx)
+                stock_quote = self.stock_quote
                 print("quote dies. Restart")
                 stock_quote.start()
 
