@@ -32,8 +32,8 @@ class hk_trade_api:
             return -1, ret_data
         return 1, ret_data
 
-    def change_order(self, cookie, price, qty, localid, oderid, envtype):
-        ret_code, ret_data = self.tradehk_ctx.change_order(cookie, price, qty, localid, oderid, envtype)
+    def change_order(self, cookie, price, qty, localid, orderid, envtype):
+        ret_code, ret_data = self.tradehk_ctx.change_order(cookie, price, qty, localid, orderid, envtype)
         if ret_code == RET_ERROR:
             print("change_order fail")
             print(ret_data)
