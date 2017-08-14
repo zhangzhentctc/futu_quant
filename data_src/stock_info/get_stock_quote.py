@@ -24,8 +24,11 @@ class get_stock_quote(threading.Thread):
         self.bull_ask = -1
         self.bear_bid = -1
         self.bear_ask = -1
+        self.bull_bid_seller = -1
+        self.bull_ask_seller = -1
+        self.bear_bid_seller = -1
+        self.bear_ask_seller = -1
 
-        global ma_1m_table_lock
 
     def subscribe_stock(self, type):
         # subscribe "QUOTE"
@@ -73,33 +76,40 @@ class get_stock_quote(threading.Thread):
         ret_status, ret_data = self.__quote_ctx.get_order_book(self.stock_code_list[1])
         if ret_status == RET_ERROR:
             return RET_ERROR
+
+        self.bull_bid = ret_data["Bid"][0][0]
+        self.bull_ask = ret_data["Ask"][0][0]
+
         pos = self.find_seller(ret_data["Bid"], seller_ident)
         if pos != -1:
-            self.bull_bid = ret_data["Bid"][pos][0]
+            self.bull_bid_seller = ret_data["Bid"][pos][0]
         else:
-            self.bull_bid = -1
+            self.bull_bid_seller = -1
 
         pos = self.find_seller(ret_data["Ask"], seller_ident)
         if pos != -1:
-            self.bull_ask = ret_data["Ask"][pos][0]
+            self.bull_ask_seller = ret_data["Ask"][pos][0]
         else:
-            self.bull_ask = -1
+            self.bull_ask_seller = -1
 
         ret_status, ret_data = self.__quote_ctx.get_order_book(self.stock_code_list[2])
         if ret_status == RET_ERROR:
             return RET_ERROR
 
+        self.bear_bid = ret_data["Bid"][0][0]
+        self.bear_ask = ret_data["Ask"][0][0]
+
         pos = self.find_seller(ret_data["Bid"], seller_ident)
         if pos != -1:
-            self.bear_bid = ret_data["Bid"][pos][0]
+            self.bear_bid_seller = ret_data["Bid"][pos][0]
         else:
-            self.bear_bid = -1
+            self.bear_bid_seller = -1
 
         pos = self.find_seller(ret_data["Ask"], seller_ident)
         if pos != -1:
-            self.bear_ask = ret_data["Ask"][pos][0]
+            self.bear_ask_seller = ret_data["Ask"][pos][0]
         else:
-            self.bear_ask = -1
+            self.bear_ask_seller = -1
 
         return RET_OK
 
@@ -214,6 +224,30 @@ class get_stock_quote(threading.Thread):
 
     def get_MA20_3(self):
         return self.MA20_3
+
+    def get_bull_bid(self):
+        return self.bull_bid
+
+    def get_bull_ask(self):
+        return self.bull_ask
+
+    def get_bear_bid(self):
+        return self.bear_bid
+
+    def get_bear_ask(self):
+        return self.bear_ask
+
+    def get_bull_bid_seller(self):
+        return self.bull_bid_seller
+
+    def get_bull_ask_seller(self):
+        return self.bull_ask_seller
+
+    def get_bear_bid_seller(self):
+        return self.bear_bid_seller
+
+    def get_bear_ask_seller(self):
+        return self.bear_ask_seller
 
     def run(self):
         self.ready = 0
