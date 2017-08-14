@@ -757,8 +757,37 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
+    def disable_adverse_bull(self):
+        # Disable Bull when MA20 decreases sharply
+        MA20_THRESHOLD = -1
+        try:
+            deltaMA20 = self.deltaMA20_ma3
+        except:
+            return
 
+        if deltaMA20 <= MA20_THRESHOLD:
+            self.opt.disble_order_stock_code(self.bull_code)
 
+        return
+
+    def disable_adverse_bear(self):
+        # Disable Bear when cur > MA10 and MA10,Ma20 increase
+        MA10_THRESHOLD = 0.7
+        MA20_THRESHOLD = 0.5
+        try:
+            deltaMA20 = self.deltaMA20_ma3
+            deltaMA10 = self.deltaMA10_ma3
+            ma10 = self.MA10_cur
+            ma20 = self.MA20_cur
+            cur = self.cur
+        except:
+            return
+
+        if deltaMA20 >= MA20_THRESHOLD and deltaMA10 >= MA10_THRESHOLD and \
+                ma10 > ma20 and cur > ma10:
+            self.opt.disble_order_stock_code(self.bear_code)
+
+        return
 
     def is_trade_time(self, cur_time):
 #        return 1
