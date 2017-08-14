@@ -330,6 +330,8 @@ class zma20_strategy_quote(threading.Thread):
         ## Condition 1: MA20 Changes fast
         if abs(deltaMA20) <= LOWMA20_THRESHOLD and abs(deltaMA10) <= LOWMA10_THRESHOLD:
             self.play.play_warn_ma_low()
+            self.opt.disble_order_stock_code(self.bear_code)
+            self.opt.disble_order_stock_code(self.bull_code)
         else:
              self.play.stop_play_warn_ma_low()
         return
