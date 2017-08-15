@@ -29,8 +29,8 @@ class zma20_strategy_quote(threading.Thread):
         self.deposit_bottom = 0
         self.deposit_bull = 0
         self.deposit_top = 0
-        self.cur_zma10_ratio_simple = 0
-        self.cur_zma10_ratio_simple_0 = 0
+        self.cur_zma10_ratio_simple_ratio = 0
+        self.cur_zma10_ratio_simple_ratio_0 = 0
         self.ret= []
         self.interval = 0.5
         self.count = 0
@@ -134,11 +134,13 @@ class zma20_strategy_quote(threading.Thread):
         start_pos = len + t
         if position < start_pos:
           return -1
-        self.cur_zma10_ratio_simple_0 = self.cur_zma10_ratio_simple
+
         val = self.ret.iloc[position, ZMA10_POS] - self.ret.iloc[position - t, ZMA10_POS]
         self.ret.iloc[position, ZMA10_RATIO_POS] = val * c
-        self.cur_zma10_ratio_simple = val * c
+
         return 1
+
+
 
     def cal_zma20_ratio(self, position, sample = 60):
         len = 2400
@@ -179,6 +181,18 @@ class zma20_strategy_quote(threading.Thread):
         if ret == -1:
             val = 0
         self.ret.iloc[position, ZMA10_RATIO_RATIO_POS] = val * 10000
+        return 1
+
+    def cal_zma10_ratio_simple_ratio(self, position, sample = 360):
+        len = 1200 + 121
+        val =0
+        start_pos = len + sample
+        if position < start_pos:
+          return -1
+        self.cur_zma10_ratio_simple_ratio_0 = self.cur_zma10_ratio_simple_ratio
+        val = self.ret.iloc[position, ZMA10_RATIO_POS] - self.ret.iloc[position - sample, ZMA10_RATIO_POS]
+        self.ret.iloc[position, ZMA10_RATIO_RATIO_POS] = val / sample
+        self.cur_zma10_ratio_simple_ratio = val / sample
         return 1
 
     ## MA GAP
@@ -511,11 +525,11 @@ class zma20_strategy_quote(threading.Thread):
 
     def detect_zma10_decrease(self):
         try:
-            cur_zma10_ratio_simple   = self.cur_zma10_ratio_simple
-            cur_zma10_ratio_simple_0 = self.cur_zma10_ratio_simple_0
+            cur_zma10_ratio_simple_ratio   = self.cur_zma10_ratio_simple_ratio
+            cur_zma10_ratio_simple_ratio_0 = self.cur_zma10_ratio_simple_ratio_0
         except:
             return
-        if cur_zma10_ratio_simple_0 > -0.01 and cur_zma10_ratio_simple <= -0.01:
+        if cur_zma10_ratio_simple_ratio_0 > -0.01 and cur_zma10_ratio_simple_ratio <= -0.01:
             print("REMIND!!!DETECT MA10 DECREASE!!")
             self.play.play_zma10_decrease()
         else:
@@ -914,6 +928,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.cal_zma10(self.count)
                 #self.cal_zma20(self.count)
                 self.cal_zma10_ratio_simple(self.count)
+                self.cal_zma10_ratio_simple_ratio(self.count)
                 #self.cal_zma10_ratio(self.count, 360)
                 #self.cal_zma20_ratio(self.count, 360)
                 #self.cal_zma_gap(self.count)
@@ -954,6 +969,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.guard_burst()
                 #self.guard_bear()
                 self.guard_bear2()
+                self.detect_zma10_decrease()
                 #self.guard_bull()
                 self.empty_head()
                 self.many_head()
