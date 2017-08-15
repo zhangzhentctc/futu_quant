@@ -42,7 +42,7 @@ class zma20_strategy_quote(threading.Thread):
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio",
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
 
-        self.bear_code = 67863
+        self.bear_code = 62162
         self.bull_code = 69512
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
@@ -401,7 +401,7 @@ class zma20_strategy_quote(threading.Thread):
         check_value = 10000
 
         observe_num = 5
-        current_weight = 0.5
+        current_weight = 0.6
         score = 0
         tolerance = 0
         limit = 10
@@ -442,6 +442,20 @@ class zma20_strategy_quote(threading.Thread):
         for i in range(1, observe_num):
             if (ma_1m_table.iloc[i, low_pos] < ma_1m_table.iloc[lowest_pos, low_pos]) or (ma_1m_table.iloc[i, low_pos] == ma_1m_table.iloc[lowest_pos, low_pos]):
                 lowest_pos = i
+
+        ## Find the highest
+        highest_pos = 0
+        for i in range(1, observe_num):
+            if (ma_1m_table.iloc[i, high_pos] > ma_1m_table.iloc[highest_pos, high_pos]) or ( ma_1m_table.iloc[i, high_pos] == ma_1m_table.iloc[highest_pos, high_pos]):
+                highest_pos = i
+
+        # Calculate limit bonus
+        high_low_gap = ma_1m_table.iloc[highest_pos, high_pos] - ma_1m_table.iloc[lowest_pos, low_pos]
+        if high_low_gap > 0:
+            limit_bonus = (high_low_gap % 10) * 0.5
+            extra_tolerance_bonus = (high_low_gap % 10) * 0.5
+            limit += limit_bonus
+            extra_tolerance += extra_tolerance_bonus
 
         ## If lowest is the latest one
         pointer = lowest_pos
