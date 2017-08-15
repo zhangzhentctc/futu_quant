@@ -19,9 +19,12 @@ class hk_trade_handler(threading.Thread):
     def sell_bear_force(self, stock_code, qty0):
         status = 1
         qty = qty0
+        wait_bad_quote = 20
         while status != 0:
+            print("Force Cell")
             bear_bid = self.stock_quote.get_bear_bid()
             bear_ask = self.stock_quote.get_bear_ask()
+            print(bear_bid, bear_ask)
             if bear_ask * 1000 - bear_bid * 1000 <= 2:
                 localid = self.hk_trade_opt.sell_stock_code_qty(stock_code, bear_bid, qty)
                 if localid == -1:
@@ -44,13 +47,16 @@ class hk_trade_handler(threading.Thread):
                 else:
                     return -1
             else:
-                time.sleep(0.5)
+                if wait_bad_quote == 0:
+                    return -1
+                else:
+                    time.sleep(0.5)
+                    wait_bad_quote -= 1
 
     def run(self):
         if self.qty == -1:
-            qty = self.hk_trade_opt.query_position_stock_qty(self.stock_quote)
+            qty = self.hk_trade_opt.query_position_stock_qty(self.stock_code)
             if qty == -1 or qty == 0:
                 print("No Position")
             self.qty = qty
-        self.sell_bear_force(self.stock_quote, self.qty)
-
+        self.sell_bear_force(self.stock_code, self.qty)
