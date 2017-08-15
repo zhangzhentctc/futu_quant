@@ -7,13 +7,13 @@ class hk_trade_opt:
 
 # envtype == 1 stands simulation
 # envtype == 0 stands real trade
-        self.envtype = 1
+        self.envtype = 0
         self.place_time = 0
 
 # Buy return:
 # {'SvrResult': '0', 'Cookie': '888888', 'EnvType': '1', 'LocalID': '1425263522639675'}
     def buy(self, price, qty, strcode):
-        if qty <= 0:
+        if int(qty) <= 0:
             print("Bad Quantity")
             return -1
         cookie = "333"
@@ -31,7 +31,7 @@ class hk_trade_opt:
         return ret_data["LocalID"]
 
     def sell(self,  price, qty, strcode):
-        if qty <= 0:
+        if int(qty) <= 0:
             print("Bad Quantity")
             return -1
         cookie = "444"
@@ -96,7 +96,7 @@ class hk_trade_opt:
         pos_qty = 0
         pos_qty = self.query_position_stock_qty(stock_code)
         print(pos_qty, "  ", qty)
-        if int(pos_qty) == 0 or int(pos_qty) == -1 or int(pos_qty) < qty:
+        if int(pos_qty) == 0 or int(pos_qty) == -1 or int(pos_qty) < int(qty):
             print("Not Enough Position")
             return -1
         else:
@@ -184,7 +184,6 @@ class hk_trade_opt:
         ret_code, ret_data = self.hk_trade_api.position_list_query("456", self.envtype)
         if ret_code == -1:
             return -1
-        print(ret_data)
         for i in ret_data["stock_code"]:
             if str(i) == str(stock_code):
                 position = count
@@ -195,6 +194,7 @@ class hk_trade_opt:
             print("No Such stock position")
         else:
             pos_qty = ret_data["can_sell_qty"][position]
+        print("pos", pos_qty)
         return pos_qty
 
     def query_position_stock_cost(self, stock_code):
