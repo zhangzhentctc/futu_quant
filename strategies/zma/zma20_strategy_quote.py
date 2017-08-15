@@ -29,7 +29,8 @@ class zma20_strategy_quote(threading.Thread):
         self.deposit_bottom = 0
         self.deposit_bull = 0
         self.deposit_top = 0
-
+        self.cur_zma10_ratio_simple = 0
+        self.cur_zma10_ratio_simple_0 = 0
         self.ret= []
         self.interval = 0.5
         self.count = 0
@@ -123,6 +124,20 @@ class zma20_strategy_quote(threading.Thread):
         if ret == -1:
             val = 0
         self.ret.iloc[position, ZMA10_RATIO_POS] = val  * 120
+        return 1
+
+    def cal_zma10_ratio_simple(self, position, sample = 120):
+        len = 1200
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if position < start_pos:
+          return -1
+        self.cur_zma10_ratio_simple_0 = self.cur_zma10_ratio_simple
+        val = self.ret.iloc[position, ZMA10_POS] - self.ret.iloc[position - t, ZMA10_POS]
+        self.ret.iloc[position, ZMA10_RATIO_POS] = val * c
+        self.cur_zma10_ratio_simple = val * c
         return 1
 
     def cal_zma20_ratio(self, position, sample = 60):
@@ -244,7 +259,6 @@ class zma20_strategy_quote(threading.Thread):
             self.play.stop_play_morning_warn()
         return
 
-
     def determine_direction(self):
         UP_THRESHOLD = 0.5
         DOWN_THRESHOLD = -0.5
@@ -319,7 +333,6 @@ class zma20_strategy_quote(threading.Thread):
                     self.play.stop_play_warn_bull_recover()
         return
 
-
     def warn_ma_low(self):
         LOWMA10_THRESHOLD = 0.7
         LOWMA20_THRESHOLD = 0.5
@@ -337,7 +350,6 @@ class zma20_strategy_quote(threading.Thread):
         else:
              self.play.stop_play_warn_ma_low()
         return
-
 
     def guard_bear(self):
         count = 26
@@ -497,6 +509,18 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
+    def detect_zma10_decrease(self):
+        try:
+            cur_zma10_ratio_simple   = self.cur_zma10_ratio_simple
+            cur_zma10_ratio_simple_0 = self.cur_zma10_ratio_simple_0
+        except:
+            return
+        if cur_zma10_ratio_simple_0 > -0.01 and cur_zma10_ratio_simple <= -0.01:
+            print("REMIND!!!DETECT MA10 DECREASE!!")
+            self.play.play_zma10_decrease()
+        else:
+            self.play.stop_play_zma10_decrease()
+        return
 
     def guard_bull(self):
         count = 26
@@ -538,7 +562,6 @@ class zma20_strategy_quote(threading.Thread):
                         print("Guard Bull: reset with deposit")
                 print("Guard Bull: wait with deposit " + str(self.deposit_top))
                 return
-
 
     def empty_head(self):
         K_NO = 26
@@ -644,7 +667,6 @@ class zma20_strategy_quote(threading.Thread):
             self.play.stop_play_start_bear()
         print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
-
 
     def many_head(self):
         K_NO = 26
@@ -890,10 +912,11 @@ class zma20_strategy_quote(threading.Thread):
                 self.ret.iloc[self.count, CUR_POS] = cur_stock_quoto
                 self.ret.iloc[self.count, TIME_POS] = self.data_time
                 self.cal_zma10(self.count)
-                self.cal_zma20(self.count)
-                self.cal_zma10_ratio(self.count, 360)
-                self.cal_zma20_ratio(self.count, 360)
-                self.cal_zma_gap(self.count)
+                #self.cal_zma20(self.count)
+                self.cal_zma10_ratio_simple(self.count)
+                #self.cal_zma10_ratio(self.count, 360)
+                #self.cal_zma20_ratio(self.count, 360)
+                #self.cal_zma_gap(self.count)
 
                 self.is_available = 1
 

@@ -24,6 +24,7 @@ class PlaySound(threading.Thread):
         self.warn_low_amplitude = STOP
         self.general_warn = STOP
         self.warn_ma_low = STOP
+        self.zma10_decrease = STOP
 
         self.start_bear_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bear.wav"
         self.start_bull_path =        r"D:\quant\\test0\\futu_quant\\sounds\start_bull.wav"
@@ -40,6 +41,7 @@ class PlaySound(threading.Thread):
         self.warn_low_amplitude_path = r"D:\quant\\test0\\futu_quant\\sounds\warn_low_amplitude.wav"
         self.general_warn_path =      r"D:\quant\\test0\\futu_quant\\sounds\general_warn.wav"
         self.warn_ma_low_path =       r"D:\quant\\test0\\futu_quant\\sounds\warn_ma_low.wav"
+        self.zma10_decrease_path =    r"D:\quant\\test0\\futu_quant\\sounds\warn_ma_low.wav"
 
 # PLAY Signal
     def play_burst_up(self):
@@ -87,6 +89,9 @@ class PlaySound(threading.Thread):
     def play_warn_ma_low(self):
         self.warn_ma_low += 1
 
+    def play_zma10_decrease(self):
+        self.zma10_decrease += 1
+
 # STOP Signal
     def stop_play_stop_lossing_bull(self):
         self.stop_lossing_bull = STOP
@@ -131,6 +136,9 @@ class PlaySound(threading.Thread):
     def stop_play_warn_ma_low(self):
         self.warn_ma_low = STOP
 
+    def stop_play_zma10_decrease(self):
+        self.zma10_decrease = STOP
+
 
     def play_sound(self, path):
         try:
@@ -156,6 +164,10 @@ class PlaySound(threading.Thread):
             if self.stop_lossing_bear_inst != STOP:
                 self.play_sound(self.stop_lossing_bear_inst_path)
                 self.stop_lossing_bear_inst -= 1
+
+            if self.zma10_decrease != STOP:
+                self.play_sound(self.zma10_decrease_path)
+                self.zma10_decrease -= 1
 
             if self.stop_lossing_bull != STOP:
                 self.play_sound(self.stop_lossing_bull_path)
