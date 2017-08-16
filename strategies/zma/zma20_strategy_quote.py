@@ -29,6 +29,7 @@ class zma20_strategy_quote(threading.Thread):
         self.deposit_bottom = 0
         self.deposit_bull = 0
         self.deposit_top = 0
+        self.zma10_new_trend = 0
         self.cur_zma10_ratio_simple_ratio = 0
         self.cur_zma10_ratio_simple_ratio_0 = 0
         self.ret= []
@@ -140,6 +141,30 @@ class zma20_strategy_quote(threading.Thread):
 
         return 1
 
+## Require ZMA10_RATIO
+    def refresh_zma10_ratio_simple(self, position, sample = 120):
+        len = 1200
+        start_pos = len + sample
+        ## Assign zma10_new_trend at the first time
+        if self.zma10_new_trend == 0:
+            try:
+                deltaMA10_ma3 = self.deltaMA10_ma3
+                if deltaMA10_ma3 >= 0:
+                    self.zma10_new_trend = 1
+                else:
+                    self.zma10_new_trend = -1
+            except:
+                x = 1
+
+        if position > start_pos + 1:
+            older_ma10_ratio = self.ret.iloc[position - 1, ZMA10_RATIO_POS]
+            now_ma10_ratio = self.ret.iloc[position, ZMA10_RATIO_POS]
+            if older_ma10_ratio >= 0 and now_ma10_ratio < 0:
+                self.zma10_new_trend = -1
+            if older_ma10_ratio <= 0 and now_ma10_ratio > 0:
+                self.zma10_new_trend = 1
+
+        return
 
 
     def cal_zma20_ratio(self, position, sample = 60):
@@ -193,6 +218,7 @@ class zma20_strategy_quote(threading.Thread):
         val = self.ret.iloc[position, ZMA10_RATIO_POS] - self.ret.iloc[position - sample, ZMA10_RATIO_POS]
         self.ret.iloc[position, ZMA10_RATIO_RATIO_POS] = val / sample
         self.cur_zma10_ratio_simple_ratio = val / sample
+        print("ratio ratio ma10: ",self.cur_zma10_ratio_simple_ratio )
         return 1
 
     ## MA GAP
@@ -534,6 +560,7 @@ class zma20_strategy_quote(threading.Thread):
             self.play.play_zma10_decrease()
         else:
             self.play.stop_play_zma10_decrease()
+        print(cur_zma10_ratio_simple_ratio, "AAAAAAAA", cur_zma10_ratio_simple_ratio_0)
         return
 
     def guard_bull(self):
@@ -846,7 +873,7 @@ class zma20_strategy_quote(threading.Thread):
         return
 
     def is_trade_time(self, cur_time):
-#        return 1
+        #return 1
         morning_end = "11:59:58"
         noon_start = "13:00:01"
 
@@ -966,6 +993,8 @@ class zma20_strategy_quote(threading.Thread):
                 self.print_ma()
                 self.cal_cur_speed()
                 self.determine_direction()
+                self.refresh_zma10_ratio_simple(self.count)
+
                 self.guard_burst()
                 #self.guard_bear()
                 self.guard_bear2()
