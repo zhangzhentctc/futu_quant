@@ -600,8 +600,7 @@ class zma20_strategy_quote(threading.Thread):
                     self.cur < self.MA10_cur:
                     print("BUY BUY BUY!!!")
                     if self.hk_trade_handler_bear_simulation.is_alive() == False:
-                        self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote,
-                                                                                 self.bear_code, BUY, self.trade_qty)
+                        self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code, BUY, self.trade_qty)
                         self.hk_trade_handler_bear_simulation.start()
                         self.test = 1
                     self.zma10_new_trend = -9999

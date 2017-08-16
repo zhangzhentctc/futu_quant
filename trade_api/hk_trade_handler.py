@@ -127,7 +127,7 @@ class hk_trade_handler(threading.Thread):
         print("SELL QTY:", sell_qty)
         while status != 0:
             bear_bid = self.stock_quote.get_bear_bid()
-            if bear_bid * 1000 - dealt_ask * 1000 >= 1 or 1:
+            if bear_bid * 1000 - dealt_ask * 1000 >= 1 :
                 localid = self.hk_trade_opt.sell_stock_code_qty(stock_code, bear_bid, qty)
                 if localid == -1:
                     return -1
