@@ -30,6 +30,7 @@ class zma20_strategy_quote(threading.Thread):
         self.deposit_bull = 0
         self.deposit_top = 0
         self.zma10_new_trend = 0
+        self.zma10_decrease = 1
         self.cur_zma10_ratio_simple_ratio = 0
         self.cur_zma10_ratio_simple_ratio_0 = 0
         self.ret= []
@@ -549,6 +550,7 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
+## Require ZMA10_RATIO_SIMPLE_RATIO
     def detect_zma10_decrease(self):
         try:
             cur_zma10_ratio_simple_ratio   = self.cur_zma10_ratio_simple_ratio
@@ -557,11 +559,40 @@ class zma20_strategy_quote(threading.Thread):
             return
         if cur_zma10_ratio_simple_ratio_0 > -0.01 and cur_zma10_ratio_simple_ratio <= -0.01:
             print("REMIND!!!DETECT MA10 DECREASE!!")
+            self.zma10_decrease = 1
             self.play.play_zma10_decrease()
         else:
+            self.zma10_decrease = 0
             self.play.stop_play_zma10_decrease()
         print(cur_zma10_ratio_simple_ratio, "AAAAAAAA", cur_zma10_ratio_simple_ratio_0)
         return
+
+## Require zma10_decrease
+    def detect_empty_start(self):
+        ## First, See if meet 001 condition
+        if self.zma10_decrease == 0:
+            return
+        if self.zma10_decrease == 1:
+            ## Second, See if we can do it for the first time
+            if self.zma10_new_trend != -1:
+                return
+            else:
+                ## Now We check Empty Start
+                ## Condition 1: MA10 goes down
+                ## Condition 2: MA10 is less than MA20
+                ## Condition 3: Current value is less than MA10
+                if self.count < 1500:
+                    ma10_ratio = self.deltaMA10_cur
+                else:
+                    ma10_ratio = self.ret.iloc[self.count, ZMA10_RATIO_POS]
+                if ma10_ratio < 0 and \
+                    self.MA10_cur < self.MA20_cur and \
+                    self.cur < self.MA10_cur:
+                    print("BUY BUY BUY!!!")
+                    self.zma10_new_trend = -9999
+
+        return
+
 
     def guard_bull(self):
         count = 26
@@ -994,11 +1025,13 @@ class zma20_strategy_quote(threading.Thread):
                 self.cal_cur_speed()
                 self.determine_direction()
                 self.refresh_zma10_ratio_simple(self.count)
+                self.detect_zma10_decrease()
+                self.detect_empty_start()
 
                 self.guard_burst()
                 #self.guard_bear()
                 self.guard_bear2()
-                self.detect_zma10_decrease()
+
                 #self.guard_bull()
                 self.empty_head()
                 self.many_head()
