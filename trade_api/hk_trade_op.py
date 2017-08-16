@@ -2,12 +2,12 @@ from trade_api.hk_trade_api import *
 import time
 
 class hk_trade_opt:
-    def __init__(self, hk_trade_api):
+    def __init__(self, hk_trade_api, envtype = 1):
         self.hk_trade_api = hk_trade_api
 
 # envtype == 1 stands simulation
 # envtype == 0 stands real trade
-        self.envtype = 0
+        self.envtype = envtype
         self.place_time = 0
 
 # Buy return:
@@ -19,7 +19,7 @@ class hk_trade_opt:
         cookie = "333"
         ret_code, ret_data = self.hk_trade_api.place_order(cookie, price, qty, strcode, 0, 0, self.envtype)
         if ret_code == -1:
-            print("place order fail")
+            print("place order buy fail")
             return -1
         if ret_data["SvrResult"] == -1:
             print("buy fail")
@@ -37,7 +37,7 @@ class hk_trade_opt:
         cookie = "444"
         ret_code, ret_data = self.hk_trade_api.place_order(cookie, price, qty, strcode, 1, 0, self.envtype)
         if ret_code == -1:
-            print("place order fail")
+            print("place order sell fail")
             return -1, ""
         if ret_data["SvrResult"] == -1:
             print("sell fail")
@@ -102,6 +102,10 @@ class hk_trade_opt:
         else:
             print(qty, "!!!!!!!!!!")
             localid = self.sell(price, qty, stock_code)
+        return localid
+
+    def buy_stock_code_qty(self, stock_code, price, qty):
+        localid = self.buy(price, qty, stock_code)
         return localid
 
     def modify_order_price(self, localid, price, qty, direction):
@@ -184,6 +188,7 @@ class hk_trade_opt:
         ret_code, ret_data = self.hk_trade_api.position_list_query("456", self.envtype)
         if ret_code == -1:
             return -1
+        print(ret_data)
         for i in ret_data["stock_code"]:
             if str(i) == str(stock_code):
                 position = count
