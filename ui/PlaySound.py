@@ -41,7 +41,7 @@ class PlaySound(threading.Thread):
         self.warn_low_amplitude_path = r"D:\quant\\test0\\futu_quant\\sounds\warn_low_amplitude.wav"
         self.general_warn_path =      r"D:\quant\\test0\\futu_quant\\sounds\general_warn.wav"
         self.warn_ma_low_path =       r"D:\quant\\test0\\futu_quant\\sounds\warn_ma_low.wav"
-        self.zma10_decrease_path =    r"D:\quant\\test0\\futu_quant\\sounds\warn_ma_low.wav"
+        self.zma10_decrease_path =    r"D:\quant\\test0\\futu_quant\\sounds\zma10_decrease.wav"
 
 # PLAY Signal
     def play_burst_up(self):
