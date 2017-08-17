@@ -40,6 +40,7 @@ class zma20_strategy_quote(threading.Thread):
         self.is_available = 0
         self.play = play
         self.direction = 0
+        self.sell_bear = 0
         data= []
         for i in range(0, 60000):
             data.append({"No.": 0})
@@ -543,6 +544,7 @@ class zma20_strategy_quote(threading.Thread):
                     print("Assign Tollerance")
                 pointer = observe_num - 1
         print("SCORE: " + str(score))
+        self.sell_bear = sell_bear
         if sell_bear == 1:
             self.play.play_stop_lossing_bear_inst()
             #self.opt.clear_stock_code(self.bear_code, self.bear_bid_seller)
@@ -597,7 +599,8 @@ class zma20_strategy_quote(threading.Thread):
                     ma10_ratio = self.ret.iloc[self.count, ZMA10_RATIO_POS]
                 if ma10_ratio < 0 and \
                     self.MA10_cur < self.MA20_cur and \
-                    self.cur < self.MA10_cur:
+                    self.cur < self.MA10_cur and \
+                    self.sell_bear == 0:
                     print("BUY BUY BUY!!!")
                     if self.hk_trade_handler_bear_simulation.is_alive() == False:
                         self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code, BUY, self.trade_qty)
