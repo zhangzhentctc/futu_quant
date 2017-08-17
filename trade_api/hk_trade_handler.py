@@ -2,7 +2,28 @@ import threading
 import time
 import math
 
+STATUS_IDLE = 0
+STATUS_BEAR_FORCE_SELL = 1
+STATUS_BEAR_FORCE_BUY = 2
+STATUS_BEAR_WAIT_PROFIT = 3
 class hk_trade_handler(threading.Thread):
+## Single Class
+## Status:
+##    1. bear force sell
+##         Change: Signal from outside
+##          Input: Signal
+##            Get: Position, bear_quoto
+##    2. bear force buy
+##         Change: Signal from outside
+##          Input: Signal, Quantity
+##            Get: bear_quoto
+##    3. bear wait 1 profit
+##         Change: After bear force buy succeed
+##          Input: Signal
+##            Get: Position, bear_quoto
+##
+
+
 
     ## BUY:  CMD = 0
     ## SELL: CMD = 1
@@ -14,6 +35,13 @@ class hk_trade_handler(threading.Thread):
         self.qty = qty
         self.cmd = cmd
         self.type = type
+
+        self.status = STATUS_IDLE
+        self.buy_qty = 0
+        self.dealt_ask = 0
+
+        self.bear_code = 0
+        self.bull_code = 0
 
 ## Sell Forcely
 # sell to bid 1
@@ -162,6 +190,18 @@ class hk_trade_handler(threading.Thread):
         ## While End
         return
 
+    def bear_force_sell(self):
+        self.status = STATUS_BEAR_FORCE_SELL
+
+    def bear_force_buy(self, qty):
+        self.status = STATUS_BEAR_FORCE_BUY
+        self.buy_qty = qty
+
+    def bear_wait_profit(self):
+        self.status = STATUS_BEAR_WAIT_PROFIT
+
+    def set_idle(self):
+        self.status = STATUS_IDLE
 
     def run(self):
         ## Sell Task
@@ -181,3 +221,196 @@ class hk_trade_handler(threading.Thread):
             else:
                 self.buy_bear_force_sell_half(self.stock_code, self.qty)
 
+    def run2(self):
+        while(1):
+            ## Get Status
+            try:
+                status = self.status
+            except:
+                time.sleep(0.1)
+                continue
+
+
+
+            if status == STATUS_IDLE:
+                time.sleep(0.1)
+                continue
+
+
+
+            if status == STATUS_BEAR_FORCE_SELL:
+                ## Check Position
+                qty_p = self.hk_trade_opt.query_position_stock_qty(self.bear_code)
+                if qty_p == -1 or qty_p == 0:
+                    print("No Position. Force Sell Bear Stop!")
+                    self.set_idle()
+                else:
+                    ## SELL
+                    bear_force_sell_status = 1
+                    qty = qty_p
+                    wait_bad_quote = 30
+                    while bear_force_sell_status != 0:
+                        bear_bid = self.stock_quote.get_bear_bid()
+                        bear_ask = self.stock_quote.get_bear_ask()
+                        print(bear_bid, bear_ask)
+                        if bear_ask * 1000 - bear_bid * 1000 <= 2:
+                            localid = self.hk_trade_opt.sell_stock_code_qty(self.bear_code, bear_bid, qty)
+                            if localid == -1:
+                                break
+                            time.sleep(1)
+
+                            # status = 2 when not all dealt
+                            # status = 0 when all dealt
+                            ret = self.hk_trade_opt.check_dealt_all(localid)
+                            if ret == -1:
+                                # if not all dealt, get dealt and delete order
+                                dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
+                                if dealt_qty == -1:
+                                    ## If it is simulation
+                                    if self.hk_trade_opt.envtype == 1:
+                                        break
+                                    break
+                                # new qty
+                                qty -= dealt_qty
+                                bear_force_sell_status = 2
+                            elif ret == 0:
+                                bear_force_sell_status = 0
+                            else:
+                                break
+                        else:
+                            if wait_bad_quote == 0:
+                                break
+                            else:
+                                time.sleep(0.2)
+                                wait_bad_quote -= 1
+
+                        # Check if status if changed by others
+                        try:
+                            check_status = self.status
+                        except:
+                            continue
+                        if check_status != STATUS_BEAR_FORCE_SELL:
+                            break
+                print("FORCE SELL FINISHED")
+                self.set_idle()
+
+
+
+            if status == STATUS_BEAR_FORCE_BUY:
+                dealt_ask = 0
+                if self.buy_qty <= 0:
+                    print("Bad Qty. Force Buy Bear Stop!")
+                    self.set_idle()
+                else:
+                    bear_force_buy_status = 1
+                    qty = self.buy_qty
+                    wait_bad_quote = 30
+                    dealt_ask = 0
+                    while bear_force_buy_status != 0:
+                        print("Force Buy")
+                        bear_bid = self.stock_quote.get_bear_bid()
+                        bear_ask = self.stock_quote.get_bear_ask()
+                        print(bear_bid, bear_ask)
+                        if bear_ask * 1000 - bear_bid * 1000 <= 2:
+                            localid = self.hk_trade_opt.buy_stock_code_qty(self.bear_code, bear_ask, qty)
+                            dealt_ask = bear_ask
+                            if localid == -1:
+                                break
+                            time.sleep(1)
+
+                            # status = 2 when not all dealt
+                            # status = 0 when all dealt
+                            ret = self.hk_trade_opt.check_dealt_all(localid)
+                            if ret == -1:
+                                # if not all dealt, get dealt and delete order
+                                dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
+                                if dealt_qty == -1:
+                                    ## If it is simulation
+                                    if self.hk_trade_opt.envtype == 1:
+                                        break
+                                    break
+                                # new qty
+                                qty -= dealt_qty
+                                bear_force_buy_status = 2
+                            elif ret == 0:
+                                bear_force_buy_status = 0
+                            else:
+                                break
+                        else:
+                            if wait_bad_quote == 0:
+                                print("Bad Bear Quoto")
+                            else:
+                                time.sleep(0.2)
+                                wait_bad_quote -= 1
+                        # Check if status if changed by others
+                        try:
+                            check_status = self.status
+                        except:
+                            continue
+                        if check_status != STATUS_BEAR_FORCE_BUY:
+                            break
+                if dealt_ask == 0:
+                    print("FORCE BUY FINISHED")
+                    self.set_idle()
+                else:
+                    print("FORCE BUY SUCCESS")
+                    self.dealt_ask = dealt_ask
+                    self.bear_wait_profit()
+
+
+
+            if status == STATUS_BEAR_WAIT_PROFIT:
+                ## Check Position
+                qty_p = self.hk_trade_opt.query_position_stock_qty(self.bear_code)
+                if qty_p == -1 or qty_p == 0:
+                    print("No Position. WAIT BEAR PROFIT Stop!")
+                    self.set_idle()
+                if self.dealt_ask == 0:
+                    print("EXIT BEAR WAIT PROFIT! BAD DEALT ASK")
+                    self.set_idle()
+                else:
+                    sell_pencil = math.ceil((int(qty_p) / 10000) / 2)
+                    sell_qty = sell_pencil * 10000
+                    qty = sell_qty
+                    wait_bear_profit_status = 1
+                    while wait_bear_profit_status != 0:
+                        bear_bid = self.stock_quote.get_bear_bid()
+                        if bear_bid * 1000 - self.dealt_ask * 1000 >= 1:
+                            localid = self.hk_trade_opt.sell_stock_code_qty(self.bear_code, bear_bid, qty)
+                            if localid == -1:
+                                break
+                            time.sleep(1)
+
+                            # status = 2 when not all dealt
+                            # status = 0 when all dealt
+                            ret = self.hk_trade_opt.check_dealt_all(localid)
+                            if ret == -1:
+                                # if not all dealt, get dealt and delete order
+                                dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
+                                if dealt_qty == -1:
+                                    ## If it is simulation
+                                    if self.hk_trade_opt.envtype == 1:
+                                        break
+                                    break
+                                # new qty
+                                qty -= dealt_qty
+                                wait_bear_profit_status = 2
+                            elif ret == 0:
+                                wait_bear_profit_status = 0
+                            else:
+                                break
+                        else:
+                            time.sleep(0.2)
+
+                        # Check if status if changed by others
+                        try:
+                            check_status = self.status
+                        except:
+                            continue
+                        if check_status != STATUS_BEAR_WAIT_PROFIT:
+                            break
+                print("BEAR WAIT PROFIT FINISHED")
+                self.set_idle()
+
+
+            time.sleep(0.2)
