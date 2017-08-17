@@ -546,9 +546,9 @@ class zma20_strategy_quote(threading.Thread):
         if sell_bear == 1:
             self.play.play_stop_lossing_bear_inst()
             #self.opt.clear_stock_code(self.bear_code, self.bear_bid_seller)
-            if self.hk_trade_handler_bear.is_alive() == False:
-                self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
-                self.hk_trade_handler_bear.start()
+            #if self.hk_trade_handler_bear.is_alive() == False:
+                #self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
+                #self.hk_trade_handler_bear.start()
 
             if self.hk_trade_handler_bear_simulation.is_alive() == False:
                 self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)

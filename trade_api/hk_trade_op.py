@@ -56,7 +56,7 @@ class hk_trade_opt:
     def get_order_id(self, localid):
         position = -1
         count = 0
-        ret_code, ret_data = self.hk_trade_api.order_list_query("123", self.envtype)
+        ret_code, ret_data = self.hk_trade_api.order_list_query("46366", self.envtype)
         if ret_code == -1:
             return -1
         for i in ret_data["localid"]:
@@ -188,7 +188,7 @@ class hk_trade_opt:
         ret_code, ret_data = self.hk_trade_api.position_list_query("456", self.envtype)
         if ret_code == -1:
             return -1
-        print(ret_data)
+        #print(ret_data)
         for i in ret_data["stock_code"]:
             if str(i) == str(stock_code):
                 position = count

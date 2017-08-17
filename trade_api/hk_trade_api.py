@@ -53,7 +53,7 @@ class hk_trade_api:
     def order_list_query(self, cookie, envtype):
         ret_code, ret_data = self.tradehk_ctx.order_list_query(cookie, envtype)
         if ret_code == RET_ERROR:
-            print("order_list_query fail")
+            print("order_list_query fail order_list_query")
             print(ret_data)
             return -1, ret_data
         return 1, ret_data
@@ -61,7 +61,7 @@ class hk_trade_api:
     def position_list_query(self, cookie, envtype):
         ret_code, ret_data = self.tradehk_ctx.position_list_query(cookie, envtype)
         if ret_code == RET_ERROR:
-            print("order_list_query fail")
+            print("order_list_query fail position_list_query")
             print(ret_data)
             return -1, ret_data
         return 1, ret_data
@@ -69,7 +69,7 @@ class hk_trade_api:
     def deal_list_query(self, cookie, envtype):
         ret_code, ret_data = self.tradehk_ctx.position_list_query(cookie, envtype)
         if ret_code == RET_ERROR:
-            print("order_list_query fail")
+            print("order_list_query fail deal_list_query")
             print(ret_data)
             return -1, ret_data
         return 1, ret_data
