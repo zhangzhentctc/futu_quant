@@ -8,6 +8,7 @@ STOP = 0
 class PlaySound(threading.Thread):
     def __init__(self):
         super(PlaySound, self).__init__()
+        self.fail_times = 0
 
         self.start_bear =        STOP
         self.stop_lossing_bear = STOP
@@ -145,6 +146,9 @@ class PlaySound(threading.Thread):
             playsound.playsound(path)
         except:
             print("WARN: Play Sound Fail")
+            self.fail_times += 1
+            return
+        self.fail_times = 0
         return
 
     def run(self):
@@ -210,5 +214,8 @@ class PlaySound(threading.Thread):
 
             if self.warn_ma_low != STOP:
                 self.play_sound(self.warn_ma_low_path)
+
+            if self.fail_times > 20:
+                break
 
             time.sleep(0.2)

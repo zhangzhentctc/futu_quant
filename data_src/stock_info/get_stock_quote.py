@@ -20,6 +20,7 @@ class get_stock_quote(threading.Thread):
         self.deltaMA20_cur = 0
         self.deltaMA20_ma3 = 0
         self.deltaMA20_ma5 = 0
+        ### For Quote
         self.bull_bid = -1
         self.bull_ask = -1
         self.bear_bid = -1
@@ -305,8 +306,9 @@ class get_stock_quote(threading.Thread):
             if dur < 0:
                 continue
             if self.refresh < dur:
+                print("quoto duration overtime")
                 continue
             else:
                 time.sleep(self.refresh - dur)
-            i -= 1
+            #i -= 1
         self.ready = 0

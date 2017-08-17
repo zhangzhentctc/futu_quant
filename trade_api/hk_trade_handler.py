@@ -9,20 +9,19 @@ STATUS_BEAR_WAIT_PROFIT = 3
 class hk_trade_handler(threading.Thread):
 ## Single Class
 ## Status:
-##    1. bear force sell
+##    1. bear force sell -> idle
 ##         Change: Signal from outside
 ##          Input: Signal
 ##            Get: Position, bear_quoto
-##    2. bear force buy
+##    2. bear force buy -> bear wait profit
 ##         Change: Signal from outside
 ##          Input: Signal, Quantity
 ##            Get: bear_quoto
-##    3. bear wait 1 profit
+##    3. bear wait 1 profit -> idle
 ##         Change: After bear force buy succeed
 ##          Input: Signal
 ##            Get: Position, bear_quoto
 ##
-
 
 
     ## BUY:  CMD = 0
@@ -244,6 +243,7 @@ class hk_trade_handler(threading.Thread):
                 if qty_p == -1 or qty_p == 0:
                     print("No Position. Force Sell Bear Stop!")
                     self.set_idle()
+                    continue
                 else:
                     ## SELL
                     bear_force_sell_status = 1
