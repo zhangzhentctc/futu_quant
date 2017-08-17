@@ -293,6 +293,7 @@ class hk_trade_handler(threading.Thread):
                             break
                 print("FORCE SELL FINISHED")
                 self.set_idle()
+                continue
 
 
 
@@ -301,6 +302,7 @@ class hk_trade_handler(threading.Thread):
                 if self.buy_qty <= 0:
                     print("Bad Qty. Force Buy Bear Stop!")
                     self.set_idle()
+                    continue
                 else:
                     bear_force_buy_status = 1
                     qty = self.buy_qty
@@ -356,17 +358,17 @@ class hk_trade_handler(threading.Thread):
                     print("FORCE BUY SUCCESS")
                     self.dealt_ask = dealt_ask
                     self.bear_wait_profit()
+                continue
 
 
 
             if status == STATUS_BEAR_WAIT_PROFIT:
                 ## Check Position
                 qty_p = self.hk_trade_opt.query_position_stock_qty(self.bear_code)
-                if qty_p == -1 or qty_p == 0:
+                if qty_p == -1 or qty_p == 0 or self.dealt_ask == 0:
+                    if self.dealt_ask == 0:
+                        print("Bad Dealt Ask")
                     print("No Position. WAIT BEAR PROFIT Stop!")
-                    self.set_idle()
-                if self.dealt_ask == 0:
-                    print("EXIT BEAR WAIT PROFIT! BAD DEALT ASK")
                     self.set_idle()
                 else:
                     sell_pencil = math.ceil((int(qty_p) / 10000) / 2)
@@ -411,6 +413,7 @@ class hk_trade_handler(threading.Thread):
                             break
                 print("BEAR WAIT PROFIT FINISHED")
                 self.set_idle()
+                continue
 
 
             time.sleep(0.2)
