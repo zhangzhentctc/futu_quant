@@ -26,11 +26,11 @@ class hk_trade_handler(threading.Thread):
 
     ## BUY:  CMD = 0
     ## SELL: CMD = 1
-    def __init__(self, hk_trade_opt, stock_quote, stock_code,  cmd = 1, qty = -1, type = 0):
+    def __init__(self, hk_trade_opt, stock_quote, bull_code, bear_code,  cmd = 1, qty = -1, type = 0):
         super(hk_trade_handler, self).__init__()
         self.hk_trade_opt = hk_trade_opt
         self.stock_quote = stock_quote
-        self.stock_code = stock_code
+        self.stock_code = 0
         self.qty = qty
         self.cmd = cmd
         self.type = type
@@ -39,8 +39,8 @@ class hk_trade_handler(threading.Thread):
         self.buy_qty = 0
         self.dealt_ask = 0
 
-        self.bear_code = 0
-        self.bull_code = 0
+        self.bear_code = bear_code
+        self.bull_code = bull_code
 
 ## Sell Forcely
 # sell to bid 1
@@ -202,7 +202,7 @@ class hk_trade_handler(threading.Thread):
     def set_idle(self):
         self.status = STATUS_IDLE
 
-    def run(self):
+    def run0(self):
         ## Sell Task
         if self.cmd == 1:
             if self.qty == -1:
@@ -220,7 +220,7 @@ class hk_trade_handler(threading.Thread):
             else:
                 self.buy_bear_force_sell_half(self.stock_code, self.qty)
 
-    def run2(self):
+    def run(self):
         while(1):
             ## Get Status
             try:

@@ -56,8 +56,9 @@ class zma20_strategy_quote(threading.Thread):
         self.opt = hk_trade_opt(self.hk_trade, 0)
         self.opt_simulation = hk_trade_opt(self.hk_trade)
         self.stock_quote = get_stock_quote(self.__quote_ctx, "HK." + str(self.bull_code), "HK." + str(self.bear_code))
-        self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
-        self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)
+        self.hk_trade_handler = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bull_code, self.bear_code)
+        # self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
+        # self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)
 
         # self.opt.disble_order_stock_code(67863)
         #    localid = opt.buy(0.06, 10000, "67541")
@@ -552,9 +553,10 @@ class zma20_strategy_quote(threading.Thread):
                 #self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
                 #self.hk_trade_handler_bear.start()
 
-            if self.hk_trade_handler_bear_simulation.is_alive() == False:
-                self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)
-                self.hk_trade_handler_bear_simulation.start()
+            #if self.hk_trade_handler_bear_simulation.is_alive() == False:
+                #self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)
+                #self.hk_trade_handler_bear_simulation.start()
+            self.hk_trade_handler.bear_force_sell()
         else:
             self.play.stop_play_stop_lossing_bear()
 
@@ -602,10 +604,12 @@ class zma20_strategy_quote(threading.Thread):
                     self.cur < self.MA10_cur and \
                     self.sell_bear == 0:
                     print("BUY BUY BUY!!!")
-                    if self.hk_trade_handler_bear_simulation.is_alive() == False:
-                        self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code, BUY, self.trade_qty)
-                        self.hk_trade_handler_bear_simulation.start()
-                        self.test = 1
+                    #if self.hk_trade_handler_bear_simulation.is_alive() == False:
+                        #self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code, BUY, self.trade_qty)
+                        #self.hk_trade_handler_bear_simulation.start()
+                        #self.test = 1
+                    self.hk_trade_handler.bear_force_buy(self.trade_qty)
+
                     self.zma10_new_trend = -9999
 
         return
@@ -983,6 +987,8 @@ class zma20_strategy_quote(threading.Thread):
         while stock_quote.ready != 1 :
             time.sleep(1)
 
+        self.hk_trade_handler.start()
+
         self.data_time = stock_quote.get_data_time()
         cur_stock_quoto = stock_quote.get_stock_quoto()
         self.cur = cur_stock_quoto
@@ -1083,6 +1089,8 @@ class zma20_strategy_quote(threading.Thread):
                 print("quote dies. Restart")
                 stock_quote.start()
 
-
+            if self.hk_trade_handler.is_alive() == False:
+                self.hk_trade_handler = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bull_code, self.bear_code)
+                self.hk_trade_handler.start()
 
 
