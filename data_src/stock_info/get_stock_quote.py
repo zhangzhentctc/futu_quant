@@ -49,6 +49,7 @@ class get_stock_quote(threading.Thread):
         if ret_status == RET_ERROR:
             return RET_ERROR
         quote_table = ret_data
+        #print("Quoto", ret_data)
         val = quote_table[self.cur_stock_quoto_index][0]
         cur_time = quote_table[self.data_time_index][0]
         cur_amplitude = quote_table[self.amplitude_index][0]
@@ -312,3 +313,4 @@ class get_stock_quote(threading.Thread):
                 time.sleep(self.refresh - dur)
             #i -= 1
         self.ready = 0
+        print("Quoto Dies")

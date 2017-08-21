@@ -18,7 +18,8 @@ ZMA_GAP_POS = 8
 ZMA_GAP_RATIO_POS = 9
 ZMA_GAP_RATIO_RATIO_POS = 10
 ZMA10_RATIO_RATIO_POS = 11
-CUR_RATIO_RATIO_POS = 12
+ZMA10_RATIO_RATIO_RATIO_POS = 12
+# CUR_RATIO_RATIO_POS = 12
 BUY = 0
 SELL = 1
 
@@ -32,8 +33,11 @@ class zma20_strategy_quote(threading.Thread):
         self.deposit_top = 0
         self.zma10_new_trend = 0
         self.zma10_decrease = 1
+        self.zma10_decrease_start = 0
         self.cur_zma10_ratio_simple_ratio = 0
         self.cur_zma10_ratio_simple_ratio_0 = 0
+        self.cur_zma10_ratio_simple_ratio_ratio = 0
+        self.cur_zma10_ratio_simple_ratio_ratio_0 = 0
         self.ret= []
         self.interval = 0.5
         self.count = 0
@@ -45,21 +49,23 @@ class zma20_strategy_quote(threading.Thread):
         for i in range(0, 60000):
             data.append({"No.": 0})
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio",
-                                               "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
-
-        self.trade_qty = 12 * 10000
-        self.bear_code = 62162
+                                               "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio"])
+        # 120K
+        self.trade_qty = 15 * 10000
+        self.bear_code = 63471
         self.bull_code = 69512
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '584679')
-        self.opt = hk_trade_opt(self.hk_trade, 0)
+        self.opt_real = hk_trade_opt(self.hk_trade, 0)
         self.opt_simulation = hk_trade_opt(self.hk_trade)
+        ### Change Trade Type Here
+        self.opt = self.opt_simulation
         self.stock_quote = get_stock_quote(self.__quote_ctx, "HK." + str(self.bull_code), "HK." + str(self.bear_code))
-        self.hk_trade_handler = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bull_code, self.bear_code)
+        self.hk_trade_handler = hk_trade_handler(self.opt, self.stock_quote, self.bull_code, self.bear_code)
         # self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
         # self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)
-
+        self.test = 0
         # self.opt.disble_order_stock_code(67863)
         #    localid = opt.buy(0.06, 10000, "67541")
         #    orderid = opt.get_order_id(localid)
@@ -106,19 +112,6 @@ class zma20_strategy_quote(threading.Thread):
 #        print("zma20 " + str(avr))
         return 0
 
-    def cal_cur_ratio(self, position):
-        len = 360
-        t = 360
-        val =0
-        start_pos = len + t
-        if position < start_pos:
-          return -1
-
-        ret, val = self.optimized_least_square_method(position - t + 1, position, "cur")
-        if ret == -1:
-            val = 0
-        self.ret.iloc[position, CUR_RATIO_RATIO_POS] = val * 10000
-        return 1
 
     ## MA Ratio
     def cal_zma10_ratio(self, position, sample = 60):
@@ -227,6 +220,22 @@ class zma20_strategy_quote(threading.Thread):
         self.ret.iloc[position, ZMA10_RATIO_RATIO_POS] = val / sample
         self.cur_zma10_ratio_simple_ratio = val / sample
         print("ratio ratio ma10: ",self.cur_zma10_ratio_simple_ratio )
+        return 1
+
+
+    def cal_zma10_ratio_ratio_ratio_simple(self, position, sample = 120):
+        len = 1200 + 121 + 360
+        val =0
+        start_pos = len + sample
+        c = 120 / sample
+        if position < start_pos:
+          return -1
+
+        self.cur_zma10_ratio_simple_ratio_ratio_0 = self.cur_zma10_ratio_simple_ratio_ratio
+        val = self.ret.iloc[position, ZMA10_RATIO_RATIO_POS] - self.ret.iloc[position - sample, ZMA10_RATIO_RATIO_POS]
+        self.ret.iloc[position, ZMA10_RATIO_RATIO_RATIO_POS] = val * c
+        self.cur_zma10_ratio_simple_ratio_ratio = val * c
+
         return 1
 
     ## MA GAP
@@ -571,6 +580,7 @@ class zma20_strategy_quote(threading.Thread):
         except:
             return
         if cur_zma10_ratio_simple_ratio_0 > -0.01 and cur_zma10_ratio_simple_ratio <= -0.01:
+
             print("REMIND!!!DETECT MA10 DECREASE!!")
             self.zma10_decrease = 1
             self.play.play_zma10_decrease()
@@ -580,8 +590,25 @@ class zma20_strategy_quote(threading.Thread):
         print(cur_zma10_ratio_simple_ratio, "AAAAAAAA", cur_zma10_ratio_simple_ratio_0)
         return
 
+    def detect_zma10_decrease_start(self):
+        try:
+            cur_zma10_ratio_simple_ratio_ratio   = self.cur_zma10_ratio_simple_ratio_ratio
+            cur_zma10_ratio_simple_ratio_ratio_0 = self.cur_zma10_ratio_simple_ratio_ratio_0
+        except:
+            return
+        if cur_zma10_ratio_simple_ratio_ratio_0 > -0.004 and cur_zma10_ratio_simple_ratio_ratio <= -0.004:
+
+            print("REMIND!!!DETECT MA10 DECREASE START!!")
+            self.zma10_decrease_start = 1
+            #self.play.play_zma10_decrease()
+        else:
+            self.zma10_decrease_start = 0
+            #self.play.stop_play_zma10_decrease()
+        print(cur_zma10_ratio_simple_ratio_ratio, "SSSSSSSS", cur_zma10_ratio_simple_ratio_ratio_0)
+        return
+
 ## Require zma10_decrease
-    def detect_empty_start(self):
+    def detect_empty_decrease(self):
 
         ## First, See if meet 001 condition
         if self.zma10_decrease == 0:
@@ -603,16 +630,75 @@ class zma20_strategy_quote(threading.Thread):
                     self.MA10_cur < self.MA20_cur and \
                     self.cur < self.MA10_cur and \
                     self.sell_bear == 0:
-                    print("BUY BUY BUY!!!")
-                    #if self.hk_trade_handler_bear_simulation.is_alive() == False:
-                        #self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code, BUY, self.trade_qty)
-                        #self.hk_trade_handler_bear_simulation.start()
-                        #self.test = 1
-                    self.hk_trade_handler.bear_force_buy(self.trade_qty)
-
-                    self.zma10_new_trend = -9999
+                    zma10_rrr = self.ret.iloc[self.count, ZMA10_RATIO_RATIO_POS] - self.ret.iloc[self.count - 120, ZMA10_RATIO_RATIO_POS]
+                    if zma10_rrr <= -0.005:
+                        print("BUY BUY BUY!!!")
+                        #if self.hk_trade_handler_bear_simulation.is_alive() == False:
+                            #self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code, BUY, self.trade_qty)
+                            #self.hk_trade_handler_bear_simulation.start()
+                            #self.test = 1
+                        self.hk_trade_handler.bear_force_buy(self.trade_qty)
+                        self.zma10_new_trend = -9999
+                    else:
+                        print("zma10_rrr", zma10_rrr)
 
         return
+
+        ## Require zma10_decrease
+    def detect_empty_start(self):
+        bear_start = 0
+         ## First, See if meet 0004 condition
+        if self.zma10_decrease_start == 0:
+             return
+        if self.zma10_decrease_start == 1:
+            ## Second, See if we can do it for the first time
+            if self.zma10_new_trend != -1:
+                return
+            else:
+                    ## Now We check Empty Start
+                    ## Condition 1: M10_r_r <=0 or M10_r_r - 0.004 * 60 <= 0
+                    ## Condition 2: Cur < M10
+                    ## Condition 3:
+                    ##         If 	1. M20_r > -1:
+                    ##                 a. M10_r <= 0 or M10_r - M10_r_r * 60 <= 0
+                    ##                 b. M10_r < M20_r
+                    ##         If   2. M20_r < -1:
+                    ##                 M10_r < 0
+                    ##
+                if self.count < 1500:
+                    ma10_ratio = self.deltaMA10_cur
+                else:
+                    ma10_ratio = self.ret.iloc[self.count, ZMA10_RATIO_POS]
+
+                if self.count < 1700:
+                    return
+                else:
+                    ma10_ratio_ratio = self.ret.iloc[self.count, ZMA10_RATIO_RATIO_POS]
+                ma20_ratio = self.deltaMA20_cur
+
+                if ( ma10_ratio_ratio <= 0 or ma10_ratio_ratio - 0.004 /2 <= 0) and ma10_ratio >= -3:
+                    if self.cur < self.MA10_cur:
+                        if ma20_ratio > -1:
+                            if ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0:
+                                if ma10_ratio < ma20_ratio:
+                                    if ma10_ratio_ratio <= -0.005:
+                                        if ma20_ratio >= 0:
+                                            if ma20_ratio - ma10_ratio < 3:
+                                                bear_start = 1
+                                        else:
+                                            bear_start = 1
+                        else:
+                            if ma10_ratio < 0:
+                                bear_start = 1
+
+        if bear_start == 1 and self.sell_bear == 0:
+            print("BUY BUY BUY!!!")
+            if self.deltaMA20_cur >= 6:
+                self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
+            else:
+                self.hk_trade_handler.bear_force_buy(self.trade_qty)
+            self.zma10_new_trend = -9999
+
 
 
     def guard_bull(self):
@@ -953,12 +1039,12 @@ class zma20_strategy_quote(threading.Thread):
                      "zma10": self.ret.iloc[pos, ZMA10_POS], "zma20": self.ret.iloc[pos, ZMA20_POS],
                      "zma10_ratio": self.ret.iloc[pos, ZMA10_RATIO_POS], "zma20_ratio": self.ret.iloc[pos, ZMA20_RATIO_POS],"zma20_ratio_ratio": self.ret.iloc[pos, ZMA20_RATIO_RATIO_POS],
                      "zma_gap": self.ret.iloc[pos, ZMA_GAP_POS], "zma_gap_ratio": self.ret.iloc[pos, ZMA_GAP_RATIO_POS], "zma_gap_ratio_ratio": self.ret.iloc[pos, ZMA_GAP_RATIO_RATIO_POS],
-                     "zma10_ratio_ratio": self.ret.iloc[pos, ZMA10_RATIO_RATIO_POS], "cur_ratio": self.ret.iloc[pos, CUR_RATIO_RATIO_POS]
+                     "zma10_ratio_ratio": self.ret.iloc[pos, ZMA10_RATIO_RATIO_POS], "zma10_ratio_ratio_zma_ratio": self.ret.iloc[pos, ZMA10_RATIO_RATIO_RATIO_POS]
                      })
         zma_quote = pd.DataFrame(data,
                              columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio",
                                       "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio",
-                                      "zma_gap_ratio_ratio", "zma10_ratio_ratio", "cur_ratio"])
+                                      "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_zma_ratio"])
         return RET_OK, zma_quote
 
     def print_ma(self):
@@ -1010,6 +1096,7 @@ class zma20_strategy_quote(threading.Thread):
                 #self.cal_zma20(self.count)
                 self.cal_zma10_ratio_simple(self.count)
                 self.cal_zma10_ratio_simple_ratio(self.count)
+                self.cal_zma10_ratio_ratio_ratio_simple(self.count)
                 #self.cal_zma10_ratio(self.count, 360)
                 #self.cal_zma20_ratio(self.count, 360)
                 #self.cal_zma_gap(self.count)
@@ -1048,8 +1135,10 @@ class zma20_strategy_quote(threading.Thread):
                 self.cal_cur_speed()
                 self.determine_direction()
                 self.refresh_zma10_ratio_simple(self.count)
-                self.detect_zma10_decrease()
+                #self.detect_zma10_decrease()
+                self.detect_zma10_decrease_start()
                 # Detect Empty and Buy
+                #self.detect_empty_decrease()
                 self.detect_empty_start()
 
                 self.guard_burst()
@@ -1084,13 +1173,26 @@ class zma20_strategy_quote(threading.Thread):
 
             ## Check Quote Status
             if stock_quote.is_alive() == False:
-                self.stock_quote = get_stock_quote(self.__quote_ctx)
-                stock_quote = self.stock_quote
-                print("quote dies. Restart")
-                stock_quote.start()
+                try:
+                    self.stock_quote = get_stock_quote(self.__quote_ctx)
+                    stock_quote = self.stock_quote
+                    print("quote dies. Restart")
+                    stock_quote.start()
+                except:
+                    print("Restart Quote Fail. Exit!")
+                    print("quote_ctx alive ", self.__quote_ctx.is_run())
+                    break
 
             if self.hk_trade_handler.is_alive() == False:
-                self.hk_trade_handler = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bull_code, self.bear_code)
-                self.hk_trade_handler.start()
+                try:
+                    self.hk_trade_handler = hk_trade_handler(self.opt, self.stock_quote, self.bull_code, self.bear_code)
+                    self.hk_trade_handler.start()
+                except:
+                    print("Restart trade handler Fail. Exit!")
+                    break
+
+            if self.ret.iloc[self.count, TIME_POS] == self.ret.iloc[self.count - 10, TIME_POS]:
+                break
+        print("MAIN THREAD DIE!!!!!!!!!!!")
 
 

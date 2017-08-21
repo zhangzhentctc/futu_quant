@@ -3,6 +3,7 @@ import time
 import math
 
 STATUS_IDLE = 0
+STATUS_WAIT_OPEN = 4
 STATUS_BEAR_FORCE_SELL = 1
 STATUS_BEAR_FORCE_BUY = 2
 STATUS_BEAR_WAIT_PROFIT = 3
@@ -35,12 +36,15 @@ class hk_trade_handler(threading.Thread):
         self.cmd = cmd
         self.type = type
 
-        self.status = STATUS_IDLE
+        self.status = STATUS_WAIT_OPEN
         self.buy_qty = 0
+        self.wait_profit_qty_ratio = 0
         self.dealt_ask = 0
 
         self.bear_code = bear_code
         self.bull_code = bull_code
+
+        self.busy = 0
 
 ## Sell Forcely
 # sell to bid 1
@@ -73,7 +77,7 @@ class hk_trade_handler(threading.Thread):
                             break
                         return -1
                     # new qty
-                    qty -= dealt_qty
+                    qty -= int(dealt_qty)
                     status = 2
                 elif ret == 0:
                     status = 0
@@ -120,7 +124,7 @@ class hk_trade_handler(threading.Thread):
                             break
                         return -1
                     # new qty
-                    qty -= dealt_qty
+                    qty -= int(dealt_qty)
                     status = 2
                 elif ret == 0:
                     status = 0
@@ -172,7 +176,7 @@ class hk_trade_handler(threading.Thread):
                             break
                         return -1
                     # new qty
-                    qty -= dealt_qty
+                    qty -= int(dealt_qty)
                     status = 2
                 elif ret == 0:
                     status = 0
@@ -190,35 +194,25 @@ class hk_trade_handler(threading.Thread):
         return
 
     def bear_force_sell(self):
-        self.status = STATUS_BEAR_FORCE_SELL
+        if self.status != STATUS_WAIT_OPEN:
+            self.status = STATUS_BEAR_FORCE_SELL
 
-    def bear_force_buy(self, qty):
-        self.status = STATUS_BEAR_FORCE_BUY
-        self.buy_qty = qty
+    def bear_force_buy(self, qty, wait_profit_ratio = 0.5):
+        if self.status != STATUS_WAIT_OPEN and self.busy != 1:
+            self.status = STATUS_BEAR_FORCE_BUY
+            self.buy_qty = qty
+            if wait_profit_ratio > 1 or wait_profit_ratio <= 0:
+                self.wait_profit_qty_ratio = 1
+            else:
+                self.wait_profit_qty_ratio = wait_profit_ratio
 
     def bear_wait_profit(self):
-        self.status = STATUS_BEAR_WAIT_PROFIT
+        if self.status != STATUS_WAIT_OPEN:
+            self.status = STATUS_BEAR_WAIT_PROFIT
 
     def set_idle(self):
         self.status = STATUS_IDLE
 
-    def run0(self):
-        ## Sell Task
-        if self.cmd == 1:
-            if self.qty == -1:
-                qty = self.hk_trade_opt.query_position_stock_qty(self.stock_code)
-                if qty == -1 or qty == 0:
-                    print("No Position")
-                self.qty = qty
-            self.sell_bear_force(self.stock_code, self.qty)
-
-        ## Buy Task
-        if self.cmd == 0:
-            if self.qty == -1:
-                print("Please specify Buy Quantity!")
-                return
-            else:
-                self.buy_bear_force_sell_half(self.stock_code, self.qty)
 
     def run(self):
         while(1):
@@ -229,6 +223,20 @@ class hk_trade_handler(threading.Thread):
                 time.sleep(0.1)
                 continue
 
+            if status == STATUS_WAIT_OPEN:
+                wait_open_status = 1
+                while wait_open_status != 0:
+                    bear_bid_seller = self.stock_quote.get_bear_bid_seller()
+                    bear_ask_seller = self.stock_quote.get_bear_ask_seller()
+                    if bear_bid_seller != -1 and bear_ask_seller != -1 and bear_bid_seller * 1000 - bear_ask_seller * 1000 <= 2:
+                        print("SELLER STARTS!")
+                        break
+                    else:
+                        time.sleep(0.5)
+                        continue
+                print("WAIT OPEN FINISHED")
+                self.set_idle()
+                continue
 
 
             if status == STATUS_IDLE:
@@ -271,7 +279,7 @@ class hk_trade_handler(threading.Thread):
                                         break
                                     break
                                 # new qty
-                                qty -= dealt_qty
+                                qty -= int(dealt_qty)
                                 bear_force_sell_status = 2
                             elif ret == 0:
                                 bear_force_sell_status = 0
@@ -293,6 +301,7 @@ class hk_trade_handler(threading.Thread):
                             break
                 print("FORCE SELL FINISHED")
                 self.set_idle()
+                self.busy = 0
                 continue
 
 
@@ -332,7 +341,7 @@ class hk_trade_handler(threading.Thread):
                                         break
                                     break
                                 # new qty
-                                qty -= dealt_qty
+                                qty -= int(dealt_qty)
                                 bear_force_buy_status = 2
                             elif ret == 0:
                                 bear_force_buy_status = 0
@@ -364,6 +373,7 @@ class hk_trade_handler(threading.Thread):
 
             if status == STATUS_BEAR_WAIT_PROFIT:
                 ## Check Position
+                sell_qty = 0
                 qty_p = self.hk_trade_opt.query_position_stock_qty(self.bear_code)
                 if qty_p == -1 or qty_p == 0 or self.dealt_ask == 0:
                     if self.dealt_ask == 0:
@@ -371,7 +381,7 @@ class hk_trade_handler(threading.Thread):
                     print("No Position. WAIT BEAR PROFIT Stop!")
                     self.set_idle()
                 else:
-                    sell_pencil = math.ceil((int(qty_p) / 10000) / 2)
+                    sell_pencil = math.ceil((int(qty_p) / 10000) * self.wait_profit_qty_ratio)
                     sell_qty = sell_pencil * 10000
                     qty = sell_qty
                     wait_bear_profit_status = 1
@@ -395,7 +405,7 @@ class hk_trade_handler(threading.Thread):
                                         break
                                     break
                                 # new qty
-                                qty -= dealt_qty
+                                qty -= int(dealt_qty)
                                 wait_bear_profit_status = 2
                             elif ret == 0:
                                 wait_bear_profit_status = 0
@@ -413,6 +423,8 @@ class hk_trade_handler(threading.Thread):
                             break
                 print("BEAR WAIT PROFIT FINISHED")
                 self.set_idle()
+                if sell_qty == qty_p:
+                    self.busy = 0
                 continue
 
 

@@ -144,8 +144,8 @@ if __name__ == "__main__":
 
     zma_str = zma20_strategy_quote(quote_context, play)
     zma_str.start()
-    #store_ch_rate = store_ch_rate(zma_str)
-    #store_ch_rate.start()
+    store_ch_rate = store_ch_rate(zma_str)
+    store_ch_rate.start()
 
 
 

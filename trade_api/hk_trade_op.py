@@ -156,7 +156,9 @@ class hk_trade_opt:
         else:
             orderid = ret_data["orderid"][position]
             dealt_qty = ret_data["dealt_qty"][position]
-            self.recall_order(orderid)
+            ret = self.recall_order(orderid)
+            if ret == -1:
+                return -1
         return dealt_qty
 
     def disble_order_stock_code(self, stock_code):
@@ -188,7 +190,7 @@ class hk_trade_opt:
         ret_code, ret_data = self.hk_trade_api.position_list_query("456", self.envtype)
         if ret_code == -1:
             return -1
-        #print(ret_data)
+
         for i in ret_data["stock_code"]:
             if str(i) == str(stock_code):
                 position = count
@@ -197,8 +199,11 @@ class hk_trade_opt:
             count += 1
         if position == -1:
             print("No Such stock position")
+            print(ret_data)
         else:
             pos_qty = ret_data["can_sell_qty"][position]
+            #if int(pos_qty) == 0:
+                #print(ret_data)
         print("pos", pos_qty)
         return pos_qty
 
@@ -256,10 +261,10 @@ class hk_trade_opt:
         if ret_code == -1:
             return -1
         if ret_data["SvrResult"] == -1:
-            print("delete_order fail")
+            print("recall_order fail")
             return -1
         if ret_data["Cookie"] != cookie:
-            print("delete_order check fail")
+            print("recall_order check fail")
             return -1
         return 1
 
