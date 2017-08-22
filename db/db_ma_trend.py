@@ -43,17 +43,33 @@ class dbop_ma_trand:
               str(zma_gap) + "," + str(zma_gap_ratio) + "," + str(zma_gap_ratio_ratio) + "," + str(zma_gap_ratio_ratio_r) + "," + str(cur_ratio) + ");"
         db_basic.insertMysql(sql)
 
-    def dbop_read_day_data(self, db_basic, time_start, time_end):
-        sql = "select * from day_data_new2 where time > '" + time_start + "' and time < '" + time_end + "';"
-        self.count = db_basic.queryMysql(sql)
-        self.position = 0
-        return self.count
+
+
+
 
     def dbop_update_day_data_trade_mark(self, db_basic, id, trade_mark):
         sql = "update day_data_new2 set trade_mark = " + str(trade_mark) + "where id = " + str(id) + ";"
         db_basic.insertMysql(sql)
 
     def dbop_read_day_data_next(self, db_basic):
+        if self.position >= self.count:
+            return ""
+        try:
+            ret = db_basic.cursor.fetchone()
+        except:
+            print("fetchone fail")
+            return ""
+        self.position += 1
+        return ret
+
+########### NEW TEST
+    def dbop_read_day_data_standard(self, db_basic, time_start, time_end):
+        sql = "select * from standard_quo where time > '" + time_start + "' and time < '" + time_end + "';"
+        self.count = db_basic.queryMysql(sql)
+        self.position = 0
+        return self.count
+
+    def dbop_read_day_data_standard_next(self, db_basic):
         if self.position >= self.count:
             return ""
         try:
