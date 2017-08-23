@@ -682,29 +682,42 @@ class zma20_strategy_quote(threading.Thread):
                     ma10_ratio_ratio = self.ret.iloc[self.count, ZMA10_RATIO_RATIO_POS]
                 ma20_ratio = self.deltaMA20_cur
 
-                if ( ma10_ratio_ratio <= 0 or ma10_ratio_ratio - 0.004 /2 <= 0) and self.vol_break != 1:
-                    if self.cur < self.MA10_cur:
-                        if ma20_ratio > -1:
-                            if ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0:
-                                if ma10_ratio < ma20_ratio:
-                                    if ma10_ratio_ratio <= -0.005:
-                                        if ma20_ratio >= 0:
-                                            if ma20_ratio - ma10_ratio < 3:
-                                                bear_start = 1
-                                            else:
-                                                bear_start = 3
-                                        else:
-                                            if ma10_ratio >= -3:
-                                                bear_start = 1
-                                            else:
-                                                bear_start = 3
-                        else:
-                            if ma10_ratio < 0:
-                                bear_start = 1
+                ma10_r_r_r_value = -0.004
+                ma20_many_head = -2
+                ma10_r_r_value = -0.005
+
+                if self.vol_break != 1:
+                    ## MA20_r is big
+                    ## MA10 r is
+                    if ma20_ratio >= ma20_many_head and \
+                            (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
+                                    ma10_ratio < ma20_ratio:
+                        if ma10_ratio_ratio <= ma10_r_r_value and self.cur < self.MA10_cur:
+                            bear_start = 1
+
+                #if ( ma10_ratio_ratio <= 0 or ma10_ratio_ratio - 0.004 /2 <= 0) and self.vol_break != 1:
+                    #if self.cur < self.MA10_cur:
+                        #if ma20_ratio > -1:
+                            #if ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0:
+                                #if ma10_ratio < ma20_ratio:
+                                    #if ma10_ratio_ratio <= -0.005:
+                                        #if ma20_ratio >= 0:
+                                            #if ma20_ratio - ma10_ratio < 3:
+                                                #bear_start = 1
+                                            #else:
+                                                #bear_start = 3
+                                        #else:
+                                            #if ma10_ratio >= -3:
+                                                #bear_start = 1
+                                            #else:
+                                                #bear_start = 3
+                        #else:
+                            #if ma10_ratio < 0:
+                                #bear_start = 1
 
         if bear_start == 1 and self.sell_bear == 0:
             print("BUY BUY BUY!!!")
-            if self.deltaMA20_cur >= 0 and (self.cur - self.MA20_cur) > 10:
+            if self.deltaMA20_cur >= 2 and (self.cur - self.MA20_cur) > 10:
                 self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
             else:
                 if bear_start == 999:
@@ -712,7 +725,7 @@ class zma20_strategy_quote(threading.Thread):
                     buy_qty = buy_pencil * 10000
                     self.hk_trade_handler.bear_force_buy(buy_qty)
                 else:
-                    self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.75)
+                    self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
             self.zma10_new_trend = -9999
 
     def guard_vol_break(self):

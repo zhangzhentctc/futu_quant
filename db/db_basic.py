@@ -40,7 +40,7 @@ class MySQLCommand(object):
             self.cursor.execute(sql)
             self.conn.commit()
         except:
-            print("insert failed.")
+            print("insert failed.:", sql)
 
     def updateMysql(self, sql):
         print("execute " + sql)

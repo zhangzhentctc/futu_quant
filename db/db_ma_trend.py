@@ -35,16 +35,20 @@ class dbop_ma_trand:
     #  Table day_data_new2
     ###
     # "No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio",
-
-    def dbop_add_day_data(self, db_basic, id, cur, time, zma10, zma20, zma10_ratio, zma20_ratio, zma10_ratio_ratio, zma20_ratio_ratio, zma_gap, zma_gap_ratio, zma_gap_ratio_ratio, zma_gap_ratio_ratio_r,  cur_ratio):
-        sql = "insert into day_data_new2(id,cur,time, zma10,zma20, zma10_ratio, zma20_ratio, zma10_ratio_ratio, zma20_ratio_ratio, zma_gap, zma_gap_ratio, zma_gap_ratio_ratio, zma_gap_ratio_ratio_r, cur_ratio) values(" + \
-              str(id) + "," + str(cur) + ", '" + str(time) + "' ," + str(zma10) + "," + str(zma20) + "," + \
-              str(zma10_ratio) + "," + str(zma20_ratio) + "," + str(zma10_ratio_ratio) + "," + str(zma20_ratio_ratio) + "," + \
-              str(zma_gap) + "," + str(zma_gap_ratio) + "," + str(zma_gap_ratio_ratio) + "," + str(zma_gap_ratio_ratio_r) + "," + str(cur_ratio) + ");"
+    # "No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio", "zma10_ratio_ratio_short"
+    def dbop_add_day_data(self, db_basic, id, cur, time, zma10, ma20, zma10_ratio, zma10_ratio_ratio, zma10_ratio_ratio_ratio, trade_mark, ma20_ratio, zma10_ratio_ratio_short):
+        sql = "insert into day_data_new_a(id,cur,time, zma10,ma20, zma10_ratio, zma10_ratio_ratio, zma10_ratio_ratio_ratio, trade_mark, ma20_ratio, zma10_ratio_ratio_short) values(" + \
+              str(id) + "," + str(cur) + ", '" + str(time) + "' ," + str(zma10) + "," + str(ma20) + "," + \
+              str(zma10_ratio) + "," + str(zma10_ratio_ratio) + "," + str(zma10_ratio_ratio_ratio) + "," + str(trade_mark) + "," + \
+              str(ma20_ratio) + "," + str(zma10_ratio_ratio_short) + ");"
         db_basic.insertMysql(sql)
 
 
-
+    def dbop_read_day_data(self, db_basic, time_start, time_end):
+        sql = "select * from day_data_new_a where time > '" + str(time_start) + "' and time < '" + str(time_end) + "';"
+        self.count = db_basic.queryMysql(sql)
+        self.position = 0
+        return self.count
 
 
     def dbop_update_day_data_trade_mark(self, db_basic, id, trade_mark):
