@@ -239,7 +239,7 @@ class daytest:
             self.ret.iloc[i, ZMA10_RATIO_RATIO_POS] = val / sample
         return 1
 
-    def cal_zma10_ratio_simple_ratio_short(self, sample = 120):
+    def cal_zma10_ratio_simple_ratio_short(self, sample = 60):
         len = 1200 + 121
         t = sample
         val =0
@@ -439,27 +439,27 @@ class daytest:
         start_time = time.time()
         self.cal_zma10()
         end_time = time.time()
-        print("cal_zma10 finished:" + str( end_time - start_time ))
+        #print("cal_zma10 finished:" + str( end_time - start_time ))
 
         start_time = time.time()
         self.cal_zma10_ratio_simple()
         end_time = time.time()
-        print("cal_zma10_ratio_simple finished:" + str( end_time - start_time))
+        #print("cal_zma10_ratio_simple finished:" + str( end_time - start_time))
 
         start_time = time.time()
         self.cal_zma10_ratio_simple_ratio()
         end_time = time.time()
-        print("cal_zma10_ratio_simple_ratio finished:" + str( end_time - start_time))
+        #print("cal_zma10_ratio_simple_ratio finished:" + str( end_time - start_time))
 
         start_time = time.time()
         self.cal_zma10_ratio_simple_ratio_short()
         end_time = time.time()
-        print("cal_zma10_ratio_simple_ratio_short finished:" + str( end_time - start_time))
+        #print("cal_zma10_ratio_simple_ratio_short finished:" + str( end_time - start_time))
 
         start_time = time.time()
         self.cal_zma10_ratio_ratio_ratio_simple()
         end_time = time.time()
-        print("cal_zma10_ratio_ratio_ratio_simple finished:" + str( end_time - start_time))
+        #print("cal_zma10_ratio_ratio_ratio_simple finished:" + str( end_time - start_time))
 
 
 
@@ -534,35 +534,13 @@ class daytest:
                     ma10_down_trend = 1
                 else:
                     ma10_down_trend = 0
-            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+
+            ma10_ratio_threshold = 0
+            if ma10_ratio < ma10_ratio_threshold and self.ret["zma10_ratio"][position - 1] >= ma10_ratio_threshold:
                 ma10_down_trend = 1
 
-            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
+            if ma10_ratio >= ma10_ratio_threshold and self.ret["zma10_ratio"][position - 1] < ma10_ratio_threshold:
                 ma10_down_trend = 0
-
-            ## when ma10-r-r-r drops to -0.004
-            if ma10_ratio_ratio_ratio <= ma10_r_r_r_value and self.ret["zma10_ratio_ratio_ratio"][position - 1] > ma10_r_r_r_value:
-                ## MA20_r is big
-                ## MA10 r is
-                if ma20_ratio >= ma20_many_head and (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0):
-                    if ma10_ratio_ratio <= ma10_r_r_value and cur < MA10_cur:
-                        #self.mark_trade(position, 111)
-                        print("")
-
-                if ma20_ratio < ma20_many_head and ma10_ratio > ma20_ratio and (MA20_cur - MA10_cur) < abs(ma20_ratio):
-                    if (ma10_ratio_ratio <= 0 or ma10_ratio_ratio + ma10_r_r_r_value / 2 <= 0):
-                        #self.mark_trade(position, 222)
-                        print("")
-                if ma20_ratio < -1 and ma10_ratio < ma20_ratio:
-                    if ma10_ratio_ratio <= -0.001:
-                        #self.mark_trade(position, 333)
-                        print("")
-
-            if ma10_ratio_ratio_ratio >=0  and self.ret["zma10_ratio_ratio_ratio"][position - 1] < 0:
-                if ma10_ratio <= -4 and ma20_ratio < 0:
-                    if ma10_ratio_ratio <= ma10_r_r_value and cur < MA10_cur:
-                        #self.mark_trade(position, 444)
-                        print("")
 
 
             good_hill = 0
@@ -572,6 +550,7 @@ class daytest:
                 #print("ma10_rr_up")
                 if ma10_down_trend == 1:
                     ma10_r_r_up_ok = 1
+                    up_pos = position
                     #print("ma10_r_r_up_ok")
                 else:
                     ma10_r_r_up_ok = 0
@@ -583,9 +562,11 @@ class daytest:
                     #print("ma10_r_r_down_ok")
                     try:
                         if ma10_r_r_up_ok == 1 and ma10_r_r_down_ok == 1:
-                            good_hill = 1
-                            ma10_down_trend = 0
-                            print("find hill", "time:", self.ret["time"][position],"ma10-r-r:", ma10_ratio_ratio, " ma10_ratio:", ma10_ratio, " ma20_ratio", ma20_ratio)
+                            if position - up_pos <= 240:
+                                good_hill = 1
+                                ma10_down_trend = 0
+                            else:
+                                print("hill time out", self.ret["time"][position],"ma10-r-r:", ma10_ratio_ratio, " ma10_ratio:", ma10_ratio, " ma20_ratio", ma20_ratio, " duration:",str((position - up_pos)/2)," seconds")
                     except:
                         print("")
 
@@ -595,9 +576,12 @@ class daytest:
                 ma10_r_r_down_ok = 0
 
             if good_hill == 1:
-                if ma10_ratio_ratio <= -0.004 and ma10_ratio <= -4:
-                    self.mark_trade(position, 555)
-                    ma10_down_trend = 0
+                if ma10_ratio <= -1 and ma20_ratio < -1:
+                    if ma10_ratio_ratio <= -0.005 and \
+                            ((ma10_ratio_ratio_ratio - self.ret["zma10_ratio_ratio_ratio"][position - 20]) < 0 or ma10_ratio_ratio_ratio < 0):
+                        self.mark_trade(position, 555)
+                        print(" duration:",str((position - up_pos)/2)," seconds")
+                        ma10_down_trend = 0
 
 
             position += 1
@@ -607,7 +591,7 @@ class daytest:
         ma10_r_r_r_value = -0.004
         ma20_many_head = -2
         ma10_r_r_value = -0.005
-
+        ma10_r_r_small_value = -0.001
         start = 1200 + 121 + 360 + 120 + 1
         position = start
 
@@ -625,19 +609,26 @@ class daytest:
 
             ## when ma10-r-r-r drops to -0.004
             if ma10_ratio_ratio_ratio <= ma10_r_r_r_value and self.ret["zma10_ratio_ratio_ratio"][position - 1] > ma10_r_r_r_value:
-                ## MA20_r is big
-                ## MA10 r is
+                ### 111 turning point drops fast
                 if ma20_ratio >= ma20_many_head and \
                         (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
                                 ma10_ratio < ma20_ratio:
                     if ma10_ratio_ratio <= ma10_r_r_value and cur < MA10_cur:
                         self.mark_trade(position, 111)
-                        print("Useful")
 
-                if ma20_ratio < ma20_many_head and ma10_ratio > ma20_ratio and (MA20_cur - MA10_cur) < abs(ma20_ratio):
-                    if (ma10_ratio_ratio <= 0 or ma10_ratio_ratio + ma10_r_r_r_value / 2 <= 0):
+                ### 222 turning point drops slowly
+                if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
+                        ma10_ratio < -1 and ma10_ratio >= -3 and \
+                                ma10_ratio < ma20_ratio:
+                    if ma10_ratio_ratio <= ma10_r_r_small_value and ma10_ratio_ratio > ma10_r_r_value and \
+                                    cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
                         self.mark_trade(position, 222)
-                        print("")
+
+
+                #if ma20_ratio < ma20_many_head and ma10_ratio > ma20_ratio and (MA20_cur - MA10_cur) < abs(ma20_ratio):
+                    #if (ma10_ratio_ratio <= 0 or ma10_ratio_ratio + ma10_r_r_r_value / 2 <= 0):
+                        #self.mark_trade(position, 222)
+                        #print("")
 
             position += 1
         return 1
@@ -1050,13 +1041,15 @@ class daytest:
 
 if __name__ == "__main__":
 #    Usage
-    date_list1 = ["2017-08-10", "2017-08-11","2017-08-14","2017-08-15","2017-08-16","2017-08-17","2017-08-18","2017-08-21","2017-08-22"]
+    data_today = ["2017-08-24"]
+    date_list1 = ["2017-08-10", "2017-08-11","2017-08-14","2017-08-15","2017-08-16","2017-08-17","2017-08-18","2017-08-21","2017-08-22","2017-08-24"]
     date_list2 = ["2017-08-09", "2017-08-08","2017-08-07","2017-08-04","2017-08-03","2017-08-02","2017-07-31","2017-07-28","2017-07-27"]
     date_list = ["2017-08-09", "2017-08-08","2017-08-07","2017-08-04","2017-08-03","2017-08-02","2017-07-31","2017-07-28", "2017-07-27", "2017-08-10", "2017-08-11","2017-08-14","2017-08-15","2017-08-16","2017-08-17","2017-08-18","2017-08-21","2017-08-22"]
     test = daytest()
     test.Initialize()
     #test.store_history(start_time, end_time)
 
+    total_s = time.time()
 
     for date in date_list1:
         start_time = date + " " + "9:20:00"
@@ -1070,7 +1063,8 @@ if __name__ == "__main__":
         #test.detect_turn2bear()
         #test.detect_turn2bear2()
 #        test.testParameters()
-
+    total_e = time.time()
+    print("Total Time:", str( total_e - total_s ))
 
 
 """

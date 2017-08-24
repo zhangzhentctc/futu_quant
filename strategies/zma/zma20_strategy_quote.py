@@ -58,7 +58,7 @@ class zma20_strategy_quote(threading.Thread):
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 62162
+        self.bear_code = 63091
         self.bull_code = 69512
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
@@ -482,6 +482,7 @@ class zma20_strategy_quote(threading.Thread):
         limit = 10
         extra_tolerance = 2
         sell_bear = 0
+        band_bear = 0
         ## Check K-1M quality
         for i in range(observe_num, 0, -1):
             if self.ma_1m_table["open"][count - i] < check_value:
@@ -556,11 +557,13 @@ class zma20_strategy_quote(threading.Thread):
                     print("ERROR!!! LONG GAP ERROR!!!")
                 score += long_gap
                 if score > limit:
+                    band_bear = 1
                     tolerance = extra_tolerance
                     print("Assign Tollerance")
                 pointer = observe_num - 1
         print("SCORE: " + str(score))
         self.sell_bear = sell_bear
+        self.band_bear = band_bear
         if sell_bear == 1:
             self.play.play_stop_lossing_bear_inst()
             #self.opt.clear_stock_code(self.bear_code, self.bear_bid_seller)
@@ -715,11 +718,13 @@ class zma20_strategy_quote(threading.Thread):
                             #if ma10_ratio < 0:
                                 #bear_start = 1
 
-        if bear_start == 1 and self.sell_bear == 0:
+        if bear_start == 1 and self.sell_bear == 0 and self.band_bear == 0:
             print("BUY BUY BUY!!!")
             if self.deltaMA20_cur >= 2 and (self.cur - self.MA20_cur) > 10:
                 self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
-            else:
+            if self.deltaMA20_cur < 2 and (self.cur - self.MA20_cur) > 10:
+                self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
+            if self.deltaMA20_cur < 2 and (self.cur - self.MA20_cur) < 0:
                 if bear_start == 999:
                     buy_pencil = math.ceil((int(self.trade_qty) / 10000) * 0.5)
                     buy_qty = buy_pencil * 10000
