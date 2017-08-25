@@ -45,7 +45,7 @@ class zma20_strategy_quote(threading.Thread):
         self.play = play
         self.direction = 0
         self.sell_bear = 0
-
+        self.band_bear = 0
         self.MA20_vol = 0
         self.vol_last = 0
         self.vol_now = 0
