@@ -19,6 +19,8 @@ ZMA10_RATIO_RATIO_RATIO_POS = 7
 TRADE_MARK_POS = 8
 MA20_RATIO_POS = 9
 ZMA10_RATIO_RATIO_SHORT_POS = 10
+ZMA5_POS = 11
+
 
 NO_SRC_POS = 0
 CUR_SRC_POS = 3
@@ -80,9 +82,10 @@ class daytest:
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
             data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "ma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS],
-                         "zma10_ratio_ratio_ratio": line[ZMA10_RATIO_RATIO_RATIO_POS], "trade_mark": line[TRADE_MARK_POS], "ma20_ratio": line[MA20_RATIO_POS], "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS]})
+                         "zma10_ratio_ratio_ratio": line[ZMA10_RATIO_RATIO_RATIO_POS], "trade_mark": line[TRADE_MARK_POS], "ma20_ratio": line[MA20_RATIO_POS],
+                         "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS]})
 
-            self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short"])
         return self.ret
 
     def addDayTestData(self, data):
@@ -128,7 +131,7 @@ class daytest:
                      "ma20": line[MA20_SRC_NEW_POS], "zma10_ratio": 0,
                      "zma10_ratio_ratio": 0,
                      "zma10_ratio_ratio_ratio": 0, "trade_mark": 0,
-                     "ma20_ratio": line[MA20_R_SRC_NEW_POS], "zma10_ratio_ratio_short": 0})
+                     "ma20_ratio": line[MA20_R_SRC_NEW_POS], "zma10_ratio_ratio_short": 0, "zma5": 0})
 
             else:
                 #data.append({"No.": line[NO_SRC_NEW_POS], "cur": line[CUR_SRC_NEW_POS], "time": line[TIME_SRC_NEW_POS], "ma20": line[MA20_SRC_NEW_POS], "ma20_ratio": line[MA20_R_SRC_NEW_POS], "trade_mark": 0})
@@ -137,9 +140,9 @@ class daytest:
                      "ma20": line[MA20_SRC_NEW_POS], "zma10_ratio": 0,
                      "zma10_ratio_ratio": 0,
                      "zma10_ratio_ratio_ratio": 0, "trade_mark": 0,
-                     "ma20_ratio": line[MA20_R_SRC_NEW_POS], "zma10_ratio_ratio_short": 0})
+                     "ma20_ratio": line[MA20_R_SRC_NEW_POS], "zma10_ratio_ratio_short": 0, "zma5": 0})
             pre_cur =line[CUR_SRC_POS]
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio", "zma10_ratio_ratio_short"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio", "zma10_ratio_ratio_short", "zma5"])
 
         return self.ret
 
@@ -162,6 +165,24 @@ class daytest:
         return 1
 
     ## MA
+    def cal_zma5(self):
+        len = 600
+        avg_sum = 0
+        start_pos = len - 1
+        if self.count < len:
+            return -1
+        for j in range(0, len):
+            avg_sum += self.ret["cur"][len - 1 - j]/len
+        avr0 = avg_sum
+        self.ret.iloc[start_pos, ZMA5_POS] = avr0
+        starter = self.ret["cur"][0]
+        for i in range(start_pos + 1, self.count):
+            avr = avr0 - starter / len + self.ret["cur"][i] / len
+            self.ret.iloc[i, ZMA5_POS] = avr
+            avr0 = avr
+            starter = self.ret["cur"][i - len]
+        return 0
+
     def cal_zma10(self):
         len = 1200
         sum = 0
@@ -441,6 +462,8 @@ class daytest:
         end_time = time.time()
         #print("cal_zma10 finished:" + str( end_time - start_time ))
 
+        self.cal_zma5()
+
         start_time = time.time()
         self.cal_zma10_ratio_simple()
         end_time = time.time()
@@ -643,10 +666,10 @@ class daytest:
                 if ma20_ratio >= ma20_many_head and \
                         (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
                                 ma10_ratio < ma20_ratio :
-                    if (ma10_ratio_ratio <= ma10_r_r_value or ma10_ratio_ratio_short <= ma10_r_r_value_short) and \
+                    if (ma10_ratio_ratio <= ma10_r_r_value) and \
                                 cur < MA10_cur and cur < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
-                        if gap < -5 and gap > -10:
+                        if  gap > -10 and gap < -5:
                             self.mark_trade(position, 1114)
                             x=1
                         if gap <= -10:
@@ -662,21 +685,82 @@ class daytest:
                                     cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
                         ratio = gap/ma10_ratio
-                        if ratio < 8:
+                        if ratio <= 8 and gap < 0:
                             self.mark_trade(position, 222)
-                        #print("gap:", cur - self.ret["cur"][position - 120])
-                        x = 1
-
-
-                #if ma20_ratio < ma20_many_head and ma10_ratio > ma20_ratio and (MA20_cur - MA10_cur) < abs(ma20_ratio):
-                    #if (ma10_ratio_ratio <= 0 or ma10_ratio_ratio + ma10_r_r_r_value / 2 <= 0):
-                        #self.mark_trade(position, 222)
-                        #print("")
+                            #print("gap:", cur - self.ret["cur"][position - 120])
+                            x = 1
 
             position += 1
         return 1
 
+    def detect_start_bull(self):
+        ma10_r_r_r_value = -0.004
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        ma10_break_val = 5
 
+        start = 1200 + 121 + 360 + 120 + 1
+        position = start
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA5_cur = self.ret["zma5"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            if position == start:
+                ma10_cross_zero_pos = 0
+                if ma20_ratio < 0:
+                    ma20_up = 1
+                else:
+                    ma20_up = 0
+
+            if ma20_ratio > 0 and self.ret["ma20_ratio"][position - 1] <= 0:
+                ma20_up = 1
+            if ma20_ratio < 0 and self.ret["ma20_ratio"][position - 1] >= 0:
+                ma20_up = 0
+
+            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
+                ma10_cross_zero_pos = position
+
+            if ma20_up == 1 and \
+                    self.ret["zma10"][ma10_cross_zero_pos] < self.ret["ma20"][ma10_cross_zero_pos] and \
+                    self.ret["zma10_ratio"][ma10_cross_zero_pos] > self.ret["ma20_ratio"][ma10_cross_zero_pos]:
+
+
+                if ma10_ratio >= ma10_break_val and self.ret["zma10_ratio"][position - 1] < ma10_break_val:
+                    #print("MA10 R break 5 ", self.ret["time"][position], " ma10rr:",self.ret["zma10_ratio_ratio"][position])
+                    if ma10_ratio_ratio > 0.005 and position - ma10_cross_zero_pos < 600:
+                        bull_wait = 1
+
+                if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+                    bull_wait = 0
+
+                try:
+                    if bull_wait == 1 and ma20_up == 1:
+                        if cur - MA5_cur <= 5:
+                            ready_to_buy = 360
+                            self.mark_trade(position, 8001)
+                            bull_wait = 0
+                            ma20_up = 0
+                except:
+                    x=1
+            else:
+                bull_wait = 0
+#######ADVICE:
+#####            1. should cross MA20, far away
+
+
+            position += 1
+        return 1
 
 
 
@@ -1064,11 +1148,11 @@ class daytest:
         s = time.time()
         self.queryDayTestData(start_time, end_time)
         e = time.time()
-        print("Read Completed.", str(e - s))
+        #print("Read Completed.", str(e - s))
         s = time.time()
         self.parseDayTestData()
         e = time.time()
-        print("Parse Completed.", str(e - s))
+        #print("Parse Completed.", str(e - s))
         self.count = self.daytestcount
 
     def insert_para_test(self):
@@ -1093,8 +1177,15 @@ if __name__ == "__main__":
     date_list_555 = ["2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
              "2017-08-10",  "2017-08-14",  "2017-08-17", "2017-08-18",
              "2017-08-24", "2017-08-25"]
-
-
+    date_list_all_12 = ["2017-07-27", "2017-07-28",  "2017-08-02",  "2017-08-04", "2017-08-07",
+                 "2017-08-08",
+                 "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
+                 "2017-08-21",  "2017-08-24", "2017-08-25"]
+    stored_date_list_all = ["2017-07-27", "2017-07-28", "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
+                 "2017-08-08", "2017-08-09",
+                 "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
+                 "2017-08-21", "2017-08-22"]
+    not_stored = ["2017-08-24", "2017-08-25"]
 
     test = daytest()
     test.Initialize()
@@ -1107,11 +1198,13 @@ if __name__ == "__main__":
         end_time = date + " " + "16:00:00"
         #test.store_history(start_time, end_time)
         s = time.time()
-        test.get_data_direct(start_time, end_time)
+        #test.get_data_direct(start_time, end_time)
+        test.read_history(start_time, end_time)
         e = time.time()
         print("Data finished:" + str( e - s ))
-        test.detectSignal2()
-        #test.detect_turn2bear()
+        #test.detectSignal2()
+        test.detect_turn2bear()
+        #test.detect_start_bull()
         #test.detect_turn2bear2()
 #        test.testParameters()
     total_e = time.time()
