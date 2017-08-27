@@ -1,10 +1,16 @@
 from pandas import Series, DataFrame
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+#from matplotlib import pyplot
+import math
+
 
 class show_plots:
-    def __init__(self):
-        pass
+    def __init__(self, data_handler):
+        self.data_handler = data_handler
+        self.origin_lines =[]
+        self.yMinMax = []
 
     def init_data(self):
         data = []
@@ -14,9 +20,42 @@ class show_plots:
         self.df = DataFrame(data, columns=["A","B","C","D"])
 
 
-    def init_plot(self, total_num):
-        plt.figure("stock")
+    def init_plot(self, total_num, name= "stock"):
+        self.fig = plt.figure(name)
         self.total_num = total_num
+        if total_num == 4:
+            ax2 = plt.subplot(412)
+            ymajorLocator_2 = MultipleLocator(1.5)  # 将y轴主刻度标签设置为0.5的倍数
+            ymajorFormatter_2 = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
+            yminorLocator_2 = MultipleLocator(1.5)  # 将此y轴次刻度标签设置为0.1的倍数
+            ax2.yaxis.set_major_locator(ymajorLocator_2)
+            ax2.yaxis.set_major_formatter(ymajorFormatter_2)
+            ax2.yaxis.set_minor_locator(yminorLocator_2)
+            ax2.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax2.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+
+            ax3 = plt.subplot(413)
+            ymajorLocator_3 = MultipleLocator(0.005)
+            #ymajorFormatter_3 = FormatStrFormatter('%1.1111f')
+            yminorLocator_3 = MultipleLocator(0.005)
+            ax3.yaxis.set_major_locator(ymajorLocator_3)
+            #ax3.yaxis.set_major_formatter(ymajorFormatter_3)
+            ax3.yaxis.set_minor_locator(yminorLocator_3)
+
+            ax3.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax3.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+
+            ax4 = plt.subplot(414)
+            ymajorLocator_4 = MultipleLocator(0.004)
+            #ymajorFormatter_4 = FormatStrFormatter('%1.1111f')
+            yminorLocator_4 = MultipleLocator(0.004)
+            ax4.yaxis.set_major_locator(ymajorLocator_4)
+            #ax4.yaxis.set_major_formatter(ymajorFormatter_4)
+            ax4.yaxis.set_minor_locator(yminorLocator_4)
+            ax4.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax4.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+
+
 
 
     def prepare_plot(self, data_list, num):
@@ -38,17 +77,64 @@ class show_plots:
         s_int = int(s)
 
         plt.subplot(s_int)
-        plt.annotate(
+        ano = plt.annotate(
             words,
             xy=(x, y),
-            xytext=(x, y + 5),
+            xytext=(x, y + 50),
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
         )
-        return 0
+        return ano
 
     def show_plot(self):
+        for i in range(0, self.total_num):
+            s = str(self.total_num) + "1" + str(i+1)
+            s_int = int(s)
+            ax =  plt.subplot(s_int)
+            plt.subplot(s_int)
+            self.origin_lines.append(len(ax.lines))
+
+            ymin,ymax = plt.ylim()
+            self.yMinMax.append([ymin,ymax])
+        #print("Lines:", self.origin_lines)
+        #print("Y:", self.yMinMax)
+        self.add_env()
         plt.show()
 
+    def get_cur_words(self, position):
+        return self.data_handler.get_cur_words(position)
+
+    def onclick(self, event):
+        for i in range(0, self.total_num):
+            s = str(self.total_num) + "1" + str(i+1)
+            s_int = int(s)
+            ax =  plt.subplot(s_int)
+            plt.subplot(s_int)
+            try:
+                ax.lines.remove(ax.lines[self.origin_lines[i]])
+            except:
+                x=1
+            ax.plot([event.xdata, event.xdata], [self.yMinMax[i][0], self.yMinMax[i][1]], linestyle="--")
+
+        try:
+            self.tmp_ano.remove()
+        except:
+            print("remove fail")
+            x=1
+
+        position = math.ceil(event.xdata)
+        words = self.get_cur_words(position)
+
+        s = str(self.total_num) + "1" + str(1)
+        s_int = int(s)
+        ax = plt.subplot(s_int)
+        self.tmp_ano = self.add_annotate(position, self.yMinMax[0][1], 1, words)
+
+        #print(ax.annotate, "aaa")
+
+        plt.show()
+
+    def add_env(self):
+        cid = self.fig.canvas.mpl_connect('button_press_event', self.onclick)
 
 if __name__ == "__main__":
 

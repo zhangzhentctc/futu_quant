@@ -722,7 +722,7 @@ class daytest:
 
 
 
-    def mark(self, plots):
+    def mark_bear_start(self, plots):
         ma10_r_r_r_value = -0.004
         ma20_many_head = -2
         ma10_r_r_value = -0.005
@@ -754,11 +754,11 @@ class daytest:
                                 cur < MA10_cur and cur < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
                         if  gap > -10 and gap < -5:
-                            plots.add_annotate(position, cur, 1, "buy1114")
+                            plots.add_annotate(position, cur, 1, "1114\n" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
                             self.mark_trade(position, 1114)
                             x=1
                         if gap <= -10:
-                            plots.add_annotate(position, cur, 1, "buy1118")
+                            plots.add_annotate(position, cur, 1, "1118 " + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
                             self.mark_trade(position, 1118)
                             x=1
                         #print("gap:", cur - self.ret["cur"][position - 120])
@@ -772,7 +772,7 @@ class daytest:
                         gap = cur - self.ret["cur"][position - 120]
                         ratio = gap/ma10_ratio
                         if ratio <= 8 and gap < 0:
-                            plots.add_annotate(position, cur, 1, "buy222")
+                            plots.add_annotate(position, cur, 1, "222" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
                             self.mark_trade(position, 222)
                             #print("gap:", cur - self.ret["cur"][position - 120])
                             x = 1
@@ -780,6 +780,116 @@ class daytest:
             position += 1
         return 1
 
+    def mark_bear_continue(self, plots):
+        ma10_r_r_r_value = -0.004
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+
+        start = 1200 + 121 + 360 + 120 + 1
+        position = start
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+            if position == start:
+                if ma10_ratio < 0:
+                    trend_down = 1
+                else:
+                    trend_down = 0
+
+            ma10_ratio_threshold = 0
+            # if ma10_ratio < ma10_ratio_threshold and self.ret["zma10_ratio"][position - 1] >= ma10_ratio_threshold:
+            # ma10_down_trend = 1
+
+            # if ma10_ratio >= ma10_ratio_threshold and self.ret["zma10_ratio"][position - 1] < ma10_ratio_threshold:
+            # ma10_down_trend = 0
+
+            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+                ma10r_down_cross_zero = 1
+            else:
+                ma10r_down_cross_zero = 0
+
+            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
+                ma10r_up_cross_zero = 1
+            else:
+                ma10r_up_cross_zero = 0
+
+            if ma10_ratio_ratio < 0 and self.ret["zma10_ratio_ratio"][position - 1] >= 0:
+                ma10rr_down_cross_zero = 1
+            else:
+                ma10rr_down_cross_zero = 0
+
+            if ma10_ratio_ratio >= 0 and self.ret["zma10_ratio_ratio"][position - 1] < 0:
+                ma10rr_up_cross_zero = 1
+            else:
+                ma10rr_up_cross_zero = 0
+
+            if ma10rr_down_cross_zero == 1 and ma10_ratio < 0:
+                trend_down = 1
+            if ma10r_down_cross_zero == 1:
+                trend_down = 1
+
+            if ma10rr_up_cross_zero == 1:
+                trend_down = 0
+
+            good_hill = 0
+            zma10_rrr_short_cross_float = -0.001
+            if ma10_ratio_ratio_short >= ma10_ratio_ratio + zma10_rrr_short_cross_float and \
+                            self.ret["zma10_ratio_ratio_short"][position - 1] < self.ret["zma10_ratio_ratio"][
+                                position - 1] + zma10_rrr_short_cross_float:
+                ma10_rr_up = 1
+                if trend_down == 1:
+                    ma10_r_r_up_ok = 1
+                    up_pos = position
+                    # print("ma10_r_r_up_ok")
+                else:
+                    ma10_r_r_up_ok = 0
+            if ma10_ratio_ratio_short < ma10_ratio_ratio - zma10_rrr_short_cross_float and \
+                            self.ret["zma10_ratio_ratio_short"][position - 1] >= self.ret["zma10_ratio_ratio"][
+                                position - 1] - zma10_rrr_short_cross_float:
+                ma10_rr_down = 1
+                if trend_down == 1:
+                    ma10_r_r_down_ok = 1
+                    # print("ma10_r_r_down_ok")
+                    try:
+                        if ma10_r_r_up_ok == 1 and ma10_r_r_down_ok == 1:
+                            if position - up_pos <= 240:
+                                good_hill = 1
+                                trend_down = 0
+                            else:
+                                plots.add_annotate(position, cur, 1, "hill")
+                                print("hill time out", self.ret["time"][position], "ma10-r-r:", ma10_ratio_ratio,
+                                      " ma10_ratio:", ma10_ratio, " ma20_ratio", ma20_ratio, " duration:",
+                                      str((position - up_pos) / 2), " seconds")
+                    except:
+                        print("")
+
+                ma10_rr_up = 0
+                ma10_rr_down = 0
+                ma10_r_r_up_ok = 0
+                ma10_r_r_down_ok = 0
+
+            if good_hill == 1:
+                if ma10_ratio <= -1 and ma20_ratio < -1:
+                    if ma10_ratio_ratio <= -0.004 and \
+                            ((ma10_ratio_ratio_ratio - self.ret["zma10_ratio_ratio_ratio"][
+                                    position - 20]) < 0 or ma10_ratio_ratio_ratio < 0):
+                        plots.add_annotate(position, cur, 1, "555\n" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(
+                            ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(
+                            ma10_ratio_ratio_ratio))
+                        self.mark_trade(position, 555)
+                        print(" duration:", str((position - up_pos) / 2), " seconds")
+                        trend_down = 0
+
+            position += 1
+        return 1
 
 
     def detect_start_bull(self):
@@ -1254,6 +1364,18 @@ class daytest:
                 for cur_r in cur_ratio_list:
                     self.myop.dbop_add_adj_paras(self.mydb,zma20_r,zma10_r_r,cur_r)
 
+    def get_cur_words(self, position):
+        ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+        ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+        ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+        ma10_ratio = self.ret["zma10_ratio"][position]
+        MA10_cur = self.ret["zma10"][position]
+        MA20_cur = self.ret["ma20"][position]
+        ma20_ratio = self.ret["ma20_ratio"][position]
+        cur = self.ret["cur"][position]
+        s = "cur:" + str(cur) + "\nMA_R" + str(ma10_ratio) + "/" + str(ma20_ratio) + \
+              "\nMA10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio)
+        return s
 
 if __name__ == "__main__":
 #    Usage
@@ -1288,11 +1410,11 @@ if __name__ == "__main__":
         #test.store_history(start_time, end_time)
         s = time.time()
         #test.get_data_direct(start_time, end_time)
-        test.read_history(start_time, end_time)
+        #test.read_history(start_time, end_time)
         e = time.time()
         print("Data finished:" + str( e - s ))
         #test.detectSignal2()
-        test.detect_turn2bear()
+        #test.detect_turn2bear()
         #test.detect_start_bull()
         #test.detect_turn2bear2()
 #        test.testParameters()
@@ -1307,13 +1429,14 @@ if __name__ == "__main__":
     start_time = plot_date + " " + "9:20:00"
     end_time = plot_date + " " + "16:00:00"
     test.read_history(start_time, end_time)
-    plots = show_plots()
-    plots.init_plot()
+    plots = show_plots(test)
+    plots.init_plot(4, plot_date+"continue")
 
     test.mark_base(plots)
-    plots.show_plot()
 
-    test.mark(plots)
+
+    #test.mark_bear_start(plots)
+    test.mark_bear_continue(plots)
     plots.show_plot()
 
 
