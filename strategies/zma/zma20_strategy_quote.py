@@ -58,7 +58,7 @@ class zma20_strategy_quote(threading.Thread):
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 63091
+        self.bear_code = 61981
         self.bull_code = 69512
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
@@ -688,50 +688,36 @@ class zma20_strategy_quote(threading.Thread):
                 ma10_r_r_r_value = -0.004
                 ma20_many_head = -2
                 ma10_r_r_value = -0.005
-
+                ma10_r_r_small_value = -0.001
                 if self.vol_break != 1:
                     ## MA20_r is big
                     ## MA10 r is
                     if ma20_ratio >= ma20_many_head and \
                             (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
-                                    ma10_ratio < ma20_ratio:
-                        if ma10_ratio_ratio <= ma10_r_r_value and self.cur < self.MA10_cur:
-                            bear_start = 1
+                                    ma10_ratio < ma20_ratio :
+                        if ma10_ratio_ratio <= ma10_r_r_value and \
+                                self.cur < self.MA10_cur and self.cur < self.MA20_cur:
+                            gap = self.cur - self.ret["cur"][self.count - 120]
+                            if gap > -10 and gap < -5:
+                                bear_start = 1
+                            if gap <= -10:
+                                bear_start = 1
 
-                #if ( ma10_ratio_ratio <= 0 or ma10_ratio_ratio - 0.004 /2 <= 0) and self.vol_break != 1:
-                    #if self.cur < self.MA10_cur:
-                        #if ma20_ratio > -1:
-                            #if ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0:
-                                #if ma10_ratio < ma20_ratio:
-                                    #if ma10_ratio_ratio <= -0.005:
-                                        #if ma20_ratio >= 0:
-                                            #if ma20_ratio - ma10_ratio < 3:
-                                                #bear_start = 1
-                                            #else:
-                                                #bear_start = 3
-                                        #else:
-                                            #if ma10_ratio >= -3:
-                                                #bear_start = 1
-                                            #else:
-                                                #bear_start = 3
-                        #else:
-                            #if ma10_ratio < 0:
-                                #bear_start = 1
+                    if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
+                            ma10_ratio < -1 and ma10_ratio >= -3 and \
+                            ma10_ratio < ma20_ratio:
+                        if ma10_ratio_ratio <= ma10_r_r_small_value and ma10_ratio_ratio > ma10_r_r_value and \
+                                self.cur < self.MA10_cur and (self.MA10_cur + ma10_ratio * 2) < self.MA20_cur:
+                            gap = self.cur - self.ret["cur"][self.count - 120]
+                            ratio = gap / ma10_ratio
+                            if ratio <= 8 and gap < 0:
+                                bear_start = 1
 
         if bear_start == 1 and self.sell_bear == 0 and self.band_bear == 0:
             print("BUY BUY BUY!!!")
-            if self.deltaMA20_cur >= 2 and (self.cur - self.MA20_cur) > 10:
-                self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
-            if self.deltaMA20_cur < 2 and (self.cur - self.MA20_cur) > 10:
-                self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
-            if self.deltaMA20_cur < 2 and (self.cur - self.MA20_cur) < 0:
-                if bear_start == 999:
-                    buy_pencil = math.ceil((int(self.trade_qty) / 10000) * 0.5)
-                    buy_qty = buy_pencil * 10000
-                    self.hk_trade_handler.bear_force_buy(buy_qty)
-                else:
-                    self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
+            self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
             self.zma10_new_trend = -9999
+
 
     def guard_vol_break(self):
         print("VOL MA20:",self.MA20_vol, "Last:", self.vol_last, " now:",self.vol_now)
@@ -1188,7 +1174,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.detect_zma10_decrease_start()
                 # Detect Empty and Buy
                 #self.detect_empty_decrease()
-                self.detect_empty_start()
+                #self.detect_empty_start()
 
                 self.guard_burst()
                 #self.guard_bear()
