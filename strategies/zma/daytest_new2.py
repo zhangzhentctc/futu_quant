@@ -952,7 +952,7 @@ class daytest:
                         (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
                                 ma10_ratio < ma20_ratio :
                     if (ma10_ratio_ratio <= ma10_r_r_value) and \
-                                cur < MA10_cur and cur < (MA10_cur + ma10_ratio * 2) < MA20_cur:
+                                cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
                         ratio = gap / ma10_ratio
                         if  gap > -10 and gap < -5:
@@ -1325,7 +1325,7 @@ if __name__ == "__main__":
 
 ########For plos
 
-    plot_date = "2017-08-22"
+    plot_date = "2017-08-29"
 
     start_time = plot_date + " " + "9:20:00"
     end_time = plot_date + " " + "16:00:00"
