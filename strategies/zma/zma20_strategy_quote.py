@@ -71,7 +71,7 @@ class zma20_strategy_quote(threading.Thread):
         self.hk_trade_handler = hk_trade_handler(self.opt, self.stock_quote, self.bull_code, self.bear_code)
         # self.hk_trade_handler_bear = hk_trade_handler(self.opt, self.stock_quote, self.bear_code)
         # self.hk_trade_handler_bear_simulation = hk_trade_handler(self.opt_simulation, self.stock_quote, self.bear_code)
-        self.test = 0
+        self.test = 1
         # self.opt.disble_order_stock_code(67863)
         #    localid = opt.buy(0.06, 10000, "67541")
         #    orderid = opt.get_order_id(localid)
@@ -690,12 +690,12 @@ class zma20_strategy_quote(threading.Thread):
                             (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
                                     ma10_ratio < ma20_ratio :
                         if ma10_ratio_ratio <= ma10_r_r_value and \
-                                self.cur < self.MA10_cur and self.cur < self.MA20_cur:
+                                self.cur < self.MA10_cur and (self.MA10_cur  + ma10_ratio * 2) < self.MA20_cur:
                             gap = self.cur - self.ret["cur"][self.count - 120]
                             if gap > -10 and gap < -5:
-                                bear_start = 1
+                                bear_start = 1118
                             if gap <= -10:
-                                bear_start = 1
+                                bear_start = 1114
 
                     if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
                             ma10_ratio < -1 and ma10_ratio >= -3 and \
@@ -705,13 +705,22 @@ class zma20_strategy_quote(threading.Thread):
                             gap = self.cur - self.ret["cur"][self.count - 120]
                             ratio = gap / ma10_ratio
                             if ratio <= 8 and gap < 0:
-                                bear_start = 1
+                                bear_start = 2222
 
-        if bear_start == 1 and self.sell_bear == 0:
+
+
+        if bear_start != 0 and self.sell_bear == 0:
             print("BUY BUY BUY!!!")
             if self.is_trade_limit_time() == 1:
-                self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
-                self.zma10_new_trend = -9999
+                if bear_start == 1114:
+                    self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
+                    self.zma10_new_trend = -9999
+                if bear_start == 1118:
+                    self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
+                    self.zma10_new_trend = -9999
+                if bear_start == 2222:
+                    self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
+                    self.zma10_new_trend = -9999
 
 
     def guard_vol_break(self):
