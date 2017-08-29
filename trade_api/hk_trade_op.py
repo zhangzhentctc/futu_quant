@@ -48,6 +48,14 @@ class hk_trade_opt:
         return 0, ret_data["LocalID"]
 
 
+### {'ZCJZ': '86752.942', 'ZQSZ': '0.0', 'GPBZJ': '0.0', 'ZGJDE': '0.0', 'DJZJ': '0.0', 'XJJY': '86752.942', 'ZSJE': '0.0', 'Power': '86752.942', 'KQXJ': '0.0', 'YYJDE': '0.0'}
+### {'ZSJE': '0.0', 'ZQSZ': '0.0', 'XJJY': '5660.69', 'GPBZJ': '0.0', 'ZGJDE': '5660.0', 'ZCJZ': '5660.69', 'YYJDE': '0.0', 'KQXJ': '4463.929', 'Power': '11320.69', 'DJZJ': '0.0'}
+    def get_avail_cash(self):
+        ret_code, ret_data = self.hk_trade_api.accinfo_query("5374678", self.envtype)
+        if ret_code == -1:
+            return -1
+        avail_cash = float(ret_data["XJJY"])
+        return avail_cash
 
 # order_list_query:
 #  stock_code  stock_name dealt_avg_price dealt_qty localid orderid order_type  price status submited_time updated_time

@@ -201,6 +201,7 @@ class hk_trade_handler(threading.Thread):
         if self.status != STATUS_WAIT_OPEN and self.busy != 1:
             self.status = STATUS_BEAR_FORCE_BUY
             self.buy_qty = qty
+            self.check_sufficiency_bear(qty)
             if wait_profit_ratio > 1 or wait_profit_ratio <= 0:
                 self.wait_profit_qty_ratio = 1
             else:
@@ -213,6 +214,15 @@ class hk_trade_handler(threading.Thread):
     def set_idle(self):
         self.status = STATUS_IDLE
 
+    def check_sufficiency_bear(self, qty):
+        bear_ask_seller = self.stock_quote.get_bear_ask_seller()
+        avail_cash = self.hk_trade_opt.get_avail_cash()
+        if bear_ask_seller == -1 or avail_cash == -1:
+            return -1
+        if qty * bear_ask_seller >= avail_cash:
+            ability_pen = math.floor((avail_cash / (bear_ask_seller - 0.001))/10000)
+            ability_qty = ability_pen * 10000
+            self.buy_qty = ability_qty
 
     def run(self):
         while(1):
