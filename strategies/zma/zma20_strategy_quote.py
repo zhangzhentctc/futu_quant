@@ -58,8 +58,8 @@ class zma20_strategy_quote(threading.Thread):
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 61981
-        self.bull_code = 69512
+        self.bear_code = 68217
+        self.bull_code = 64237
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '584679')
@@ -225,7 +225,6 @@ class zma20_strategy_quote(threading.Thread):
         val = self.ret.iloc[position, ZMA10_RATIO_POS] - self.ret.iloc[position - sample, ZMA10_RATIO_POS]
         self.ret.iloc[position, ZMA10_RATIO_RATIO_POS] = val / sample
         self.cur_zma10_ratio_simple_ratio = val / sample
-        print("ratio ratio ma10: ",self.cur_zma10_ratio_simple_ratio )
         return 1
 
 
@@ -544,11 +543,11 @@ class zma20_strategy_quote(threading.Thread):
                         score += (ma_1m_table.iloc[pointer, close_pos] - ma_1m_table.iloc[pointer, open_pos]) * current_weight
                 if tolerance > 0:
                     if (ma_1m_table.iloc[pointer, high_pos] - ma_1m_table.iloc[pointer, open_pos]) > tolerance:
-                        print("WARN!!!! SELL BEAR!!! Over Tolerance")
+                        #print("WARN!!!! SELL BEAR!!! Over Tolerance")
                         sell_bear = 1
                 else:
                     if score > limit:
-                        print("WARN!!!! SELL BEAR!!!")
+                        #print("WARN!!!! SELL BEAR!!!")
                         sell_bear = 1
                 pointer += 1
             else:
@@ -559,9 +558,9 @@ class zma20_strategy_quote(threading.Thread):
                 if score > limit:
                     band_bear = 1
                     tolerance = extra_tolerance
-                    print("Assign Tollerance")
+                    #print("Assign Tollerance")
                 pointer = observe_num - 1
-        print("SCORE: " + str(score))
+        #print("SCORE: " + str(score))
         self.sell_bear = sell_bear
         self.band_bear = band_bear
         if sell_bear == 1:
@@ -596,7 +595,7 @@ class zma20_strategy_quote(threading.Thread):
         else:
             self.zma10_decrease = 0
             self.play.stop_play_zma10_decrease()
-        print(cur_zma10_ratio_simple_ratio, "AAAAAAAA", cur_zma10_ratio_simple_ratio_0)
+        #print(cur_zma10_ratio_simple_ratio, "AAAAAAAA", cur_zma10_ratio_simple_ratio_0)
         return
 
     def detect_zma10_decrease_start(self):
@@ -606,14 +605,13 @@ class zma20_strategy_quote(threading.Thread):
         except:
             return
         if cur_zma10_ratio_simple_ratio_ratio_0 > -0.004 and cur_zma10_ratio_simple_ratio_ratio <= -0.004:
-
-            print("REMIND!!!DETECT MA10 DECREASE START!!")
+            print(str(self.data_time), "REMIND!!!DETECT MA10 DECREASE START!!")
             self.zma10_decrease_start = 1
             #self.play.play_zma10_decrease()
         else:
             self.zma10_decrease_start = 0
             #self.play.stop_play_zma10_decrease()
-        print(cur_zma10_ratio_simple_ratio_ratio, "SSSSSSSS", cur_zma10_ratio_simple_ratio_ratio_0)
+        #print(cur_zma10_ratio_simple_ratio_ratio, "SSSSSSSS", cur_zma10_ratio_simple_ratio_ratio_0)
         return
 
 ## Require zma10_decrease
@@ -674,17 +672,13 @@ class zma20_strategy_quote(threading.Thread):
                     ##         If   2. M20_r < -1:
                     ##                 M10_r < 0
                     ##
-                if self.count < 1500:
-                    ma10_ratio = self.deltaMA10_cur
-                else:
-                    ma10_ratio = self.ret.iloc[self.count, ZMA10_RATIO_POS]
 
                 if self.count < 1700:
                     return
-                else:
-                    ma10_ratio_ratio = self.ret.iloc[self.count, ZMA10_RATIO_RATIO_POS]
-                ma20_ratio = self.deltaMA20_cur
 
+                ma10_ratio_ratio = self.ret.iloc[self.count, ZMA10_RATIO_RATIO_POS]
+                ma10_ratio = self.ret.iloc[self.count, ZMA10_RATIO_POS]
+                ma20_ratio = self.deltaMA20_cur
                 ma10_r_r_r_value = -0.004
                 ma20_many_head = -2
                 ma10_r_r_value = -0.005
@@ -713,14 +707,15 @@ class zma20_strategy_quote(threading.Thread):
                             if ratio <= 8 and gap < 0:
                                 bear_start = 1
 
-        if bear_start == 1 and self.sell_bear == 0 and self.band_bear == 0:
+        if bear_start == 1 and self.sell_bear == 0:
             print("BUY BUY BUY!!!")
-            self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
-            self.zma10_new_trend = -9999
+            if self.is_trade_limit_time() == 1:
+                self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
+                self.zma10_new_trend = -9999
 
 
     def guard_vol_break(self):
-        print("VOL MA20:",self.MA20_vol, "Last:", self.vol_last, " now:",self.vol_now)
+        #print("VOL MA20:",self.MA20_vol, "Last:", self.vol_last, " now:",self.vol_now)
         if self.MA20_vol != 0:
             ratio = self.vol_last / self.MA20_vol
             if ratio >= 3:
@@ -741,7 +736,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.deposit_bull = 0
                 self.deposit_top = 0
                 self.play.stop_play_stop_lossing_bull()
-                print("Guard Bull: reset green")
+                #print("Guard Bull: reset green")
                 return
             else:
                 self.deposit_bull = abs(sub)
@@ -749,10 +744,10 @@ class zma20_strategy_quote(threading.Thread):
                     self.play.play_stop_lossing_bull()
                     self.deposit_bull = 0
                     self.deposit_top = 0
-                    print("Guard Bull: warn directly")
+                    #print("Guard Bull: warn directly")
                 else:
                     self.deposit_top = self.ma_1m_table.iloc[count - 2, 2]
-                    print("Guard Bull: wait, find deposit")
+                    #print("Guard Bull: wait, find deposit")
                     return
         else:
         # we have a Green K bar that is less than VALUE
@@ -761,7 +756,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.play.play_stop_lossing_bull()
                 self.deposit_bull = 0
                 self.deposit_top = 0
-                print("Guard Bull: warn with deposit")
+                #print("Guard Bull: warn with deposit")
             else:
                 sub = self.ma_1m_table.iloc[count - 2, 3] - self.ma_1m_table.iloc[count - 2, 2]
                 if sub > 0:
@@ -769,8 +764,8 @@ class zma20_strategy_quote(threading.Thread):
                         self.deposit_bull = 0
                         self.deposit_top = 0
                         self.play.stop_play_stop_lossing_bull()
-                        print("Guard Bull: reset with deposit")
-                print("Guard Bull: wait with deposit " + str(self.deposit_top))
+                        #print("Guard Bull: reset with deposit")
+                #print("Guard Bull: wait with deposit " + str(self.deposit_top))
                 return
 
     def empty_head(self):
@@ -875,7 +870,7 @@ class zma20_strategy_quote(threading.Thread):
         else:
             ret = "XX XX XX"
             self.play.stop_play_start_bear()
-        print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
+        #print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
     def many_head(self):
@@ -930,7 +925,7 @@ class zma20_strategy_quote(threading.Thread):
         else:
             ret = "XX XX XX"
             self.play.stop_play_start_bull()
-        print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
+        #print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
         return
 
     def warn_recover_bull_down_trend(self):
@@ -968,7 +963,7 @@ class zma20_strategy_quote(threading.Thread):
         else:
             ret = "XX XX XX"
             self.play.stop_play_bull_recover_down_trend()
-        print("BullRecover" + "| " + ret + " | " + str_0 + " | " + str_1)
+        #print("BullRecover" + "| " + ret + " | " + str_0 + " | " + str_1)
         return
 
     def warn_bogus_break(self):
@@ -1060,6 +1055,20 @@ class zma20_strategy_quote(threading.Thread):
 
         return 1
 
+    def is_trade_limit_time(self):
+        trade_end_time = "15:30:00"
+
+        trade_end_time_list = trade_end_time.split(":")
+        trade_end_time_second = int(trade_end_time_list[0]) * 3600 + int(trade_end_time_list[1]) * 60 + int(trade_end_time_list[2])
+
+        cur_time_list = self.data_time.split(":")
+        cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+        if cur_time_second > trade_end_time_second:
+            return 0
+
+        return 1
+
 
     def get_cur_zma_quote(self):
         if self.count <= 1:
@@ -1091,11 +1100,11 @@ class zma20_strategy_quote(threading.Thread):
 
     def cal_cur_speed(self):
         if self.count > 40:
-            print("Changes in last 5s,10s,20s")
+            #print("Changes in last 5s,10s,20s")
             self.cur_gap_5s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 10, CUR_POS]) / 5
             self.cur_gap_10s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 20, CUR_POS]) / 10
             self.cur_gap_20s = (self.ret.iloc[self.count, CUR_POS] - self.ret.iloc[self.count - 40, CUR_POS]) / 20
-            print(str(self.cur_gap_5s) + " " + str(self.cur_gap_10s) + " " + str(self.cur_gap_20s))
+            #print(str(self.cur_gap_5s) + " " + str(self.cur_gap_10s) + " " + str(self.cur_gap_20s))
 
 
     def run(self):
@@ -1165,7 +1174,7 @@ class zma20_strategy_quote(threading.Thread):
                     cur_stock_quoto = self.ret.iloc[self.count, CUR_POS]
                     self.cur = cur_stock_quoto
 
-                self.print_ma()
+                #self.print_ma()
                 self.cal_cur_speed()
                 self.determine_direction()
                 self.refresh_zma10_ratio_simple(self.count)
@@ -1174,20 +1183,22 @@ class zma20_strategy_quote(threading.Thread):
                 self.detect_zma10_decrease_start()
                 # Detect Empty and Buy
                 #self.detect_empty_decrease()
-                #self.detect_empty_start()
+
 
                 self.guard_burst()
                 #self.guard_bear()
                 self.guard_bear2()
 
+                self.detect_empty_start()
+
                 #self.guard_bull()
-                self.empty_head()
-                self.many_head()
-                self.first_10min_warning()
-                self.warn_bull_recover()
-                self.warn_recover_bull_down_trend()
-                self.warn_bogus_break()
-                self.warn_low_amplitude()
+                #self.empty_head()
+                #self.many_head()
+                #self.first_10min_warning()
+                #self.warn_bull_recover()
+                #self.warn_recover_bull_down_trend()
+                #self.warn_bogus_break()
+                #self.warn_low_amplitude()
                 #self.warn_ma_low()
                 #self.disable_adverse_bull()
                 #self.disable_adverse_bear()

@@ -84,9 +84,9 @@ class daytest:
             line = self.getNextDayTestData()
             data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "ma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS],
                          "zma10_ratio_ratio_ratio": line[ZMA10_RATIO_RATIO_RATIO_POS], "trade_mark": line[TRADE_MARK_POS], "ma20_ratio": line[MA20_RATIO_POS],
-                         "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS]})
+                         "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS], "bull_decrease": 0 ,"zmab":0})
 
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short","bull_decrease","zmab"])
         return self.ret
 
     def addDayTestData(self, data):
@@ -180,6 +180,24 @@ class daytest:
         for i in range(start_pos + 1, self.count):
             avr = avr0 - starter / len + self.ret["cur"][i] / len
             self.ret.iloc[i, ZMA5_POS] = avr
+            avr0 = avr
+            starter = self.ret["cur"][i - len]
+        return 0
+
+    def cal_zmab(self):
+        len = 60
+        avg_sum = 0
+        start_pos = len - 1
+        if self.count < len:
+            return -1
+        for j in range(0, len):
+            avg_sum += self.ret["cur"][len - 1 - j]/len
+        avr0 = avg_sum
+        self.ret.iloc[start_pos, 12] = avr0
+        starter = self.ret["cur"][0]
+        for i in range(start_pos + 1, self.count):
+            avr = avr0 - starter / len + self.ret["cur"][i] / len
+            self.ret.iloc[i, 12] = avr
             avr0 = avr
             starter = self.ret["cur"][i - len]
         return 0
@@ -703,6 +721,7 @@ class daytest:
         zma10_r_r_tl = self.ret["zma10_ratio_ratio"]
         zma10_r_r_s_tl = self.ret["zma10_ratio_ratio_short"]
         zma10_r_r_r_tl = self.ret["zma10_ratio_ratio_ratio"]
+        bull_decrease = self.ret["bull_decrease"]
 
         plots.prepare_plot(cur_tl, 1)
         plots.prepare_plot(zma10_tl, 1)
@@ -716,10 +735,192 @@ class daytest:
 
         plots.prepare_plot(zma10_r_r_r_tl, 4)
 
+        plots.prepare_plot(bull_decrease,5 )
+
+    def cal_bull_decrease(self):
+        print("BULL DECREASE CAL")
+        start = 120
+        position = start
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
+                max = cur
+                ma10_up = 1
+
+            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+                ma10_up = 0
+
+            try:
+                if ma10_up == 1:
+
+                    if cur < max:
+                        gap = max - cur
+                    else:
+                        max = cur
+                        gap = 0
+                else:
+                    gap = -1
+            except:
+                gap = -1
+
+            self.ret.iloc[position, 11] = gap
+
+            position += 1
+
+    def cal_bear_increase(self):
+        print("Bear INCREASE CAL")
+        start = 120
+        position = start
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            cur = self.ret["cur"][position]
+            cur_b = self.ret["zmab"][position]
+            if position == start:
+                if ma10_ratio < 0:
+                    min = cur
+                    ma10_up = 1
+
+            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+                min = cur
+                ma10_up = 1
+
+            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
+                ma10_up = 0
+
+            try:
+                if ma10_up == 1:
+
+                    if cur_b > min:
+                        gap = cur_b - min
+                    else:
+                        min = cur_b
+                        gap = 0
+                else:
+                    gap = -1
+            except:
+                gap = -1
+
+            self.ret.iloc[position, 11] = gap
+
+            position += 1
 
 
+    def mark_undefine(self, plots):
+        ma10_r_r_r_value = -0.002
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        #start = 1200 + 121 + 360 + 120 + 1
+        start = 120
+        position = start
+        print("start ",str(start))
+
+        vally_count = 0
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
 
 
+            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
+                vally_count = 0
+                back_static = 0
+                max = cur
+                ma10_up = 1
+
+            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+                back_static = 0
+                ma10_up = 0
+
+            ## when ma10-r-r-r drops to -0.004
+            if ma10_ratio_ratio_ratio * 1000 <= ma10_r_r_r_value * 1000 and \
+                    self.ret["zma10_ratio_ratio_ratio"][position - 1] * 1000 > ma10_r_r_r_value * 1000 :
+                ### 111 turning point drops fast
+                ### a. ma20_r >= -2
+                vally_count += 1
+
+                if cur > MA10_cur and MA10_cur > MA20_cur and MA10_cur - MA20_cur > ma10_ratio and \
+                        ma20_ratio > 1 and \
+                        ma10_ratio > ma20_ratio and \
+                        ma10_ratio_ratio > 0 :
+                    plots.add_annotate(position, cur, 1, str(self.ret["time"][position]) + "\n002 +\n"+ "cur:" + str(cur) + "\n" +str(MA10_cur) + "\n" +str(vally_count) + "\n" + str((cur - MA10_cur)/ma10_ratio), -200)
+
+                if ma20_ratio >= ma20_many_head and \
+                        (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
+                                ma10_ratio < ma20_ratio :
+                    if (ma10_ratio_ratio <= ma10_r_r_value) and \
+                                cur < MA10_cur and cur < MA20_cur:
+                        gap = cur - self.ret["cur"][position - 120]
+                        if  gap > -10 and gap < -5:
+                            #plots.add_annotate(position, cur, 1, "1114\n" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
+                            self.mark_trade(position, 1114)
+                            x=1
+                        if gap <= -10:
+                            #plots.add_annotate(position, cur, 1, "1118 " + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
+                            self.mark_trade(position, 1118)
+                            x=1
+                        #print("gap:", cur - self.ret["cur"][position - 120])
+
+                ### 222 turning point drops slowly
+                if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
+                        ma10_ratio < -1 and ma10_ratio >= -3 and \
+                                ma10_ratio < ma20_ratio:
+                    if ma10_ratio_ratio <= ma10_r_r_small_value and ma10_ratio_ratio > ma10_r_r_value and \
+                                    cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
+                        gap = cur - self.ret["cur"][position - 120]
+                        ratio = gap/ma10_ratio
+                        if ratio <= 8 and gap < 0:
+                            #plots.add_annotate(position, cur, 1, "222" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
+                            self.mark_trade(position, 222)
+                            #print("gap:", cur - self.ret["cur"][position - 120])
+                            x = 1
+
+            position += 1
+        return 1
+
+    def mark_bear_about_die(self, plots):
+        ma10_r_r_r_value = -0.004
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        start = 1200 + 121 + 360 + 120 + 1
+        position = start
+
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            if ma20_ratio <= -1.5:
+                if ma10_ratio < ma20_ratio and self.ret["zma10_ratio"][position-1] >= self.ret["ma20_ratio"][position-1] and self.ret["zma10_ratio"][position-120] >= self.ret["ma20_ratio"][position-120] and \
+                        MA20_cur - MA10_cur > -1 * ma10_ratio and \
+                        ma10_ratio_ratio < -0.001 and \
+                        ma10_ratio_ratio_ratio < 0:
+                    plots.add_annotate(position, cur, 1, "444 " + str(cur) + "\n" + str(ma10_ratio) + "/" + str(
+                        ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
+            position += 1
+        return 1
 
 
     def mark_bear_start(self, plots):
@@ -727,8 +928,8 @@ class daytest:
         ma20_many_head = -2
         ma10_r_r_value = -0.005
         ma10_r_r_value_short = -0.01
-        ma10_r_r_small_value = -0.001
-        start = 1200 + 121 + 360 + 120 + 1
+        ma10_r_r_small_value = 0
+        start = 121
         position = start
 
 
@@ -751,13 +952,16 @@ class daytest:
                         (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
                                 ma10_ratio < ma20_ratio :
                     if (ma10_ratio_ratio <= ma10_r_r_value) and \
-                                cur < MA10_cur and cur < MA20_cur:
+                                cur < MA10_cur and cur < (MA10_cur + ma10_ratio * 2) < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
+                        ratio = gap / ma10_ratio
                         if  gap > -10 and gap < -5:
+                            print("gap:", cur - self.ret["cur"][position - 120], "ratio", ratio)
                             plots.add_annotate(position, cur, 1, "1114\n" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
                             self.mark_trade(position, 1114)
                             x=1
                         if gap <= -10:
+                            print("gap:", cur - self.ret["cur"][position - 120], "ratio", ratio)
                             plots.add_annotate(position, cur, 1, "1118 " + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
                             self.mark_trade(position, 1118)
                             x=1
@@ -771,7 +975,9 @@ class daytest:
                                     cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
                         ratio = gap/ma10_ratio
-                        if ratio <= 8 and gap < 0:
+
+                        if ratio < 8 and gap < 0:
+                            print("gap:", cur - self.ret["cur"][position - 120], "ratio", ratio)
                             plots.add_annotate(position, cur, 1, "222" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
                             self.mark_trade(position, 222)
                             #print("gap:", cur - self.ret["cur"][position - 120])
@@ -781,7 +987,7 @@ class daytest:
         return 1
 
     def mark_bear_continue(self, plots):
-        ma10_r_r_r_value = -0.004
+        ma10_r_r_r_value = -0.001
         ma20_many_head = -2
         ma10_r_r_value = -0.005
 
@@ -851,9 +1057,15 @@ class daytest:
                     # print("ma10_r_r_up_ok")
                 else:
                     ma10_r_r_up_ok = 0
-            if ma10_ratio_ratio_short < ma10_ratio_ratio - zma10_rrr_short_cross_float and \
-                            self.ret["zma10_ratio_ratio_short"][position - 1] >= self.ret["zma10_ratio_ratio"][
-                                position - 1] - zma10_rrr_short_cross_float:
+            # down cross ma10_ratio
+            #if ma10_ratio_ratio_short < ma10_ratio_ratio - zma10_rrr_short_cross_float and \
+                            #self.ret["zma10_ratio_ratio_short"][position - 1] >= self.ret["zma10_ratio_ratio"][
+                                #position - 1] - zma10_rrr_short_cross_float:
+
+            if (ma10_ratio_ratio_short < 0 and \
+                    self.ret["zma10_ratio_ratio_short"][position - 1] >= 0) or \
+                    ( ma10_ratio_ratio_short < ma10_ratio_ratio - zma10_rrr_short_cross_float and \
+                    self.ret["zma10_ratio_ratio_short"][position - 1] >= self.ret["zma10_ratio_ratio"][position - 1] - zma10_rrr_short_cross_float):
                 ma10_rr_down = 1
                 if trend_down == 1:
                     ma10_r_r_down_ok = 1
@@ -992,324 +1204,6 @@ class daytest:
             position += 1
         return 1
 
-
-
-    def strategy_1st(self):
-        start = 2400 + 60 + 1
-        position = start
-
-        while position < self.count:
-            if self.ret["zma_gap"][position] >= 5 and self.ret["zma_gap"][position] <= 15 and \
-                            self.ret["zma_gap_ratio"][position] > 0 and self.ret["zma_gap_ratio_ratio"][position] > 0 and abs(self.ret["zma_gap_ratio_ratio_r"][position]) > 0.3 and \
-                            self.ret["zma10_ratio"][position] > self.ret["zma20_ratio"][position] and \
-                            self.ret["zma20_ratio"][position] >= 0.005 and self.ret["zma10_ratio_ratio"][position] > 0 and self.ret["zma20_ratio_ratio"][position] > 0:
-                self.mark_trade(position, 1)
-            if self.ret["zma_gap"][position] <= -5 and self.ret["zma_gap"][position] >= -15 and \
-                            self.ret["zma_gap_ratio"][position] < -0 and self.ret["zma_gap_ratio_ratio"][position] < 0 and abs(self.ret["zma_gap_ratio_ratio_r"][position]) > 0.3 and \
-                            self.ret["zma10_ratio"][position] < self.ret["zma20_ratio"][position] and \
-                            self.ret["zma20_ratio"][position] <= -0.005 and self.ret["zma10_ratio_ratio"][position] < 0 and self.ret["zma20_ratio_ratio"][position] < 0:
-                self.mark_trade(position, -1)
-            position += 1
-        return 1
-
-    ######
-    ##   Get Test Parameters from Database
-    ##     To: Dataframe: self.adj_paras
-    ######
-    def getAdjParas(self):
-        ret = self.queryAdjParas()
-        if ret == -1:
-            print("query fail")
-            return -1
-        self.parseAdjParas()
-
-    def queryAdjParas(self):
-        self.AdjParas = self.myop.dbop_read_adj_paras(self.mydb)
-        if self.AdjParas == 0:
-            return -1
-        return self.AdjParas
-
-    def getNextAdjParas(self):
-        ret = self.myop.dbop_read_adj_paras_next(self.mydb)
-        return ret
-
-    def parseAdjParas(self):
-        data = []
-        for i in range(0, self.AdjParas):
-            line = self.getNextAdjParas()
-            data.append({"para_index": line[0], "zma10_ratio":line[1],"zma20_ratio": line[2],  "zma10_ratio_ratio": line[3], "zma20_ratio_ratio": line[4],
-                         "zma_gap_min": line[5], "zma_gap_max": line[6], "zma_gap_ratio": line[7], "zma_gap_ratio_ratio": line[8], "zma20": line[9], "cur_ratio":line[10]})
-
-        self.adj_paras = pd.DataFrame(data, columns=["para_index", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap_min", "zma_gap_max", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma20", "cur_ratio"])
-        return self.adj_paras
-
-    ######
-    ##   Get Test Trade Mark from Database
-    ##     To: Dataframe: self.trade_mark
-    ######
-    def getTradeMark(self):
-        ret = self.queryTradeMark()
-        if ret == -1:
-            print("query fail")
-            return -1
-        self.parseTradeMark()
-
-    def queryTradeMark(self):
-        self.tradeMark = self.myop.dbop_read_mark_trade(self.mydb)
-        if self.tradeMark == 0:
-            return -1
-        return self.tradeMark
-
-    def getNextTradeMark(self):
-        ret = self.myop.dbop_read_mark_trade_next(self.mydb)
-        return ret
-
-    def parseTradeMark(self):
-        data = []
-        for i in range(0, self.tradeMark):
-            line = self.getNextTradeMark()
-            data.append({"No.": line[1], "para_index":line[2],"trade_mark": line[3]})
-
-        self.trade_mark = pd.DataFrame(data, columns=["No.", "para_index", "trade_mark"])
-        return self.trade_mark
-
-    ####
-    ##    Mark Trade to DB by given Parameters
-    ####
-    def mark_trade_given_paras(self, No, index, mark):
-        self.myop.dbop_add_mark_trade(self.mydb, No, index, mark)
-
-
-    def strategy_func(self, adj_paras):
-        start = 2400 + 60 + 1
-        position = start
-        record_c_trend = -1
-        record_p_trend = -1
-        trend_c_cnt = 0
-        trend_p_cnt = 0
-        trend = 0
-        while position < self.count:
-            if self.ret["zma10_ratio"][position] > 0:
-                if trend != 1:
-                    trend = 1
-                    trend_c_cnt += 1
-            else:
-                if trend != -1:
-                    trend = -1
-                    trend_p_cnt += 1
-
-
-            if self.ret["zma_gap"][position] >= adj_paras.zma_gap_min_sh and self.ret["zma_gap"][position] <= adj_paras.zma_gap_max_sh and \
-                            self.ret["zma_gap_ratio"][position] > adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] > adj_paras.zma_gap_ratio_ratio_sh  and \
-                            self.ret["zma10_ratio"][position] > self.ret["zma20_ratio"][position] and \
-                            self.ret["zma20_ratio"][position] >= adj_paras.zma20_ratio_sh and self.ret["zma10_ratio_ratio"][position] > adj_paras.zma10_ratio_ratio_sh and self.ret["zma20_ratio_ratio"][position] > adj_paras.zma20_ratio_ratio_sh:
-                if record_c_trend != trend_c_cnt:
-                    self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index,  1)
-                    record_c_trend = trend_c_cnt
-
-            if self.ret["zma_gap"][position] <= -1 * adj_paras.zma_gap_min_sh and self.ret["zma_gap"][position] >= -1 * adj_paras.zma_gap_max_sh and \
-                            self.ret["zma_gap_ratio"][position] < -1 * adj_paras.zma_gap_ratio_sh and self.ret["zma_gap_ratio_ratio"][position] < -1 * adj_paras.zma_gap_ratio_ratio_sh  and \
-                            self.ret["zma10_ratio"][position] < self.ret["zma20_ratio"][position] and \
-                            self.ret["zma20_ratio"][position] <= -1 * adj_paras.zma20_ratio_sh and self.ret["zma10_ratio_ratio"][position] < -1 * adj_paras.zma10_ratio_ratio_sh and self.ret["zma20_ratio_ratio"][position] < -1 * adj_paras.zma20_ratio_ratio_sh:
-                if record_p_trend != trend_p_cnt:
-                    self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index,  -1)
-                    record_p_trend = trend_p_cnt
-            position += 1
-
-        return 1
-
-    def strategy_break_func(self, adj_paras):
-        start = 2400 + 60 + 1
-        position = start
-        record_c_trend = -1
-        record_p_trend = -1
-        trend_c_cnt = 0
-        trend_p_cnt = 0
-        trend = 0
-        while position < self.count:
-            if self.ret["zma10_ratio"][position] > 0:
-                if trend != 1:
-                    trend = 1
-                    trend_c_cnt += 1
-                    if record_c_trend != trend_c_cnt:
-                        if self.ret["cur_ratio"][position] > adj_paras.cur_ratio_sh and \
-                           self.ret["zma20_ratio"][position] < adj_paras.zma20_sh and \
-                           self.ret["zma10_ratio_ratio"][position] > adj_paras.zma10_ratio_ratio_sh and \
-                           self.ret["zma10_ratio_ratio"][position] * self.ret["zma20_ratio_ratio"][position] > 0:
-                            self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index, -1)
-                        record_c_trend = trend_c_cnt
-            else:
-                if trend != -1:
-                    trend = -1
-                    trend_p_cnt += 1
-                    if record_p_trend != trend_p_cnt:
-                        if self.ret["cur_ratio"][position] < -1 * adj_paras.cur_ratio_sh and \
-                           self.ret["zma20_ratio"][position] > -1 * adj_paras.zma20_sh and \
-                           self.ret["zma10_ratio_ratio"][position] < -1 * adj_paras.zma10_ratio_ratio_sh and \
-                           self.ret["zma10_ratio_ratio"][position] * self.ret["zma20_ratio_ratio"][position] > 0:
-                            self.mark_trade_given_paras(self.ret["No."][position], adj_paras.index, 1)
-                        record_p_trend = trend_p_cnt
-
-            position += 1
-
-        return 1
-
-
-    ####
-    ##  Write judge result
-    ####
-    def judge_func(self, adj_paras_index):
-        # Get length
-        day_data_len = 0
-        for index in self.ret.iterrows():
-            day_data_len += 1
-
-        trade_mark_tol_len = 0
-        for index in self.trade_mark.iterrows():
-            trade_mark_tol_len += 1
-
-        # Find data. Filter adj_paras
-        trade_mark_len = 0
-        data = []
-        for i in range(0, trade_mark_tol_len):
-            if self.trade_mark["para_index"][i] == adj_paras_index:
-                data.append({"No.": self.trade_mark["No."][i], "para_index":self.trade_mark["para_index"][i],"trade_mark": self.trade_mark["trade_mark"][i]})
-                trade_mark_len += 1
-        indexed_trade_mark = pd.DataFrame(data, columns=["No.", "para_index", "trade_mark"])
-
-#        print(indexed_trade_mark)
-        # Start judging
-        i = 0
-        j = 0
-        while( i < trade_mark_len ):
-            while indexed_trade_mark["No."][i] < self.ret["No."][j]:
-                i += 1
-                if i >= trade_mark_len - 1 or j >= day_data_len - 1:
-                    break
-            if i>= trade_mark_len - 1 or j >= day_data_len - 1:
-                break
-            while indexed_trade_mark["No."][i] != self.ret["No."][j]:
-                j += 1
-                if i >= trade_mark_len - 1 or j >= day_data_len - 1:
-                    break
-            if i >= trade_mark_len - 1 or j >= day_data_len - 1:
-                break
-            buy_pos = j
-            buy_val = self.ret["cur"][buy_pos]
-            max_pos = buy_pos
-            max_val = 0
-            turn_pos = buy_pos
-            turn_val = 0
-            # When zma10_ratio turns, break
-            while self.ret["zma10_ratio"][buy_pos] * self.ret["zma10_ratio"][j] > 0 and j < day_data_len:
-                # C, trend is up, value is over buy val
-                if self.ret["zma10_ratio"][buy_pos] >0:
-                    if self.ret["cur"][j] > buy_val:
-                        if self.ret["cur"][j] - buy_val > max_val:
-                            max_val = self.ret["cur"][j] - buy_val
-                            max_pos = j
-                # P, trend is down, value is below buy val
-                else:
-                    if self.ret["cur"][j] < buy_val:
-                        if buy_val - self.ret["cur"][j]  > max_val:
-                            max_val = buy_val - self.ret["cur"][j]
-                            max_pos = j
-
-                # Find cur when zma10 turns
-                turn_pos = j
-                turn_val = self.ret["cur"][j]
-
-                j+=1
-            passive_gap = self.ret["cur"][max_pos] - self.ret["cur"][buy_pos]
-            turn_gap = turn_val - self.ret["cur"][buy_pos]
-            self.write_judge_ret(self.ret["No."][buy_pos], indexed_trade_mark["trade_mark"][i], passive_gap, self.ret["No."][turn_pos], turn_gap, adj_paras_index)
-            i += 1
-
-    def write_judge_ret(self, No, mark, passive_gap, turn_pos, turn_gap, index):
-        self.myop.dbop_add_judge_result(self.mydb, No, mark, passive_gap, turn_pos, turn_gap, index)
-
-
-    ####
-    ##  1. Get Paras from DB
-    ##  2. Test Paras
-    ####
-    def testParameters(self):
-        self.getAdjParas()
-
-        len = 0
-        for index in self.adj_paras.iterrows():
-             len += 1
-        for i in range(0, len):
-            ## Get Parameters
-            para = adjust_paras()
-            para.index                  = self.adj_paras["para_index"][i]
-            para.zma10_ratio_sh         = self.adj_paras["zma10_ratio"][i]
-            para.zma20_ratio_sh         = self.adj_paras["zma20_ratio"][i]
-            para.zma10_ratio_ratio_sh   = self.adj_paras["zma10_ratio_ratio"][i]
-            para.zma20_ratio_ratio_sh   = self.adj_paras["zma20_ratio_ratio"][i]
-            para.zma_gap_min_sh         = self.adj_paras["zma_gap_min"][i]
-            para.zma_gap_max_sh         = self.adj_paras["zma_gap_max"][i]
-            para.zma_gap_ratio_sh       = self.adj_paras["zma_gap_ratio"][i]
-            para.zma_gap_ratio_ratio_sh = self.adj_paras["zma_gap_ratio_ratio"][i]
-            para.zma20_sh               = self.adj_paras["zma20"][i]
-            para.cur_ratio_sh           = self.adj_paras["cur_ratio"][i]
-
-            ## Test Paras
-            print("TEST STRATEGY " + str(i))
-            self.strategy_func(para)
-
-
-        self.getTradeMark()
-        print(self.trade_mark)
-
-        for i in range(0, len):
-            ## Get Parameters
-            para = adjust_paras()
-            para.index = self.adj_paras["para_index"][i]
-
-            ## Judge
-            self.judge_func(para.index)
-
-
-
-    def search_biggest(self, start, end, prod):
-        max_value = 0
-        value = 0
-        if prod == 1:
-            value = self.zmax(start, end)
-        if prod == -1:
-            value = self.zmin(start, end)
-        max_value = abs(self.ret["cur"][start] - value)
-        return max_value
-
-    def zmin(self, start, end):
-        min_v = self.ret["cur"][start]
-        for i in (start + 1, end + 1):
-            if self.ret["cur"][i] < min_v:
-                min_v = self.ret["cur"][i]
-        return min_v
-
-    def zmax(self, start, end):
-        max_v = self.ret["cur"][start]
-        for i in (start + 1, end + 1):
-            if self.ret["cur"][i] > max_v:
-                max_v = self.ret["cur"][i]
-        return max_v
-
-    def judge(self, trade_record):
-        len = 0
-        ret = []
-        for index in trade_record.iterrows():
-            len += 1
-
-        for i in range(0, len):
-            start = trade_record.iloc[i, 0]
-            end = trade_record.iloc[i, 1]
-            prod = trade_record.iloc[i, 2]
-            max = self.search_biggest(start, end, prod)
-            ret.append(max)
-        return ret
-
     def readData(self, start, end):
         ret = self.queryData(start, end)
         if ret == -1:
@@ -1353,6 +1247,9 @@ class daytest:
         e = time.time()
         #print("Parse Completed.", str(e - s))
         self.count = self.daytestcount
+        #self.cal_bull_decrease()
+        #self.cal_zmab()
+        #self.cal_bear_increase()
 
     def insert_para_test(self):
         zma20_ratio_list = [0.001, 0.002, 0.003, 0.004]
@@ -1377,6 +1274,9 @@ class daytest:
               "\nMA10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio)
         return s
 
+    def export_ret(self):
+        self.ret.to_csv("C:\\export.csv", index = False)
+
 if __name__ == "__main__":
 #    Usage
 
@@ -1395,8 +1295,8 @@ if __name__ == "__main__":
     stored_date_list_all = ["2017-07-27", "2017-07-28", "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
                  "2017-08-08", "2017-08-09",
                  "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
-                 "2017-08-21", "2017-08-22"]
-    not_stored = ["2017-08-24", "2017-08-25"]
+                 "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29"]
+    not_stored = []
 
     test = daytest()
     test.Initialize()
@@ -1404,10 +1304,10 @@ if __name__ == "__main__":
 
     total_s = time.time()
 
-    for date in date_list_all:
+    for date in not_stored:
         start_time = date + " " + "9:20:00"
         end_time = date + " " + "16:00:00"
-        #test.store_history(start_time, end_time)
+        test.store_history(start_time, end_time)
         s = time.time()
         #test.get_data_direct(start_time, end_time)
         #test.read_history(start_time, end_time)
@@ -1423,20 +1323,29 @@ if __name__ == "__main__":
     print("Total Time:", str( total_e - total_s ))
 
 
-########For plots
-    plot_date = "2017-08-25"
+########For plos
+
+    plot_date = "2017-08-22"
 
     start_time = plot_date + " " + "9:20:00"
     end_time = plot_date + " " + "16:00:00"
     test.read_history(start_time, end_time)
+    #test.get_data_direct(start_time, end_time)
     plots = show_plots(test)
-    plots.init_plot(4, plot_date+"continue")
+    plots.init_plot(5, plot_date+"-004")
 
     test.mark_base(plots)
 
+    # 8/29 8/28 8/24 8/21 8/18 8/16 8/15 8/11 8/8 8/2 | 08/14
+    test.mark_bear_start(plots)
+    #test.mark_bear_continue(plots)
 
-    #test.mark_bear_start(plots)
-    test.mark_bear_continue(plots)
+    # 3 8 10 17 21
+    #test.mark_bear_about_die(plots)
+
+
+    #test.mark_undefine(plots)
+    #test.export_ret()
     plots.show_plot()
 
 

@@ -23,8 +23,9 @@ class show_plots:
     def init_plot(self, total_num, name= "stock"):
         self.fig = plt.figure(name)
         self.total_num = total_num
-        if total_num == 4:
-            ax2 = plt.subplot(412)
+        if total_num >= 5:
+
+            ax2 = plt.subplot(512)
             ymajorLocator_2 = MultipleLocator(1.5)  # 将y轴主刻度标签设置为0.5的倍数
             ymajorFormatter_2 = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
             yminorLocator_2 = MultipleLocator(1.5)  # 将此y轴次刻度标签设置为0.1的倍数
@@ -34,7 +35,7 @@ class show_plots:
             ax2.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
             ax2.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
-            ax3 = plt.subplot(413)
+            ax3 = plt.subplot(513)
             ymajorLocator_3 = MultipleLocator(0.005)
             #ymajorFormatter_3 = FormatStrFormatter('%1.1111f')
             yminorLocator_3 = MultipleLocator(0.005)
@@ -45,7 +46,7 @@ class show_plots:
             ax3.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
             ax3.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
-            ax4 = plt.subplot(414)
+            ax4 = plt.subplot(514)
             ymajorLocator_4 = MultipleLocator(0.004)
             #ymajorFormatter_4 = FormatStrFormatter('%1.1111f')
             yminorLocator_4 = MultipleLocator(0.004)
@@ -55,7 +56,15 @@ class show_plots:
             ax4.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
             ax4.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
-
+            ax5 = plt.subplot(515)
+            ymajorLocator_5 = MultipleLocator(5)
+            #ymajorFormatter_4 = FormatStrFormatter('%1.1111f')
+            yminorLocator_5 = MultipleLocator(5)
+            ax5.yaxis.set_major_locator(ymajorLocator_5)
+            #ax4.yaxis.set_major_formatter(ymajorFormatter_4)
+            ax5.yaxis.set_minor_locator(yminorLocator_5)
+            ax5.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax5.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
 
 
     def prepare_plot(self, data_list, num):
@@ -69,7 +78,7 @@ class show_plots:
         plt.plot(data_list)
         return 0
 
-    def add_annotate(self, x, y, num, words):
+    def add_annotate(self, x, y, num, words, place = 50):
         if num > self.total_num or num <= 0:
             print("Bad Sub Plot Num!")
             return -1
@@ -80,7 +89,7 @@ class show_plots:
         ano = plt.annotate(
             words,
             xy=(x, y),
-            xytext=(x, y + 50),
+            xytext=(x, y + place),
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
         )
         return ano

@@ -327,9 +327,16 @@ class get_stock_quote(threading.Thread):
             if ret == RET_ERROR:
                 continue
 
-            ret = self.get_ask_bid()
-            if ret == RET_ERROR:
-                continue
+            start_time = "09:31:00"
+            cur_time = self.data_time
+            start_time_list = start_time.split(":")
+            start_time_second = int(start_time_list[0]) * 3600 + int(start_time_list[1]) * 60 + int(start_time_list[2])
+            cur_time_list = cur_time.split(":")
+            cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+            if cur_time_second >=start_time_second:
+                ret = self.get_ask_bid()
+                if ret == RET_ERROR:
+                    continue
 
             self.get_ma_1m(26)
             self.cal_delta_ma()
