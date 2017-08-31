@@ -144,9 +144,10 @@ class PlaySound(threading.Thread):
     def play_sound(self, path):
         try:
             #playsound.playsound(path)
-            print("skip play")
+            x=1
+            #print("skip play")
         except:
-            print("WARN: Play Sound Fail")
+            #print("WARN: Play Sound Fail")
             self.fail_times += 1
             return
         self.fail_times = 0

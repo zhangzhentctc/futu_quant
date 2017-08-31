@@ -122,7 +122,10 @@ class show_plots:
                 ax.lines.remove(ax.lines[self.origin_lines[i]])
             except:
                 x=1
-            ax.plot([event.xdata, event.xdata], [self.yMinMax[i][0], self.yMinMax[i][1]], linestyle="--")
+            try:
+                ax.plot([event.xdata, event.xdata], [self.yMinMax[i][0], self.yMinMax[i][1]], linestyle="--")
+            except:
+                x=1
 
         try:
             self.tmp_ano.remove()

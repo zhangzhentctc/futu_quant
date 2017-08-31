@@ -105,7 +105,7 @@ class hk_trade_opt:
         pos_qty = self.query_position_stock_qty(stock_code)
         print(pos_qty, "  ", qty)
         if int(pos_qty) == 0 or int(pos_qty) == -1 or int(pos_qty) < int(qty):
-            print("Not Enough Position")
+            #print("Not Enough Position")
             return -1
         else:
             print(qty, "!!!!!!!!!!")
@@ -179,14 +179,14 @@ class hk_trade_opt:
         for i in ret_data["stock_code"]:
             if str(i) == str(stock_code) and (int(ret_data["status"][count]) == 1 or int(ret_data["status"][count]) == 2):
                 position = count
-                print("Find Order")
+                #print("Find Order")
                 break
             count += 1
         if position == -1:
-            print("No Such Order")
+            #print("No Such Order")
             return -1
         else:
-            print("Disable Order")
+            #print("Disable Order")
             orderid = ret_data["orderid"][position]
             self.disable_order(orderid)
         return orderid
@@ -202,17 +202,18 @@ class hk_trade_opt:
         for i in ret_data["stock_code"]:
             if str(i) == str(stock_code):
                 position = count
-                print("Find Position")
+                #print("Find Position")
                 break
             count += 1
         if position == -1:
-            print("No Such stock position")
-            print(ret_data)
+            x=1
+            #print("No Such stock position")
+            #print(ret_data)
         else:
             pos_qty = ret_data["can_sell_qty"][position]
             #if int(pos_qty) == 0:
                 #print(ret_data)
-        print("pos", pos_qty)
+        #print("pos", pos_qty)
         return pos_qty
 
     def query_position_stock_cost(self, stock_code):

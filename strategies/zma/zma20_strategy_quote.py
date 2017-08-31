@@ -58,7 +58,7 @@ class zma20_strategy_quote(threading.Thread):
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 68217
+        self.bear_code = 69535
         self.bull_code = 64237
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
@@ -711,6 +711,7 @@ class zma20_strategy_quote(threading.Thread):
 
         if bear_start != 0 and self.sell_bear == 0:
             print("BUY BUY BUY!!!")
+            print(self.ret.iloc[self.count,])
             if self.is_trade_limit_time() == 1:
                 if bear_start == 1114:
                     self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
@@ -1213,7 +1214,7 @@ class zma20_strategy_quote(threading.Thread):
                 #self.disable_adverse_bear()
 
 
-                print(self.ret.iloc[self.count,])
+                #print(self.ret.iloc[self.count,])
                 end = time.time()
                 dur = end - start
                 if dur > self.interval:

@@ -259,7 +259,7 @@ class hk_trade_handler(threading.Thread):
                 ## Check Position
                 qty_p = self.hk_trade_opt.query_position_stock_qty(self.bear_code)
                 if qty_p == -1 or qty_p == 0:
-                    print("No Position. Force Sell Bear Stop!")
+                    #print("No Position. Force Sell Bear Stop!")
                     self.set_idle()
                     continue
                 else:
@@ -270,7 +270,7 @@ class hk_trade_handler(threading.Thread):
                     while bear_force_sell_status != 0:
                         bear_bid = self.stock_quote.get_bear_bid()
                         bear_ask = self.stock_quote.get_bear_ask()
-                        print(bear_bid, bear_ask)
+                        #print(bear_bid, bear_ask)
                         if bear_ask * 1000 - bear_bid * 1000 <= 2:
                             localid = self.hk_trade_opt.sell_stock_code_qty(self.bear_code, bear_bid, qty)
                             if localid == -1:
@@ -309,7 +309,7 @@ class hk_trade_handler(threading.Thread):
                             continue
                         if check_status != STATUS_BEAR_FORCE_SELL:
                             break
-                print("FORCE SELL FINISHED")
+                #print("FORCE SELL FINISHED")
                 self.set_idle()
                 self.busy = 0
                 continue

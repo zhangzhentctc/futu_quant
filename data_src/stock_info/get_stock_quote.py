@@ -139,7 +139,8 @@ class get_stock_quote(threading.Thread):
         return ret, table
 
     def get_ma_1m(self, number):
-        stock_code_list = ["HK_FUTURE.999010"]
+
+        stock_code_list = [self.stock_code_list[0]]
         sub_type_list = ["K_1M"]
 
         for code in stock_code_list:
@@ -322,6 +323,7 @@ class get_stock_quote(threading.Thread):
 
         i = 180
         while(1):
+            #print("Loop")
             start = time.time()
             ret = self.get_cur_stock_quoto()
             if ret == RET_ERROR:
@@ -347,7 +349,7 @@ class get_stock_quote(threading.Thread):
             if dur < 0:
                 continue
             if self.refresh < dur:
-                print("quoto duration overtime")
+                #print("quoto duration overtime")
                 continue
             else:
                 time.sleep(self.refresh - dur)

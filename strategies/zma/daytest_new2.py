@@ -810,8 +810,75 @@ class daytest:
 
             position += 1
 
+    def mark_bear_rrcross(self, plots):
+        ma10_r_r_r_value = -0.002
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        #start = 1200 + 121 + 360 + 120 + 1
+        start = 120
+        position = start
+        print("start ",str(start))
+
+        vally_count = 0
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            if ma10_ratio < ma20_ratio and self.ret["zma10_ratio"][position-1] >= self.ret["ma20_ratio"][position-1] and \
+                     ma10_ratio_ratio_short <= -0.01 and \
+                     ma10_ratio <= 0 and \
+                     ma10_ratio_ratio < 0 and \
+                     ma20_ratio - self.ret["ma20_ratio"][position - 120] < 0:
+                gap = cur - self.ret["cur"][position - 360]
+                plots.add_annotate(position, cur, 1,
+                                   str(self.ret["time"][position]) + "\n" + "cur:" + str(cur) + "\n" + str(gap) + "\n" + str(cur - MA10_cur), -200)
+            position += 1
+        return 1
 
     def mark_undefine(self, plots):
+        ma10_r_r_r_value = -0.002
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        #start = 1200 + 121 + 360 + 120 + 1
+        start = 120
+        position = start
+        print("start ",str(start))
+
+        vally_count = 0
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            if ma10_ratio < ma20_ratio and self.ret["zma10_ratio"][position-1] >= self.ret["ma20_ratio"][position-1] and \
+                     ma10_ratio_ratio_short <= -0.01 and \
+                     ma10_ratio <= 0 and \
+                     ma10_ratio_ratio < 0 and \
+                     ma20_ratio - self.ret["ma20_ratio"][position - 120] < 0:
+                gap = cur - self.ret["cur"][position - 360]
+                plots.add_annotate(position, cur, 1,
+                                   str(self.ret["time"][position]) + "\n" + "cur:" + str(cur) + "\n" + str(gap) + "\n" + str(cur - MA10_cur), -200)
+            position += 1
+        return 1
+
+    def mark_bull_continue(self, plots):
         ma10_r_r_r_value = -0.002
         ma20_many_head = -2
         ma10_r_r_value = -0.005
@@ -840,10 +907,22 @@ class daytest:
                 back_static = 0
                 max = cur
                 ma10_up = 1
+                ma20_up_pos = position
+                ma20_up_val = ma20_ratio
 
             if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
                 back_static = 0
                 ma10_up = 0
+
+            if position == start:
+                if ma20_ratio >= 0:
+                    ma20_up_pos = position
+                    ma20_up_val = ma20_ratio
+
+            #if ma20_ratio >= 0 and self.ret["ma20_ratio"][position - 1] < 0:
+                #ma20_up_pos = position
+                #ma20_up_val = ma20_ratio
+
 
             ## when ma10-r-r-r drops to -0.004
             if ma10_ratio_ratio_ratio * 1000 <= ma10_r_r_r_value * 1000 and \
@@ -851,42 +930,68 @@ class daytest:
                 ### 111 turning point drops fast
                 ### a. ma20_r >= -2
                 vally_count += 1
+                print(self.ret.iloc[position,])
+                try:
+                    ma20_ratio_ratio = ((ma20_ratio - ma20_up_val)/(position - ma20_up_pos)) * 120
+                except:
+                    ma20_ratio_ratio = 0
 
-                if cur > MA10_cur and MA10_cur > MA20_cur and MA10_cur - MA20_cur > ma10_ratio and \
-                        ma20_ratio > 1 and \
-                        ma10_ratio > ma20_ratio and \
-                        ma10_ratio_ratio > 0 :
-                    plots.add_annotate(position, cur, 1, str(self.ret["time"][position]) + "\n002 +\n"+ "cur:" + str(cur) + "\n" +str(MA10_cur) + "\n" +str(vally_count) + "\n" + str((cur - MA10_cur)/ma10_ratio), -200)
+                MA_Condition = 0
+                if cur > MA10_cur and MA10_cur > MA20_cur and MA10_cur - MA20_cur > 2 * ma10_ratio:
+                    MA_Condition = 1
+                else:
+                    MA_Condition = 0
+                    print("MA_Condition Fail: cur:", cur, " MA10:", MA10_cur ," MA20:", MA20_cur)
 
-                if ma20_ratio >= ma20_many_head and \
-                        (ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0) and ma10_ratio >= -3 and \
-                                ma10_ratio < ma20_ratio :
-                    if (ma10_ratio_ratio <= ma10_r_r_value) and \
-                                cur < MA10_cur and cur < MA20_cur:
-                        gap = cur - self.ret["cur"][position - 120]
-                        if  gap > -10 and gap < -5:
-                            #plots.add_annotate(position, cur, 1, "1114\n" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
-                            self.mark_trade(position, 1114)
-                            x=1
-                        if gap <= -10:
-                            #plots.add_annotate(position, cur, 1, "1118 " + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
-                            self.mark_trade(position, 1118)
-                            x=1
-                        #print("gap:", cur - self.ret["cur"][position - 120])
+                if ma20_ratio > 1 and ma10_ratio > ma20_ratio:
+                    MA_R_Condition = 1
+                else:
+                    MA_R_Condition = 0
+                    print("MA_Condition Fail: MA10_R", ma10_ratio, " MA20_R", ma20_ratio)
+                ratio = (cur - MA10_cur) / ma10_ratio
+                ratio2 = ma10_ratio / ma20_ratio
+                if MA_Condition == 1 and MA_R_Condition == 1:
+                    show = 0
+                    if ma20_ratio > 1:
+                        if vally_count <= 3:
+                            show = 1
 
-                ### 222 turning point drops slowly
-                if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
-                        ma10_ratio < -1 and ma10_ratio >= -3 and \
-                                ma10_ratio < ma20_ratio:
-                    if ma10_ratio_ratio <= ma10_r_r_small_value and ma10_ratio_ratio > ma10_r_r_value and \
-                                    cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
-                        gap = cur - self.ret["cur"][position - 120]
-                        ratio = gap/ma10_ratio
-                        if ratio <= 8 and gap < 0:
-                            #plots.add_annotate(position, cur, 1, "222" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
-                            self.mark_trade(position, 222)
-                            #print("gap:", cur - self.ret["cur"][position - 120])
-                            x = 1
+                    if show == 1:
+                        plots.add_annotate(position, cur, 1, str(self.ret["time"][position]) + "\n"+ "cur:" + str(cur) + "\n" +str(ratio) + "\n" +str(ratio2) + "\n" + str(vally_count)+ "\n" + str(ma20_ratio_ratio), -200 )
+
+
+            position += 1
+        return 1
+
+
+    def mark_rr_cross(self, plots):
+        ma10_r_r_r_value = -0.002
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        #start = 1200 + 121 + 360 + 120 + 1
+        start = 120
+        position = start
+        print("start ",str(start))
+
+        vally_count = 0
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            if ma20_ratio >= - 2 and ma20_ratio <= 0.5:
+                if ma10_ratio > ma20_ratio and self.ret["zma10_ratio"][position - 1] <= self.ret["ma20_ratio"][position - 1] and \
+                        ma10_ratio_ratio_short >= 0.01:
+                    plots.add_annotate(position, cur, 1, str(self.ret["time"][position]) + "\n" + "cur:" + str(cur), -200)
+
 
             position += 1
         return 1
@@ -969,8 +1074,22 @@ class daytest:
 
                 ### 222 turning point drops slowly
                 if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
-                        ma10_ratio < -1 and ma10_ratio >= -3 and \
+                        ma10_ratio + ma10_ratio_ratio * 120 < -1 and ma10_ratio >= -3 and \
                                 ma10_ratio < ma20_ratio:
+                    if ma10_ratio_ratio <= ma10_r_r_small_value and ma10_ratio_ratio > ma10_r_r_value and \
+                                    cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
+                        gap = cur - self.ret["cur"][position - 120]
+                        ratio = gap/ma10_ratio
+                        #print("gap:", cur - self.ret["cur"][position - 120], "ratio", ratio, " ", self.ret["time"][position])
+                        if ratio < 8 and gap < 0:
+                            print("gap:", cur - self.ret["cur"][position - 120], "ratio", ratio)
+                            plots.add_annotate(position, cur, 1, "222" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
+                            self.mark_trade(position, 222)
+                            #print("gap:", cur - self.ret["cur"][position - 120])
+                            x = 1
+
+                if ma20_ratio >= ma20_many_head and ma20_ratio < 0.5 and \
+                        ma10_ratio < -1 and ma10_ratio >= -3:
                     if ma10_ratio_ratio <= ma10_r_r_small_value and ma10_ratio_ratio > ma10_r_r_value and \
                                     cur < MA10_cur and (MA10_cur + ma10_ratio * 2) < MA20_cur:
                         gap = cur - self.ret["cur"][position - 120]
@@ -979,10 +1098,9 @@ class daytest:
                         if ratio < 8 and gap < 0:
                             print("gap:", cur - self.ret["cur"][position - 120], "ratio", ratio)
                             plots.add_annotate(position, cur, 1, "222" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
-                            self.mark_trade(position, 222)
+                            self.mark_trade(position, 22244)
                             #print("gap:", cur - self.ret["cur"][position - 120])
                             x = 1
-
             position += 1
         return 1
 
@@ -1103,6 +1221,40 @@ class daytest:
             position += 1
         return 1
 
+
+
+    def mark_pure004(self, plots):
+        ma10_r_r_r_value = -0.004
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = 0
+        start = 121
+        position = start
+
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+            ## when ma10-r-r-r drops to -0.004
+            if ma10_ratio_ratio_ratio <= ma10_r_r_r_value and self.ret["zma10_ratio_ratio_ratio"][position - 1] > ma10_r_r_r_value:
+                ### 111 turning point drops fast
+                ### a. ma20_r >= -2
+
+                plots.add_annotate(position, cur, 1, "1114\n" + str(cur) + "\n" + str(ma10_ratio) + "/" + str(
+                    ma20_ratio) + "\nma10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio))
+
+
+            position += 1
+        return 1
 
     def detect_start_bull(self):
         ma10_r_r_r_value = -0.004
@@ -1295,7 +1447,7 @@ if __name__ == "__main__":
     stored_date_list_all = ["2017-07-27", "2017-07-28", "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
                  "2017-08-08", "2017-08-09",
                  "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
-                 "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29"]
+                 "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29","2017-08-30","2017-08-31"]
     not_stored = []
 
     test = daytest()
@@ -1325,28 +1477,30 @@ if __name__ == "__main__":
 
 ########For plos
 
-    plot_date = "2017-08-29"
+    plot_date_day = []
+    for plot_date in stored_date_list_all:
+        start_time = plot_date + " " + "9:20:00"
+        end_time = plot_date + " " + "16:00:00"
+        test.read_history(start_time, end_time)
+        #test.get_data_direct(start_time, end_time)
+        plots = show_plots(test)
+        plots.init_plot(5, plot_date+"-bull002")
 
-    start_time = plot_date + " " + "9:20:00"
-    end_time = plot_date + " " + "16:00:00"
-    test.read_history(start_time, end_time)
-    #test.get_data_direct(start_time, end_time)
-    plots = show_plots(test)
-    plots.init_plot(5, plot_date+"-004")
+        test.mark_base(plots)
 
-    test.mark_base(plots)
+        # 8/29 8/28 8/24 8/21 8/18 8/16 8/15 8/11 8/8 8/2 | 08/14
+        #test.mark_bear_start(plots)
+        #test.mark_bear_continue(plots)
 
-    # 8/29 8/28 8/24 8/21 8/18 8/16 8/15 8/11 8/8 8/2 | 08/14
-    test.mark_bear_start(plots)
-    #test.mark_bear_continue(plots)
+        # 3 8 10 17 21
+        #test.mark_bear_about_die(plots)
 
-    # 3 8 10 17 21
-    #test.mark_bear_about_die(plots)
+        #test.mark_pure004(plots)
+        test.mark_bear_rrcross(plots)
 
-
-    #test.mark_undefine(plots)
-    #test.export_ret()
-    plots.show_plot()
+        #test.mark_rr_cross(plots)
+        #test.export_ret()
+        plots.show_plot()
 
 
 
