@@ -4,39 +4,43 @@ import pandas as pd
 import time
 import math
 from ui.show_plots import *
+from strategies.zma.feature_data_pkg import *
 
 
-# "No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio",
 
-##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
 NO_POS = 0
 CUR_POS = 1
 TIME_POS = 2
 
-ZMA1_POS = 15
-ZMA1_RATIO_POS = 16
-ZMA1_RATIO_SHORT_POS = 17
-ZMA1_RATIO_RATIO_POS = 21
-ZMA1_ZMA10_GAP_POS = 18
-ZMA1_ZMA10_GAP_SCOPE_POS = 19
+ZMAB_POS = 3
+ZMAB_RATIO_POS = 4
+ZMAB_RATIO_SHORT_POS = 5
+ZMAB_RATIO_RATIO_POS = 6
 
-ZMA5_POS = 13
-ZMA5_RATIO_POS = 14
-ZMA5_RATIO_RATIO_POS = 20
+ZMA1_POS = 7
+ZMA1_RATIO_POS = 8
+ZMA1_RATIO_SHORT_POS = 9
+ZMA1_RATIO_RATIO_POS = 10
 
-ZMA10_POS = 3
-ZMA10_RATIO_POS = 5
-ZMA10_RATIO_RATIO_POS = 6
-ZMA10_RATIO_RATIO_SHORT_POS = 10
-ZMA10_RATIO_RATIO_RATIO_POS = 7
 
-ZMA20_POS = 4
-MA20_RATIO_POS = 9
+ZMA5_POS = 11
+ZMA5_RATIO_POS = 12
+ZMA5_RATIO_RATIO_POS = 12
 
-ZMA50_POS = 22
-ZMA50_RATIO_POS = 23
+ZMA10_POS = 14
+ZMA10_RATIO_POS = 15
+ZMA10_RATIO_RATIO_POS = 16
+ZMA10_RATIO_RATIO_SHORT_POS = 17
+ZMA10_RATIO_RATIO_RATIO_POS = 18
 
-TRADE_MARK_POS = 8
+MA20_POS = 19
+MA20_RATIO_POS = 20
+
+ZMA50_POS = 21
+ZMA50_RATIO_POS = 22
+
+ZMA1_ZMA10_GAP_POS = 23
+ZMA1_ZMA10_GAP_SCOPE_POS = 24
 
 #####################
 NO_SRC_POS = 0
@@ -49,6 +53,40 @@ MA10_R_SRC_NEW_POS = 2
 MA20_SRC_NEW_POS = 3
 MA20_R_SRC_NEW_POS = 5
 TIME_SRC_NEW_POS = 6
+
+
+STR_number = "No."
+STR_cur = "cur"
+STR_time = "time"
+STR_zmab = "zmab"
+STR_zmab_r = "zmab_ratio"
+STR_zmab_r_s = "zmab_ratio_short"
+STR_zmab_r_r = "zmab_ratio_ratio"
+STR_zma1 = "zma1"
+STR_zma1_r = "zma1_ratio"
+STR_zma1_r_s = "zma1_ratio_short"
+STR_zma1_r_r = "zma1_ratio_ratio"
+
+STR_zma5 = "zma5"
+STR_zma5_r = "zma5_ratio"
+STR_zma5_r_r = "zma5_ratio_ratio"
+
+STR_zma10 = "zma10"
+STR_zma10_r = "zma10_ratio"
+STR_zma10_r_r = "zma10_ratio_ratio"
+STR_zma10_r_r_s = "zma10_ratio_ratio_short"
+STR_zma10_r_r_r = "zma10_ratio_ratio_ratio"
+
+STR_ma20 = "ma20"
+STR_ma20_r = "ma20_ratio"
+
+STR_zma50 = "zma50"
+STR_zma50_r = "zma50_ratio"
+
+STR_zma1_zma10_gap = "zma1_zma10_gap"
+STR_zma1_zma10_gap_scope = "zma1_zma10_gap_scope"
+
+
 
 class adjust_paras:
     def __init__(self):
@@ -83,7 +121,21 @@ class daytest:
         self.myop = dbop_ma_trand()
 
     ##
+    # Operation on Database: trend
+    ##
+    def queryData(self, start, end):
+        self.count = self.op.dbop_read_day_data_standard(self.db, start, end)
+        if self.count == 0:
+            return -1
+        return self.count
+
+    def getNextData(self):
+        ret = self.op.dbop_read_day_data_standard_next(self.db)
+        return ret
+
+    ##
     # Operation on Database: day_review_01
+    ##
     def queryDayTestData(self,start, end):
         self.daytestcount = self.myop.dbop_read_day_data(self.mydb, start, end)
         if self.daytestcount == 0:
@@ -94,6 +146,58 @@ class daytest:
         ret = self.myop.dbop_read_day_data_next(self.mydb)
         return ret
 
+
+    def addDayTestData(self, data):
+        len = 0
+        for index in data.iterrows():
+             len += 1
+        for i in range(1800, len):
+             data_pkg = feature_data_pkg()
+
+             ## BASIC
+             data_pkg.number = data[STR_number][i]
+             data_pkg.cur = data[STR_cur][i]
+             data_pkg.time = data[STR_time][i]
+
+             ## ZMAB
+             data_pkg.zmab = data[STR_zmab][i]
+             data_pkg.zmab_r = data[STR_zmab_r][i]
+             data_pkg.zmab_r_s = data[STR_zmab_r_s][i]
+             data_pkg.zmab_r_r = data[STR_zmab_r_r][i]
+
+             ## ZMA1
+             data_pkg.zma1 = data[STR_zma1][i]
+             data_pkg.zma1_r = data[STR_zma1_r][i]
+             data_pkg.zma1_r_s = data[STR_zma1_r_s][i]
+             data_pkg.zma1_r_r = data[STR_zma1_r_r][i]
+
+             ## ZMA5
+             data_pkg.zma5 = data[STR_zma5][i]
+             data_pkg.zma5_r = data[STR_zma5_r][i]
+             data_pkg.zma5_r_r = data[STR_zma5_r_r][i]
+
+             ## ZMA10
+             data_pkg.zma10 = data[STR_zma10][i]
+             data_pkg.zma10_r = data[STR_zma10_r][i]
+             data_pkg.zma10_r_r = data[STR_zma10_r_r][i]
+             data_pkg.zma10_r_r_s = data[STR_zma10_r_r_s][i]
+             data_pkg.zma10_r_r_r = data[STR_zma10_r_r_r][i]
+
+             ## MA20
+             data_pkg.ma20 = data[STR_ma20][i]
+             data_pkg.ma20_r = data[STR_ma20_r][i]
+
+             ## MA50
+             data_pkg.zma50 = data[STR_zma50][i]
+             data_pkg.zma50_r = data[STR_zma50_r][i]
+
+             ## GAP
+             data_pkg.zma1_zma10_gap = data[STR_zma1_zma10_gap][i]
+             data_pkg.zma1_zma10_gap_scope = data[STR_zma1_zma10_gap_scope][i]
+
+
+             self.myop.dbop_add_day_data_pkg(self.mydb, data_pkg)
+
     ####
     ## 1. Get from DB
     ## 2. Cal data
@@ -103,136 +207,131 @@ class daytest:
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
             data.append({
-                "No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "ma20":line[ZMA20_POS],
-                         "zma10_ratio":line[ZMA10_RATIO_POS],"zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma10_ratio_ratio_ratio": line[ZMA10_RATIO_RATIO_RATIO_POS], "trade_mark": line[TRADE_MARK_POS], "ma20_ratio": line[MA20_RATIO_POS],
-                         "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS], "bull_decrease": 0 ,"zmab":0, "zma5":0, "zma5_ratio":0,
-                         "zma1":0, "zma1_ratio":0,"zma1_ratio_short":0,"zma1_zma10_gap":0, "zma1_zma10_gap_scope":0, "zma5_ratio_ratio":0,
-                         "zma1_ratio_ratio": 0, "ma50": 0
+                STR_number:line[NO_POS],    STR_cur:    line[CUR_POS],        STR_time:line[TIME_POS],
+                STR_zmab:  line[ZMAB_POS],  STR_zmab_r: line[ZMAB_RATIO_POS], STR_zmab_r_s: line[ZMAB_RATIO_SHORT_POS], STR_zmab_r_r: line[ZMAB_RATIO_RATIO_POS],
+                STR_zma1:  line[ZMA1_POS],  STR_zma1_r: line[ZMA1_RATIO_POS], STR_zma1_r_s: line[ZMA1_RATIO_SHORT_POS], STR_zma1_r_r: line[ZMA1_RATIO_RATIO_POS],
+                STR_zma5:  line[ZMA5_POS],  STR_zma5_r: line[ZMA5_RATIO_POS], STR_zma5_r_r: line[ZMA5_RATIO_RATIO_POS],
+                STR_zma10: line[ZMA10_POS], STR_zma10_r:line[ZMA10_RATIO_POS],STR_zma10_r_r: line[ZMA10_RATIO_RATIO_POS], STR_zma10_r_r_s: line[ZMA10_RATIO_RATIO_SHORT_POS], STR_zma10_r_r_r: line[ZMA10_RATIO_RATIO_RATIO_POS],
+                STR_ma20:  line[MA20_POS],  STR_ma20_r: line[MA20_RATIO_POS],
+                STR_zma50: line[ZMA50_POS], STR_zma50_r:line[ZMA50_RATIO_POS],
+                STR_zma1_zma10_gap: line[ZMA1_ZMA10_GAP_POS], STR_zma1_zma10_gap_scope: line[ZMA1_ZMA10_GAP_SCOPE_POS]
             })
 
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short",
-                                               "bull_decrease","zmab","zma5","zma5_ratio", "zma1", "zma1_ratio", "zma1_ratio_short","zma1_zma10_gap","zma1_zma10_gap_scope","zma5_ratio_ratio","zma1_ratio_ratio","ma50"])
+        self.ret = pd.DataFrame(data, columns=[
+            STR_number, STR_cur, STR_time,
+            STR_zmab, STR_zmab_r, STR_zmab_r_s, STR_zmab_r_r,
+            STR_zma1, STR_zma1_r, STR_zma1_r_s, STR_zma1_r_r,
+            STR_zma5, STR_zma5_r, STR_zma5_r_r,
+            STR_zma10, STR_zma10_r, STR_zma10_r_r, STR_zma10_r_r_s, STR_zma10_r_r_r,
+            STR_ma20, STR_ma20_r,
+            STR_zma50, STR_zma50_r,
+            STR_zma1_zma10_gap, STR_zma1_zma10_gap_scope
+            ])
         return self.ret
 
-    def addDayTestData(self, data):
-        len = 0
-        for index in data.iterrows():
-             len += 1
-        for i in range(1800, len):
-             self.myop.dbop_add_day_data(self.mydb, data["No."][i], data["cur"][i], data["time"][i],
-                                        data["zma10"][i], data["ma20"][i],
-                                        data["zma10_ratio"][i], data["zma10_ratio_ratio"][i],
-                                        data["zma10_ratio_ratio_ratio"][i], data["trade_mark"][i], data["ma20_ratio"][i], data["zma10_ratio_ratio_short"][i],)
 
-    def updateDayTestData_trade_mark(self, data):
-        len = 0
-        for index in data.iterrows():
-            len += 1
-        for i in range(0, len):
-            self.myop.dbop_update_day_data_trade_mark(self.mydb, data["No."][i], data["trade_mark"][i])
-##
-# Operation on Database: trend
-
-    ##
-    # Operation on Database: trend
-    def queryData(self, start, end ):
-        self.count = self.op.dbop_read_day_data_standard(self.db, start, end)
-        if self.count == 0:
-            return -1
-        return self.count
-
-    def getNextData(self):
-        ret = self.op.dbop_read_day_data_standard_next(self.db)
-        return ret
-
+    ### 1. Get RAW Data From DB [NO.,cur,time,ma20,ma20_r]
+    ### 2. Contruction Data structure
     def parse_data(self):
         data = []
         pre_cur = 0
         for i in range(0, self.count):
             line = self.getNextData()
             if line[CUR_SRC_POS] == 0:
-                #data.append({"No.": line[NO_SRC_NEW_POS], "cur": pre_cur, "time": line[TIME_SRC_NEW_POS], "ma20": line[MA20_SRC_NEW_POS], "ma20_ratio": line[MA20_R_SRC_NEW_POS], "trade_mark": 0})
-                data.append(
-                    {"No.": line[NO_SRC_NEW_POS], "cur": pre_cur, "time": line[TIME_SRC_NEW_POS], "zma10": 0,
-                     "ma20": line[MA20_SRC_NEW_POS], "zma10_ratio": 0,
-                     "zma10_ratio_ratio": 0,
-                     "zma10_ratio_ratio_ratio": 0, "trade_mark": 0,
-                     "ma20_ratio": line[MA20_R_SRC_NEW_POS], "zma10_ratio_ratio_short": 0, "zma5": 0})
-
+                data.append({
+                    STR_number: line[NO_SRC_NEW_POS], STR_cur: pre_cur, STR_time: line[TIME_SRC_NEW_POS],
+                    STR_zmab: 0, STR_zmab_r: 0, STR_zmab_r_s: 0, STR_zmab_r_r: 0,
+                    STR_zma1: 0, STR_zma1_r: 0, STR_zma1_r_s: 0, STR_zma1_r_r: 0,
+                    STR_zma5: 0, STR_zma5_r: 0, STR_zma5_r_r: 0,
+                    STR_zma10: 0, STR_zma10_r: 0, STR_zma10_r_r: 0, STR_zma10_r_r_s: 0, STR_zma10_r_r_r: 0,
+                    STR_ma20: line[MA20_SRC_NEW_POS], STR_ma20_r: line[MA20_R_SRC_NEW_POS],
+                    STR_zma50: 0, STR_zma50_r: 0,
+                    STR_zma1_zma10_gap: 0, STR_zma1_zma10_gap_scope: 0
+                })
             else:
-                #data.append({"No.": line[NO_SRC_NEW_POS], "cur": line[CUR_SRC_NEW_POS], "time": line[TIME_SRC_NEW_POS], "ma20": line[MA20_SRC_NEW_POS], "ma20_ratio": line[MA20_R_SRC_NEW_POS], "trade_mark": 0})
-                data.append(
-                    {"No.": line[NO_SRC_NEW_POS], "cur": line[CUR_SRC_NEW_POS], "time": line[TIME_SRC_NEW_POS], "zma10": 0,
-                     "ma20": line[MA20_SRC_NEW_POS], "zma10_ratio": 0,
-                     "zma10_ratio_ratio": 0,
-                     "zma10_ratio_ratio_ratio": 0, "trade_mark": 0,
-                     "ma20_ratio": line[MA20_R_SRC_NEW_POS], "zma10_ratio_ratio_short": 0, "zma5": 0})
+                data.append({
+                    STR_number: line[NO_SRC_NEW_POS], STR_cur: line[CUR_SRC_NEW_POS], STR_time: line[TIME_SRC_NEW_POS],
+                    STR_zmab: 0, STR_zmab_r: 0, STR_zmab_r_s: 0, STR_zmab_r_r: 0,
+                    STR_zma1: 0, STR_zma1_r: 0, STR_zma1_r_s: 0, STR_zma1_r_r: 0,
+                    STR_zma5: 0, STR_zma5_r: 0, STR_zma5_r_r: 0,
+                    STR_zma10: 0, STR_zma10_r: 0, STR_zma10_r_r: 0, STR_zma10_r_r_s: 0, STR_zma10_r_r_r: 0,
+                    STR_ma20: line[MA20_SRC_NEW_POS], STR_ma20_r: line[MA20_R_SRC_NEW_POS],
+                    STR_zma50: 0, STR_zma50_r: 0,
+                    STR_zma1_zma10_gap: 0, STR_zma1_zma10_gap_scope: 0
+                })
+
             pre_cur =line[CUR_SRC_POS]
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio", "zma10_ratio_ratio_short", "zma5"])
+
+        self.ret = pd.DataFrame(data, columns=[
+            STR_number, STR_cur, STR_time,
+            STR_zmab, STR_zmab_r, STR_zmab_r_s, STR_zmab_r_r,
+            STR_zma1, STR_zma1_r, STR_zma1_r_s, STR_zma1_r_r,
+            STR_zma5, STR_zma5_r, STR_zma5_r_r,
+            STR_zma10, STR_zma10_r, STR_zma10_r_r, STR_zma10_r_r_s, STR_zma10_r_r_r,
+            STR_ma20, STR_ma20_r,
+            STR_zma50, STR_zma50_r,
+            STR_zma1_zma10_gap, STR_zma1_zma10_gap_scope
+            ])
 
         return self.ret
 
-    ## Cur Ratio
-    ## Dur = 3 min
-    def cal_cur_ratio(self):
-        len = 0
-        t = 360
-        val =0
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            ret, val = self.optimized_least_square_method(i - t + 1, i, "cur")
-            if ret == -1:
-                val = 0
-            val *= 1000000
-            val = round(val, 4)
-            self.ret.iloc[i, CUR_RATIO_POS] = val
-        return 1
-
-    def cal_zma1_zma10_gap(self):
-        len = 0
-        val =0
-        start_pos = len
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            gap = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i, ZMA10_POS]
-            self.ret.iloc[i, ZMA1_ZMA10_GAP_POS] = gap
-        return 1
-
-    def cal_zma1_zma10_gap_scope(self, sample = 120):
-        len = 0
-        t = sample
-        val =0
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma1_zma10_gap")
-            if ret == -1:
-                val = 0
-            val = round(val, 4)
-            self.ret.iloc[i, ZMA1_ZMA10_GAP_SCOPE_POS] = val
-        return 1
-
-    def cal_ma50(self):
-        len = 3600
+####
+##   ZMAB
+####
+    def cal_zmab(self):
+        len = 60
         avg_sum = 0
         start_pos = len - 1
         if self.count < len:
             return -1
-        for i in range(0, len + 1):
-            self.ret.iloc[i, ZMA50_POS] = self.ret["cur"][0]
 
+        for i in range(0, len + 1):
+            self.ret.iloc[i, ZMAB_POS] = self.ret["cur"][0]
+
+        for j in range(0, len):
+            avg_sum += self.ret["cur"][len - 1 - j]/len
+        avr0 = avg_sum
+        self.ret.iloc[start_pos, ZMAB_POS] = avr0
+        starter = self.ret["cur"][0]
         for i in range(start_pos + 1, self.count):
-            sum = self.ret["ma20"][i] * 20 + self.ret["ma20"][i - 2400] * 20 + self.ret["zma10"][i - 3600] * 10
-            avr = sum / 50
-            self.ret.iloc[i, ZMA50_POS] = avr
+            avr = avr0 - starter / len + self.ret["cur"][i] / len
+            self.ret.iloc[i, ZMAB_POS] = avr
+            avr0 = avr
+            starter = self.ret["cur"][i - len]
         return 0
 
+    def cal_zmab_ratio_simple(self, sample = 240):
+        len = 120
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMAB_POS] - self.ret.iloc[i - t, ZMAB_POS]
+            self.ret.iloc[i, ZMAB_RATIO_POS] = val * c
 
-    ## MA
+        return 1
+
+    def cal_zmab_ratio_short_simple(self, sample = 120):
+        len = 120
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMAB_POS] - self.ret.iloc[i - t, ZMAB_POS]
+            self.ret.iloc[i, ZMAB_RATIO_SHORT_POS] = val * c
+
+        return 1
+
+
+####
+##   ZMA1
+####
     def cal_zma1(self):
         len = 120
         avg_sum = 0
@@ -255,6 +354,37 @@ class daytest:
             starter = self.ret["cur"][i - len]
         return 0
 
+    def cal_zma1_ratio_simple(self, sample = 240):
+        len = 120
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i - t, ZMA1_POS]
+            self.ret.iloc[i, ZMA1_RATIO_POS] = val * c
+
+        return 1
+
+    def cal_zma1_ratio_short_simple(self, sample = 120):
+        len = 120
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i - t, ZMA1_POS]
+            self.ret.iloc[i, ZMA1_RATIO_SHORT_POS] = val * c
+
+        return 1
+
+####
+##   ZMA5
+####
     def cal_zma5(self):
         len = 600
         avg_sum = 0
@@ -276,89 +406,6 @@ class daytest:
             avr0 = avr
             starter = self.ret["cur"][i - len]
         return 0
-
-    def cal_zmab(self):
-        len = 60
-        avg_sum = 0
-        start_pos = len - 1
-        if self.count < len:
-            return -1
-        for j in range(0, len):
-            avg_sum += self.ret["cur"][len - 1 - j]/len
-        avr0 = avg_sum
-        self.ret.iloc[start_pos, 12] = avr0
-        starter = self.ret["cur"][0]
-        for i in range(start_pos + 1, self.count):
-            avr = avr0 - starter / len + self.ret["cur"][i] / len
-            self.ret.iloc[i, 12] = avr
-            avr0 = avr
-            starter = self.ret["cur"][i - len]
-        return 0
-
-    def cal_zma10(self):
-        len = 1200
-        sum = 0
-        start_pos = len - 1
-        if self.count < len:
-            return -1
-        for j in range(0, len):
-            sum += self.ret["cur"][len - 1 - j]
-        avr0 = sum / len
-        self.ret.iloc[start_pos, ZMA10_POS] = avr0
-        starter = self.ret["cur"][0]
-        for i in range(start_pos + 1, self.count):
-            avr = avr0 - starter / len + self.ret["cur"][i] / len
-            self.ret.iloc[i, ZMA10_POS] = avr
-            avr0 = avr
-            starter = self.ret["cur"][i - len]
-        return 0
-
-    def cal_zma20(self):
-        len = 2400
-        sum = 0
-        start_pos = len - 1
-        if self.count < len:
-            return -1
-        for j in range(0, len):
-            sum += self.ret["cur"][len - 1 - j]
-        avr0 = sum / len
-        self.ret.iloc[start_pos, ZMA20_POS] = avr0
-        starter = self.ret["cur"][0]
-        for i in range(start_pos + 1, self.count):
-            avr = avr0 - starter/len + self.ret["cur"][i]/len
-            self.ret.iloc[i, ZMA20_POS] = avr
-            avr0 = avr
-            starter = self.ret["cur"][i - len]
-        return 0
-
-    def cal_zma1_ratio_simple(self, sample = 240):
-        len = 120
-        t = sample
-        val =0
-        c = 120 / sample
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            val = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i - t, ZMA1_POS]
-            self.ret.iloc[i, ZMA1_RATIO_POS] = val * c
-
-        return 1
-
-
-    def cal_zma1_ratio_short_simple(self, sample = 120):
-        len = 120
-        t = sample
-        val =0
-        c = 120 / sample
-        start_pos = len + t
-        if self.count < start_pos:
-          return -1
-        for i in range(start_pos, self.count):
-            val = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i - t, ZMA1_POS]
-            self.ret.iloc[i, ZMA1_RATIO_SHORT_POS] = val * c
-
-        return 1
 
     def cal_zma5_ratio_simple(self, sample = 120):
         len = 600
@@ -386,8 +433,28 @@ class daytest:
             self.ret.iloc[i, ZMA5_RATIO_RATIO_POS] = val / sample
         return 1
 
+####
+##   ZMA10
+####
 
-    ## MA Ratio
+    def cal_zma10(self):
+        len = 1200
+        sum = 0
+        start_pos = len - 1
+        if self.count < len:
+            return -1
+        for j in range(0, len):
+            sum += self.ret["cur"][len - 1 - j]
+        avr0 = sum / len
+        self.ret.iloc[start_pos, ZMA10_POS] = avr0
+        starter = self.ret["cur"][0]
+        for i in range(start_pos + 1, self.count):
+            avr = avr0 - starter / len + self.ret["cur"][i] / len
+            self.ret.iloc[i, ZMA10_POS] = avr
+            avr0 = avr
+            starter = self.ret["cur"][i - len]
+        return 0
+
     def cal_zma10_ratio(self):
         len = 1200
         t = 60
@@ -453,91 +520,54 @@ class daytest:
             self.ret.iloc[i, ZMA10_RATIO_RATIO_RATIO_POS] = val * c
         return 1
 
-
-
-
-    def cal_delta_zma10(self):
-        len = 1200
-        if self.count < len + 1:
+####
+##   ZMA50
+####
+    def cal_zma50(self):
+        len = 3600
+        avg_sum = 0
+        start_pos = len - 1
+        if self.count < len:
             return -1
-        for i in range(len, self.count):
-            delta = self.ret["zma10"][i] - self.ret["zma10"][i-1]
-            delta *= 1000
-            self.ret.iloc[i, 4] = delta
-        return 0
+        for i in range(0, len + 1):
+            self.ret.iloc[i, ZMA50_POS] = self.ret["cur"][i]
 
-    def cal_delta_zma20(self):
-        len = 2400
-        if self.count < len + 1:
-            return -1
-        for i in range(len, self.count):
-            delta = self.ret["zma20"][i] - self.ret["zma20"][i-1]
-            delta *= 1000
-            self.ret.iloc[i, 5] = delta
-        return 0
-
-    def cal_delta_zma10_ma60(self):
-        len = 60
-        sum = 0
-        start_pos = 1200 + 2 + len - 1
-        if self.count < start_pos:
-            return -1
-        for j in range(0, 60):
-            sum += self.ret["delta_zma10"][start_pos - j]
-        avr0 = sum / len
-        self.ret.iloc[start_pos, 6] = avr0
-        starter = self.ret["delta_zma10"][start_pos - len - 1]
         for i in range(start_pos + 1, self.count):
-            avr = avr0 - starter/len + self.ret["delta_zma10"][i]/len
-
-            self.ret.iloc[i, 6] = avr
-            avr0 = avr
-            starter = self.ret["delta_zma10"][i - len]
+            sum = self.ret["ma20"][i] * 20 + self.ret["ma20"][i - 2400] * 20 + self.ret["zma10"][i - 3600] * 10
+            avr = sum / 50
+            self.ret.iloc[i, ZMA50_POS] = avr
         return 0
 
-    def cal_delta_zma20_ma60(self):
-        len = 60
-        sum = 0
-        start_pos = 2400 + 2 + len - 1
+####
+##   GAP
+####
+    def cal_zma1_zma10_gap(self):
+        len = 0
+        val =0
+        start_pos = len
         if self.count < start_pos:
-            return -1
-        for j in range(0, 60):
-            sum += self.ret["delta_zma20"][start_pos - j]
-        avr0 = sum / len
-        self.ret.iloc[start_pos, 7] = avr0
-        starter = self.ret["delta_zma20"][start_pos - len - 1]
-        for i in range(start_pos + 1, self.count):
-            avr = avr0 - starter/len + self.ret["delta_zma20"][i]/len
-            self.ret.iloc[i, 7] = avr
-            avr0 = avr
-            starter = self.ret["delta_zma20"][i - len]
-        return 0
+          return -1
+        for i in range(start_pos, self.count):
+            gap = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i, ZMA10_POS]
+            self.ret.iloc[i, ZMA1_ZMA10_GAP_POS] = gap
+        return 1
 
-    def cal_delta_zma20_ma60_ratio(self):
-        len = 2400
-        t = 60
+    def cal_zma1_zma10_gap_scope(self, sample = 120):
+        len = 0
+        t = sample
         val =0
         start_pos = len + t
         if self.count < start_pos:
           return -1
         for i in range(start_pos, self.count):
-            ret, val = self.least_square_method(i - t + 1, i, "delta_zma20_ma60")
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma1_zma10_gap")
             if ret == -1:
                 val = 0
-            self.ret.iloc[i, 12] = val
+            val = round(val, 4)
+            self.ret.iloc[i, ZMA1_ZMA10_GAP_SCOPE_POS] = val
         return 1
 
-    def cal_ratio(self):
-        len = 2400
-        if self.count < len + 1 + 60:
-            return -1
-        for i in range(len + 60, self.count):
-            if self.ret["delta_zma10_ma60"][i] == 0 or self.ret["delta_zma20_ma60"][i] == 0:
-                ratio = 0
-            else:
-                ratio = self.ret["delta_zma10_ma60"][i]/self.ret["delta_zma20_ma60"][i]
-            self.ret.iloc[i, 8] = ratio
-        return 0
+
 
     ## Math
     def least_square_method(self, start, end, column):
@@ -624,186 +654,101 @@ class daytest:
 
     # Calculate all
     def cal_data(self):
+        #### CAL ZMAB
+        start_time = time.time()
+        self.cal_zmab()
+        end_time = time.time()
+        print("cal_zmab finished:" + str( end_time - start_time ))
 
+        start_time = time.time()
+        self.cal_zmab_ratio_simple()
+        end_time = time.time()
+        print("cal_zmab_ratio_simple finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
+        self.cal_zmab_ratio_short_simple()
+        end_time = time.time()
+        print("cal_zmab_ratio_short_simple finished:" + str( end_time - start_time ))
+
+        #### CAL ZMA1
+        start_time = time.time()
+        self.cal_zma1()
+        end_time = time.time()
+        print("cal_zma1 finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
+        self.cal_zma1_ratio_simple()
+        end_time = time.time()
+        print("cal_zma1_ratio_simple finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
+        self.cal_zma1_ratio_short_simple()
+        end_time = time.time()
+        print("cal_zma1_ratio_short_simple finished:" + str( end_time - start_time ))
+
+        #### CAL ZMA5
+        start_time = time.time()
+        self.cal_zma5()
+        end_time = time.time()
+        print("cal_zma5 finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
+        self.cal_zma5_ratio_simple()
+        end_time = time.time()
+        print("cal_zma5_ratio_simple finished:" + str( end_time - start_time ))
+
+        start_time = time.time()
+        self.cal_zma5_ratio_simple_ratio()
+        end_time = time.time()
+        print("cal_zma5_ratio_simple_ratio finished:" + str( end_time - start_time ))
+
+        #### CAL ZMA10
         start_time = time.time()
         self.cal_zma10()
         end_time = time.time()
-        #print("cal_zma10 finished:" + str( end_time - start_time ))
+        print("cal_zma10 finished:" + str( end_time - start_time ))
 
         start_time = time.time()
         self.cal_zma10_ratio_simple()
         end_time = time.time()
-        #print("cal_zma10_ratio_simple finished:" + str( end_time - start_time))
+        print("cal_zma10_ratio_simple finished:" + str( end_time - start_time))
 
         start_time = time.time()
         self.cal_zma10_ratio_simple_ratio()
         end_time = time.time()
-        #print("cal_zma10_ratio_simple_ratio finished:" + str( end_time - start_time))
+        print("cal_zma10_ratio_simple_ratio finished:" + str( end_time - start_time))
 
         start_time = time.time()
         self.cal_zma10_ratio_simple_ratio_short()
         end_time = time.time()
-        #print("cal_zma10_ratio_simple_ratio_short finished:" + str( end_time - start_time))
+        print("cal_zma10_ratio_simple_ratio_short finished:" + str( end_time - start_time))
 
         start_time = time.time()
         self.cal_zma10_ratio_ratio_ratio_simple()
         end_time = time.time()
-        #print("cal_zma10_ratio_ratio_ratio_simple finished:" + str( end_time - start_time))
+        print("cal_zma10_ratio_ratio_ratio_simple finished:" + str( end_time - start_time))
+
+        #### CAL ZMA50
+        start_time = time.time()
+        self.cal_zma50()
+        end_time = time.time()
+        print("cal_zma50 finished:" + str(end_time - start_time))
+
+        #### CAL GAP
+        start_time = time.time()
+        self.cal_zma1_zma10_gap()
+        end_time = time.time()
+        print("cal_zma1_zma10_gap finished:" + str(end_time - start_time))
+
+        start_time = time.time()
+        self.cal_zma1_zma10_gap_scope()
+        end_time = time.time()
+        print("cal_zma1_zma10_gap_scope finished:" + str(end_time - start_time))
 
 
-
-
-
-
-
-    def mark_trade(self, position, mark):
-        self.ret.iloc[position, TRADE_MARK_POS] = mark
-        print("BUY:", mark,"\n", self.ret.iloc[position,])
-
-    def detectSignal(self):
-        ma10_r_r_r_value = -0.004
-        ma10_r_r_value = -0.005
-
-
-        start = 1200 + 121 + 360 + 120 + 1
-        position = start
-        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
-        while position < self.count:
-            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
-            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
-            ma10_ratio = self.ret["zma10_ratio"][position]
-            MA10_cur  = self.ret["zma10"][position]
-            ma20_ratio = self.ret["ma20_ratio"][position]
-            cur = self.ret["cur"][position]
-
-            if ma10_ratio_ratio_ratio <= ma10_r_r_r_value and self.ret["zma10_ratio_ratio_ratio"][position - 1] > ma10_r_r_r_value:
-                if ( ma10_ratio_ratio <= 0 or ma10_ratio_ratio + ma10_r_r_r_value /2 <= 0) :
-                    if cur < MA10_cur:
-                        if ma20_ratio > -2:
-                            if ma10_ratio <= 0 or ma10_ratio + ma10_ratio_ratio * 60 <= 0:
-                                if ma10_ratio < ma20_ratio:
-                                    if ma10_ratio_ratio <= ma10_r_r_value:
-                                        if ma20_ratio >= 0:
-                                            if ma20_ratio - ma10_ratio < 3:
-                                                self.mark_trade(position, 1)
-                                            else:
-                                                self.mark_trade(position, 3)
-                                        else:
-                                            if ma10_ratio >= -3:
-                                                self.mark_trade(position, 1)
-                                            else:
-                                                self.mark_trade(position, 3)
-                        else:
-                            if ma10_ratio < 0:
-                                self.mark_trade(position, 1)
-            position += 1
-        return 1
-
-    def detectSignal2(self):
-        ma10_r_r_r_value = -0.004
-        ma20_many_head = -2
-        ma10_r_r_value = -0.005
-
-        start = 1200 + 121 + 360 + 120 + 1
-        position = start
-
-
-        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
-        while position < self.count:
-            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
-            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
-            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
-            ma10_ratio = self.ret["zma10_ratio"][position]
-            MA10_cur = self.ret["zma10"][position]
-            MA20_cur = self.ret["ma20"][position]
-            ma20_ratio = self.ret["ma20_ratio"][position]
-            cur = self.ret["cur"][position]
-            if position == start:
-                if ma10_ratio < 0:
-                    trend_down = 1
-                else:
-                    trend_down = 0
-
-            ma10_ratio_threshold = 0
-            #if ma10_ratio < ma10_ratio_threshold and self.ret["zma10_ratio"][position - 1] >= ma10_ratio_threshold:
-                #ma10_down_trend = 1
-
-            #if ma10_ratio >= ma10_ratio_threshold and self.ret["zma10_ratio"][position - 1] < ma10_ratio_threshold:
-                #ma10_down_trend = 0
-
-            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
-                ma10r_down_cross_zero = 1
-            else:
-                ma10r_down_cross_zero = 0
-
-            if ma10_ratio >= 0 and self.ret["zma10_ratio"][position - 1] < 0:
-                ma10r_up_cross_zero = 1
-            else:
-                ma10r_up_cross_zero = 0
-
-            if ma10_ratio_ratio < 0 and self.ret["zma10_ratio_ratio"][position - 1] >= 0:
-                ma10rr_down_cross_zero = 1
-            else:
-                ma10rr_down_cross_zero = 0
-
-            if ma10_ratio_ratio >= 0 and self.ret["zma10_ratio_ratio"][position - 1] < 0:
-                ma10rr_up_cross_zero = 1
-            else:
-                ma10rr_up_cross_zero = 0
-
-
-            if ma10rr_down_cross_zero == 1 and ma10_ratio < 0:
-                trend_down = 1
-            if ma10r_down_cross_zero == 1:
-                trend_down = 1
-
-            if ma10rr_up_cross_zero == 1:
-                trend_down = 0
-
-
-
-            good_hill = 0
-            zma10_rrr_short_cross_float = -0.001
-            if ma10_ratio_ratio_short >= ma10_ratio_ratio + zma10_rrr_short_cross_float and self.ret["zma10_ratio_ratio_short"][position - 1] < self.ret["zma10_ratio_ratio"][position - 1] + zma10_rrr_short_cross_float:
-                ma10_rr_up = 1
-                if trend_down == 1:
-                    ma10_r_r_up_ok = 1
-                    up_pos = position
-                    #print("ma10_r_r_up_ok")
-                else:
-                    ma10_r_r_up_ok = 0
-            if ma10_ratio_ratio_short < ma10_ratio_ratio - zma10_rrr_short_cross_float and self.ret["zma10_ratio_ratio_short"][position - 1] >= self.ret["zma10_ratio_ratio"][position - 1] - zma10_rrr_short_cross_float:
-                ma10_rr_down = 1
-                if trend_down == 1:
-                    ma10_r_r_down_ok = 1
-                    #print("ma10_r_r_down_ok")
-                    try:
-                        if ma10_r_r_up_ok == 1 and ma10_r_r_down_ok == 1:
-                            if position - up_pos <= 240:
-                                good_hill = 1
-                                trend_down = 0
-                            else:
-                                print("hill time out", self.ret["time"][position],"ma10-r-r:", ma10_ratio_ratio, " ma10_ratio:", ma10_ratio, " ma20_ratio", ma20_ratio, " duration:",str((position - up_pos)/2)," seconds")
-                    except:
-                        print("")
-
-                ma10_rr_up = 0
-                ma10_rr_down = 0
-                ma10_r_r_up_ok = 0
-                ma10_r_r_down_ok = 0
-
-            if good_hill == 1:
-                if ma10_ratio <= -1 and ma20_ratio < -1:
-                    if ma10_ratio_ratio <= -0.004 and \
-                             ((ma10_ratio_ratio_ratio - self.ret["zma10_ratio_ratio_ratio"][position - 20]) < 0 or ma10_ratio_ratio_ratio < 0):
-                        self.mark_trade(position, 555)
-                        print(" duration:",str((position - up_pos)/2)," seconds")
-                        trend_down = 0
-
-
-            position += 1
-        return 1
-
+###########
+##### Strategies
+###########
     def detect_turn2bear(self):
         ma10_r_r_r_value = -0.004
         ma20_many_head = -2
@@ -859,6 +804,9 @@ class daytest:
             position += 1
         return 1
 
+    def mark_trade(self, position, mark):
+        print("BUY:", mark,"\n", self.ret.iloc[position,])
+
     def mark_base(self, plots):
         cur_tl = self.ret["cur"]
         zma10_tl = self.ret["zma10"]
@@ -906,6 +854,10 @@ class daytest:
 
 
         #plots.prepare_plot(bull_decrease,5 )
+
+
+
+
 
     def cal_bull_decrease(self):
         print("BULL DECREASE CAL")
@@ -1799,11 +1751,6 @@ class daytest:
         self.parse_data()
         self.cal_data()
 
-    def daytestFuc(self):
-        self.strategy_1st()
-#        self.updateDayTestData_trade_mark(self.ret)
-#        judge_ret = self.judge(trade_record)
-#        print(judge_ret)
 
     def store_history(self, start, end):
         ret = self.queryData(start, end)
@@ -1812,8 +1759,6 @@ class daytest:
             return -1
         self.parse_data()
         self.cal_data()
-
-#        print(self.ret)
         self.addDayTestData(self.ret)
 
     def get_data_direct(self, start, end):
@@ -1835,28 +1780,7 @@ class daytest:
         #print("Parse Completed.", str(e - s))
         self.count = self.daytestcount
         #self.cal_bull_decrease()
-        #self.cal_zmab()
-        self.cal_ma50()
-        self.cal_zma5()
-        self.cal_zma5_ratio_simple()
-        self.cal_zma5_ratio_simple_ratio()
-        self.cal_zma1()
-        self.cal_zma1_ratio_simple()
-        self.cal_zma1_ratio_short_simple()
-        #self.cal_zma1_ratio_ratio()
-        #self.cal_zma1_zma10_gap()
-        #self.cal_zma1_zma10_gap_scope()
-        #self.cal_bear_increase()
 
-    def insert_para_test(self):
-        zma20_ratio_list = [0.001, 0.002, 0.003, 0.004]
-        zma10_ratio_ratio_list = [0.000005, 0.000008, 0.00001, 0.000012]
-        cur_ratio_list = [5000, 8000, 10000, 12000, 15000]
-
-        for zma20_r in zma20_ratio_list:
-            for zma10_r_r in zma10_ratio_ratio_list:
-                for cur_r in cur_ratio_list:
-                    self.myop.dbop_add_adj_paras(self.mydb,zma20_r,zma10_r_r,cur_r)
 
     def get_cur_words(self, position):
         ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]

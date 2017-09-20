@@ -98,6 +98,34 @@ ma20_ratio                float,
 zma10_ratio_ratio_short          float
 );
 
+create table day_data_new_b(
+id                      int(10),
+cur                     float not null,
+time                    datetime,
+zmab                    float,
+zmab_ratio              float,
+zmab_ratio_short        float,
+zmab_ratio_ratio        float,
+zma1                    float,
+zma1_ratio              float,
+zma1_ratio_short        float,
+zma1_ratio_ratio        float,
+zma5                    float,
+zma5_ratio              float,
+zma5_ratio_ratio        float,
+zma10                   float,
+zma10_ratio             float,
+zma10_ratio_ratio       float,
+zma10_ratio_ratio_short float,
+zma10_ratio_ratio_ratio float,
+ma20                    float,
+ma20_ratio              float,
+zma50                   float,
+zma50_ratio             float,
+zma1_zma10_gap          float,
+zma1_zma10_gap_scope    float
+);
+
 
 create table adjust_parameters(
 para_index int not null primary key not null auto_increment,

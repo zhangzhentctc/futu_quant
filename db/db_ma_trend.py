@@ -1,11 +1,71 @@
 from db.db_basic import *
 import time
+from strategies.zma.feature_data_pkg import *
 
 class dbop_ma_trand:
     def __init__(self):
         self.count = 0
         self.position = 0
         self.insert_ct = 0
+        STR_number = "id"
+        STR_cur = "cur"
+        STR_time = "time"
+        STR_zmab = "zmab"
+        STR_zmab_r = "zmab_ratio"
+        STR_zmab_r_s = "zmab_ratio_short"
+        STR_zmab_r_r = "zmab_ratio_ratio"
+        STR_zma1 = "zma1"
+        STR_zma1_r = "zma1_ratio"
+        STR_zma1_r_s = "zma1_ratio_short"
+        STR_zma1_r_r = "zma1_ratio_ratio"
+
+        STR_zma5 = "zma5"
+        STR_zma5_r = "zma5_ratio"
+        STR_zma5_r_r = "zma5_ratio_ratio"
+
+        STR_zma10 = "zma10"
+        STR_zma10_r = "zma10_ratio"
+        STR_zma10_r_r = "zma10_ratio_ratio"
+        STR_zma10_r_r_s = "zma10_ratio_ratio_short"
+        STR_zma10_r_r_r = "zma10_ratio_ratio_ratio"
+
+        STR_ma20 = "ma20"
+        STR_ma20_r = "ma20_ratio"
+
+        STR_zma50 = "zma50"
+        STR_zma50_r = "zma50_ratio"
+
+        STR_zma1_zma10_gap = "zma1_zma10_gap"
+        STR_zma1_zma10_gap_scope = "zma1_zma10_gap_scope"
+
+        self.tl_day_data_structure_str = \
+            STR_number              + "," + \
+            STR_cur                 + "," + \
+            STR_time                + "," + \
+            STR_zmab                + "," + \
+            STR_zmab_r              + "," + \
+            STR_zmab_r_s            + "," + \
+            STR_zmab_r_r            + "," + \
+            STR_zma1                + "," + \
+            STR_zma1_r              + "," + \
+            STR_zma1_r_s            + "," + \
+            STR_zma1_r_r            + "," + \
+            STR_zma5                + "," + \
+            STR_zma5_r              + "," + \
+            STR_zma5_r_r            + "," + \
+            STR_zma10               + "," + \
+            STR_zma10_r             + "," + \
+            STR_zma10_r_r           + "," + \
+            STR_zma10_r_r_s         + "," + \
+            STR_zma10_r_r_r         + "," + \
+            STR_ma20                + "," + \
+            STR_ma20_r              + "," + \
+            STR_zma50               + "," + \
+            STR_zma50_r             + "," + \
+            STR_zma1_zma10_gap      + "," + \
+            STR_zma1_zma10_gap_scope
+
+
 
     def dbop_store_ma_dur2(self, db_basic, ma10_val, ma20_val,cur_val, ask_val, bid_val, ask_p_val, bid_p_val):
         sql = "insert into dur2_trend(ma10,ma20,cur,ask,bid, p_ask, p_bid) values(" + str(ma10_val) + "," + str(ma20_val) + "," + str(cur_val)  + "," + str(ask_val)  + "," + str(bid_val) + "," + str(ask_p_val) + "," + str(bid_p_val) + ");"
@@ -42,6 +102,24 @@ class dbop_ma_trand:
               str(zma10_ratio) + "," + str(zma10_ratio_ratio) + "," + str(zma10_ratio_ratio_ratio) + "," + str(trade_mark) + "," + \
               str(ma20_ratio) + "," + str(zma10_ratio_ratio_short) + ");"
         db_basic.insertMysql(sql)
+
+
+    def dbop_add_day_data_pkg(self, db_basic, data_pkg):
+        val_str = str(data_pkg.number) + "," + str(data_pkg.cur) + ", '" + str(data_pkg.time) + "' ," + \
+            str(data_pkg.zmab) + "," + str(data_pkg.zmab_r) + "," + str(data_pkg.zmab_r_s) + "," + str(data_pkg.zmab_r_r) + "," + \
+            str(data_pkg.zma1) + "," + str(data_pkg.zma1_r) + "," + str(data_pkg.zma1_r_s) + "," + str(data_pkg.zma1_r_r) + "," + \
+            str(data_pkg.zma5) + "," + str(data_pkg.zma5_r) + "," + str(data_pkg.zma5_r_r) + "," + \
+            str(data_pkg.zma10) + "," + str(data_pkg.zma10_r) + "," + str(data_pkg.zma10_r_r) + "," + str(data_pkg.zma10_r_r_s) + "," + str(data_pkg.zma10_r_r_r) + "," + \
+            str(data_pkg.ma20) + "," + str(data_pkg.ma20_r) + "," + \
+            str(data_pkg.zma50) + "," + str(data_pkg.zma50_r) + "," + \
+            str(data_pkg.zma1_zma10_gap) + "," + str(data_pkg.zma1_zma10_gap_scope)
+
+
+        sql = "insert into " \
+              "day_data_new_a" + "(" + self.tl_day_data_structure_str +")" + \
+              "values(" + val_str + ");"
+        db_basic.insertMysql(sql)
+
 
 
     def dbop_read_day_data(self, db_basic, time_start, time_end):

@@ -19,13 +19,30 @@ ZMA20_RATIO_RATIO_POS = 8
 ZMA_GAP_POS = 9
 ZMA_GAP_RATIO_POS = 10
 ZMA_GAP_RATIO_RATIO_POS = 11
-ZMA_GAP_RATIO_RATIO_R_POS = 12
+# ZMA_GAP_RATIO_RATIO_R_POS = 12
 TRADE_MARK_POS = 13
 CUR_RATIO_POS = 14
 
 NO_SRC_POS = 0
 CUR_SRC_POS = 3
 TIME_SRC_POS = 8
+
+
+
+NO_POS = 0
+CUR_POS = 1
+TIME_POS = 2
+ZMA10_POS = 3
+ZMA20_POS = 4
+ZMA10_RATIO_POS = 5
+ZMA20_RATIO_POS = 6
+ZMA20_RATIO_RATIO_POS = 7
+ZMA_GAP_POS = 8
+ZMA_GAP_RATIO_POS = 9
+ZMA_GAP_RATIO_RATIO_POS = 10
+ZMA10_RATIO_RATIO_POS = 11
+CUR_RATIO_RATIO_POS = 12
+
 
 
 class adjust_paras:
@@ -80,6 +97,11 @@ class daytest:
 
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20", "zma10_ratio", "zma20_ratio", "zma10_ratio_ratio", "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma_gap_ratio_ratio_r", "trade_mark", "cur_ratio"])
         return self.ret
+
+    ##
+    #
+
+
 
     def addDayTestData(self, data):
         len = 0
