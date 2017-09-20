@@ -23,12 +23,12 @@ class show_plots:
     def init_plot(self, total_num, name= "stock"):
         self.fig = plt.figure(name)
         self.total_num = total_num
-        if total_num >= 5:
+        if total_num == 5:
 
             ax2 = plt.subplot(512)
-            ymajorLocator_2 = MultipleLocator(1.5)  # 将y轴主刻度标签设置为0.5的倍数
+            ymajorLocator_2 = MultipleLocator(1.5)           # 将y轴主刻度标签设置为0.5的倍数
             ymajorFormatter_2 = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
-            yminorLocator_2 = MultipleLocator(1.5)  # 将此y轴次刻度标签设置为0.1的倍数
+            yminorLocator_2 = MultipleLocator(1.5)           # 将此y轴次刻度标签设置为0.1的倍数
             ax2.yaxis.set_major_locator(ymajorLocator_2)
             ax2.yaxis.set_major_formatter(ymajorFormatter_2)
             ax2.yaxis.set_minor_locator(yminorLocator_2)
@@ -65,6 +65,43 @@ class show_plots:
             ax5.yaxis.set_minor_locator(yminorLocator_5)
             ax5.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
             ax5.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+
+        if total_num == 4:
+
+            ax2 = plt.subplot(412)
+            ymajorLocator_2 = MultipleLocator(1.5)  # 将y轴主刻度标签设置为0.5的倍数
+            ymajorFormatter_2 = FormatStrFormatter('%1.1f')  # 设置y轴标签文本的格式
+            yminorLocator_2 = MultipleLocator(1.5)  # 将此y轴次刻度标签设置为0.1的倍数
+            ax2.yaxis.set_major_locator(ymajorLocator_2)
+            ax2.yaxis.set_major_formatter(ymajorFormatter_2)
+            ax2.yaxis.set_minor_locator(yminorLocator_2)
+            ax2.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax2.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+
+            ax3 = plt.subplot(413)
+            ymajorLocator_3 = MultipleLocator(0.01)
+            #ymajorFormatter_3 = FormatStrFormatter('%1.1111f')
+            yminorLocator_3 = MultipleLocator(0.01)
+            ax3.yaxis.set_major_locator(ymajorLocator_3)
+            #ax3.yaxis.set_major_formatter(ymajorFormatter_3)
+            ax3.yaxis.set_minor_locator(yminorLocator_3)
+
+            ax3.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            ax3.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+
+            ax4 = plt.subplot(414)
+            #ymajorLocator_4 = MultipleLocator(0.004)
+            #yminorLocator_4 = MultipleLocator(0.004)
+            #ax4.yaxis.set_major_locator(ymajorLocator_4)
+            #ax4.yaxis.set_minor_locator(yminorLocator_4)
+            #ax4.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
+            #ax4.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
+            ymajorLocator_4 = MultipleLocator(0.005)
+            yminorLocator_4 = MultipleLocator(0.005)
+            ax4.yaxis.set_major_locator(ymajorLocator_4)
+            ax4.yaxis.set_minor_locator(yminorLocator_4)
+            ax4.xaxis.grid(True, which='major')
+            ax4.yaxis.grid(True, which='minor')
 
 
     def prepare_plot(self, data_list, num):
@@ -108,6 +145,10 @@ class show_plots:
         #print("Y:", self.yMinMax)
         self.add_env()
         plt.show()
+
+    def close_plot_all(self):
+        plt.close('all')
+
 
     def get_cur_words(self, position):
         return self.data_handler.get_cur_words(position)

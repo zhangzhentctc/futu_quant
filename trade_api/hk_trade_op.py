@@ -103,7 +103,7 @@ class hk_trade_opt:
     def sell_stock_code_qty(self, stock_code, price, qty):
         pos_qty = 0
         pos_qty = self.query_position_stock_qty(stock_code)
-        print(pos_qty, "  ", qty)
+        #print(pos_qty, "  ", qty)
         if int(pos_qty) == 0 or int(pos_qty) == -1 or int(pos_qty) < int(qty):
             #print("Not Enough Position")
             return -1

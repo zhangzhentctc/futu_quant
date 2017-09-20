@@ -20,8 +20,17 @@ ZMA10_RATIO_RATIO_RATIO_POS = 7
 TRADE_MARK_POS = 8
 MA20_RATIO_POS = 9
 ZMA10_RATIO_RATIO_SHORT_POS = 10
-ZMA5_POS = 11
-
+ZMA5_POS = 13
+ZMA5_RATIO_POS = 14
+ZMA1_POS = 15
+ZMA1_RATIO_POS = 16
+ZMA1_RATIO_SHORT_POS = 17
+ZMA1_ZMA10_GAP_POS = 18
+ZMA1_ZMA10_GAP_SCOPE_POS = 19
+ZMA5_RATIO_RATIO_POS = 20
+ZMA1_RATIO_RATIO_POS = 21
+ZMA50_POS = 22
+ZMA50_RATIO_POS = 23
 
 NO_SRC_POS = 0
 CUR_SRC_POS = 3
@@ -82,11 +91,14 @@ class daytest:
         data = []
         for i in range(0, self.daytestcount):
             line = self.getNextDayTestData()
-            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "ma20":line[ZMA20_POS], "zma10_ratio":line[ZMA10_RATIO_POS],"zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS],
-                         "zma10_ratio_ratio_ratio": line[ZMA10_RATIO_RATIO_RATIO_POS], "trade_mark": line[TRADE_MARK_POS], "ma20_ratio": line[MA20_RATIO_POS],
-                         "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS], "bull_decrease": 0 ,"zmab":0})
+            data.append({"No.": line[NO_POS], "cur": line[CUR_POS], "time":line[TIME_POS], "zma10":line[ZMA10_POS],  "ma20":line[ZMA20_POS],
+                         "zma10_ratio":line[ZMA10_RATIO_POS],"zma10_ratio_ratio": line[ZMA10_RATIO_RATIO_POS], "zma10_ratio_ratio_ratio": line[ZMA10_RATIO_RATIO_RATIO_POS], "trade_mark": line[TRADE_MARK_POS], "ma20_ratio": line[MA20_RATIO_POS],
+                         "zma10_ratio_ratio_short": line[ZMA10_RATIO_RATIO_SHORT_POS], "bull_decrease": 0 ,"zmab":0, "zma5":0, "zma5_ratio":0,
+                         "zma1":0, "zma1_ratio":0,"zma1_ratio_short":0,"zma1_zma10_gap":0, "zma1_zma10_gap_scope":0, "zma5_ratio_ratio":0,
+                         "zma1_ratio_ratio": 0, "ma50": 0})
 
-        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short","bull_decrease","zmab"])
+        self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio","zma10_ratio_ratio_ratio", "trade_mark", "ma20_ratio","zma10_ratio_ratio_short",
+                                               "bull_decrease","zmab","zma5","zma5_ratio", "zma1", "zma1_ratio", "zma1_ratio_short","zma1_zma10_gap","zma1_zma10_gap_scope","zma5_ratio_ratio","zma1_ratio_ratio","ma50"])
         return self.ret
 
     def addDayTestData(self, data):
@@ -165,13 +177,81 @@ class daytest:
             self.ret.iloc[i, CUR_RATIO_POS] = val
         return 1
 
+    def cal_zma1_zma10_gap(self):
+        len = 0
+        val =0
+        start_pos = len
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            gap = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i, ZMA10_POS]
+            self.ret.iloc[i, ZMA1_ZMA10_GAP_POS] = gap
+        return 1
+
+    def cal_zma1_zma10_gap_scope(self, sample = 120):
+        len = 0
+        t = sample
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            ret, val = self.optimized_least_square_method(i - t + 1, i, "zma1_zma10_gap")
+            if ret == -1:
+                val = 0
+            val = round(val, 4)
+            self.ret.iloc[i, ZMA1_ZMA10_GAP_SCOPE_POS] = val
+        return 1
+
+    def cal_ma50(self):
+        len = 3600
+        avg_sum = 0
+        start_pos = len - 1
+        if self.count < len:
+            return -1
+        for i in range(0, len + 1):
+            self.ret.iloc[i, ZMA50_POS] = self.ret["cur"][0]
+
+        for i in range(start_pos + 1, self.count):
+            sum = self.ret["ma20"][i] * 20 + self.ret["ma20"][i - 2400] * 20 + self.ret["zma10"][i - 3600] * 10
+            avr = sum / 50
+            self.ret.iloc[i, ZMA50_POS] = avr
+        return 0
+
+
     ## MA
+    def cal_zma1(self):
+        len = 120
+        avg_sum = 0
+        start_pos = len - 1
+        if self.count < len:
+            return -1
+
+        for i in range(0, len + 1):
+            self.ret.iloc[i, ZMA1_POS] = self.ret["cur"][0]
+
+        for j in range(0, len):
+            avg_sum += self.ret["cur"][len - 1 - j]/len
+        avr0 = avg_sum
+        self.ret.iloc[start_pos, ZMA1_POS] = avr0
+        starter = self.ret["cur"][0]
+        for i in range(start_pos + 1, self.count):
+            avr = avr0 - starter / len + self.ret["cur"][i] / len
+            self.ret.iloc[i, ZMA1_POS] = avr
+            avr0 = avr
+            starter = self.ret["cur"][i - len]
+        return 0
+
     def cal_zma5(self):
         len = 600
         avg_sum = 0
         start_pos = len - 1
         if self.count < len:
             return -1
+
+        for i in range(0, len + 1):
+            self.ret.iloc[i, ZMA5_POS] = self.ret["cur"][0]
+
         for j in range(0, len):
             avg_sum += self.ret["cur"][len - 1 - j]/len
         avr0 = avg_sum
@@ -237,6 +317,62 @@ class daytest:
             avr0 = avr
             starter = self.ret["cur"][i - len]
         return 0
+
+    def cal_zma1_ratio_simple(self, sample = 240):
+        len = 120
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i - t, ZMA1_POS]
+            self.ret.iloc[i, ZMA1_RATIO_POS] = val * c
+
+        return 1
+
+
+    def cal_zma1_ratio_short_simple(self, sample = 120):
+        len = 120
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMA1_POS] - self.ret.iloc[i - t, ZMA1_POS]
+            self.ret.iloc[i, ZMA1_RATIO_SHORT_POS] = val * c
+
+        return 1
+
+    def cal_zma5_ratio_simple(self, sample = 120):
+        len = 600
+        t = sample
+        val =0
+        c = 120 / sample
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMA5_POS] - self.ret.iloc[i - t, ZMA5_POS]
+            self.ret.iloc[i, ZMA5_RATIO_POS] = val * c
+
+        return 1
+
+    def cal_zma5_ratio_simple_ratio(self, sample = 120):
+        len = 600 + 121
+        t = sample
+        val =0
+        start_pos = len + t
+        if self.count < start_pos:
+          return -1
+        for i in range(start_pos, self.count):
+            val = self.ret.iloc[i, ZMA5_RATIO_POS] - self.ret.iloc[i - sample, ZMA5_RATIO_POS]
+            self.ret.iloc[i, ZMA5_RATIO_RATIO_POS] = val / sample
+        return 1
+
 
     ## MA Ratio
     def cal_zma10_ratio(self):
@@ -481,8 +617,6 @@ class daytest:
         end_time = time.time()
         #print("cal_zma10 finished:" + str( end_time - start_time ))
 
-        self.cal_zma5()
-
         start_time = time.time()
         self.cal_zma10_ratio_simple()
         end_time = time.time()
@@ -716,26 +850,49 @@ class daytest:
         cur_tl = self.ret["cur"]
         zma10_tl = self.ret["zma10"]
         ma20_tl = self.ret["ma20"]
+        ma50_tl = self.ret["ma50"]
+        zma1_r_tl = self.ret["zma1_ratio"]
+        zma1_r_s_tl = self.ret["zma1_ratio_short"]
+        # zma1_r_r_tl = self.ret["zma1_ratio_ratio"]
+        zma5_r_tl = self.ret["zma5_ratio"]
+        zma5_r_r_tl = self.ret["zma5_ratio_ratio"]
         zma10_r_tl = self.ret["zma10_ratio"]
         ma20_r_tl = self.ret["ma20_ratio"]
         zma10_r_r_tl = self.ret["zma10_ratio_ratio"]
         zma10_r_r_s_tl = self.ret["zma10_ratio_ratio_short"]
         zma10_r_r_r_tl = self.ret["zma10_ratio_ratio_ratio"]
         bull_decrease = self.ret["bull_decrease"]
+        zma5_tl = self.ret["zma5"]
+        zma1_tl = self.ret["zma1"]
+        zma1_zma10_gap_tl = self.ret["zma1_zma10_gap"]
+        zma1_zma10_gap_scope_tl = self.ret["zma1_zma10_gap_scope"]
 
         plots.prepare_plot(cur_tl, 1)
+        plots.prepare_plot(zma1_tl, 1)
+        plots.prepare_plot(zma5_tl, 1)
         plots.prepare_plot(zma10_tl, 1)
         plots.prepare_plot(ma20_tl, 1)
+        plots.prepare_plot(ma50_tl, 1)
 
-        plots.prepare_plot(zma10_r_tl, 2)
-        plots.prepare_plot(ma20_r_tl, 2)
 
+        plots.prepare_plot(zma1_r_tl, 2)
+        plots.prepare_plot(zma1_r_s_tl, 2)
+        plots.prepare_plot(zma5_r_tl, 2)
+        #plots.prepare_plot(zma10_r_tl, 2)
+        #plots.prepare_plot(ma20_r_tl, 2)
+
+        plots.prepare_plot(zma5_r_r_tl, 3)
         plots.prepare_plot(zma10_r_r_tl, 3)
-        plots.prepare_plot(zma10_r_r_s_tl, 3)
+        #plots.prepare_plot(zma10_r_r_s_tl, 3)
 
-        plots.prepare_plot(zma10_r_r_r_tl, 4)
+        #plots.prepare_plot(zma1_zma10_gap_scope_tl, 3)
 
-        plots.prepare_plot(bull_decrease,5 )
+        #plots.prepare_plot(zma1_r_r_tl, 4)
+        #plots.prepare_plot(zma1_zma10_gap_tl, 4)
+        #plots.prepare_plot(zma10_r_r_r_tl, 4)
+
+
+        #plots.prepare_plot(bull_decrease,5 )
 
     def cal_bull_decrease(self):
         print("BULL DECREASE CAL")
@@ -810,6 +967,236 @@ class daytest:
 
             position += 1
 
+
+    def mark_bear_zma1_zma10_cross(self, plots):
+        ma10_r_r_r_value = -0.002
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        #start = 1200 + 121 + 360 + 120 + 1
+        start = 120
+        position = start
+
+        count = 0
+        state = 0
+        assign_froze = 0
+        wait_time_froze = 0
+        once_high = 0
+        assign_froze = 0
+        zma1_cross_number = 0
+        wait_point = 0
+        wait_ma20_pen = 0
+        ma10_penetration = 0
+        ma20_penetration = 0
+        wait_vally = 0
+        up_trend = 0
+        wait_time = 2400
+        marked = 0
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            ma5_ratio = self.ret["zma5_ratio"][position]
+            ma5_ratio_ratio = self.ret["zma5_ratio_ratio"][position]
+            ma1_ratio = self.ret["zma1_ratio"][position]
+            ma1_s_ratio = self.ret["zma1_ratio_short"][position]
+            zma1 =  self.ret["zma1"][position]
+            MA5_cur = self.ret["zma5"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            MA50_cur = self.ret["ma50"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+            basic_condition = 0
+            started = 0
+
+            if  ( zma1 > MA20_cur and self.ret["zma1"][position - 1] <= self.ret["ma20"][position - 1] ) or \
+                ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["ma50"][position - 1])    :
+
+                plots.add_annotate(position, cur, 1,
+                              "P\n"
+                               , 50)
+                wait_vally = wait_time
+                marked = 0
+
+            if MA5_cur < MA10_cur and self.ret["zma5"][position - 1] >= self.ret["zma10"][position - 1]:
+                plots.add_annotate(position, cur, 1,
+                                       "sell"
+                                       , 50)
+
+
+            if wait_vally > 0 and wait_vally < wait_time -240 and up_trend < 20:
+                #if zma1 < MA10_cur:
+                    #wait_vally = 0
+                    #up_trend = 0
+
+                ratio = ma1_ratio/(wait_time-wait_vally)
+                self.ret.iloc[position, ZMA1_RATIO_RATIO_POS] = ratio
+
+
+
+                if ma1_ratio > 4 and (ma1_ratio/(wait_time-wait_vally) ) >= 0.005 and \
+                        ma1_s_ratio > 0 and ma10_ratio > 1.5 and \
+                        ma5_ratio_ratio > 0:
+                    x=1
+                    #plots.add_annotate(position, cur, 1,
+                                       #"ok"
+                                       #, 100)
+
+
+                if ma1_s_ratio > ma1_ratio and self.ret["zma1_ratio_short"][position - 1] <= self.ret["zma1_ratio"][position - 1] and \
+                        cur > MA10_cur:
+                    basic_condition = 1
+                    plots.add_annotate(position, cur, 1,
+                                       str(basic_condition)
+                                       , 50)
+
+
+                if ma1_s_ratio > ma5_ratio and self.ret["zma1_ratio_short"][position - 1] <= self.ret["zma5_ratio"][position - 1] and \
+                    cur > MA10_cur:
+                    basic_condition = 2
+                    plots.add_annotate(position, cur, 1,
+                                       str(basic_condition)
+                                       , 50)
+
+                basic_condition = 99
+
+                if (basic_condition != 0 or 1) and marked == 0:
+                    if count % 2 == 0:
+                        show_len = -250
+                    else:
+                        show_len = -450
+                    #up_trend += 1
+                    if ma10_ratio >= 1.5 and \
+                            ( (ma1_s_ratio >= ma20_ratio and MA20_cur < MA10_cur) or \
+                              (ma1_s_ratio >= ma10_ratio and MA20_cur >= MA10_cur) ) and \
+                            (ma1_s_ratio >= ma20_ratio or ma1_s_ratio >= ma10_ratio) and \
+                            (ma1_ratio >= ma20_ratio or ma1_ratio >= ma10_ratio) and  \
+                             ma1_ratio > 0 and \
+                            ma5_ratio > 3 and \
+                             ma5_ratio_ratio * 1000 >= 1:
+                        #plots.add_annotate(position, cur, 1,
+                        #"BULL!!!\n" + str(round(ma1_ratio,3)) + "\n" + str(round(ma5_ratio,3)) + "\n" + str(round(ma10_ratio,3)) + "\n" + str(ma20_ratio) + "\n" +
+                         #str(round(ma5_ratio_ratio*1000,2)) + "\n"+ str(round(ma10_ratio_ratio*1000,2)) + "\n" +
+                         #str((wait_time-wait_vally)/2) + "s" + "\n" + str(basic_condition)
+                        # , show_len)
+
+                        plots.add_annotate(position, cur, 1,
+                            "BULL!!!"
+                             , show_len)
+
+                        print("BULL!!!" + str(round(ma1_ratio, 3)) + " " + str(round(ma5_ratio, 3)) + " " + str(round(ma10_ratio, 3)) + " " + str(ma20_ratio) + " " +
+                              str(round(ma5_ratio_ratio * 1000, 2)) + " " + str(round(ma10_ratio_ratio * 1000, 2)) + " " +
+                              str((wait_time-wait_vally)/2) + "s" + " " + str(basic_condition))
+                        up_trend = 20
+                        marked = 1
+
+                    if up_trend == 20:
+                        wait_vally = 0
+                        up_trend = 0
+
+                    count += 1
+
+            if wait_vally > 0:
+                wait_vally -= 1
+
+            position += 1
+
+        return count
+
+
+    def mark_bear_rrcross_pure(self, plots):
+        ma10_r_r_r_value = -0.002
+        ma20_many_head = -2
+        ma10_r_r_value = -0.005
+        ma10_r_r_value_short = -0.01
+        ma10_r_r_small_value = -0.001
+        #start = 1200 + 121 + 360 + 120 + 1
+        start = 120
+        position = start
+
+        count = 0
+        state = 0
+        assign_froze = 0
+        wait_time_froze = 0
+        once_high = 0
+        assign_froze = 0
+        zma1_cross_number = 0
+        wait_point = 0
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            ma1_ratio = self.ret["zma1_ratio"][position]
+            ma1_s_ratio = self.ret["zma1_ratio_short"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+
+
+            if ma10_ratio > 0 and self.ret["zma10_ratio"][position - 1] <= 0:
+                zma1_cross_number = 0
+
+            if ma10_ratio <= 0 and self.ret["zma10_ratio"][position - 1] > 0:
+                zma1_cross_number = 0
+
+            if ma1_ratio < ma20_ratio and self.ret["zma1_ratio"][position - 1] >= self.ret["ma20_ratio"][position - 1]:
+                zma1_cross_number += 1
+
+            if ma1_ratio < ma20_ratio and self.ret["zma1_ratio"][position - 1] >= self.ret["ma20_ratio"][position - 1]:
+                if ma1_s_ratio < ma1_ratio and \
+                    assign_froze == 0:
+                    if count % 2 == 0:
+                        show_len = -250
+                    else:
+                        show_len = -450
+                    plots.add_annotate(position, cur, 1,
+                                       str(cur) + "\n" +
+                                       str(round(ma1_s_ratio, 2)) + "\n" + str(round(ma1_ratio, 5)) + "\n" +
+                                       str(ma10_ratio) + "\n" + str(ma20_ratio) + "\n" + str(zma1_cross_number)
+                                       , show_len)
+                    # plots.add_annotate(position, cur, 1,
+                    # str(cur) + "\n" + str(MA10_cur) + "\n" +  str(MA20_cur) + "\n" +
+                    # str(ma10_ratio) + "\n"+ str(ma20_ratio) + "\n" +
+                    # str(round(ma10_ratio_ratio, 5)) + "\n"+ str(round(ma10_ratio_ratio_ratio, 5)) + "\n" + str(round(ma10_ratio_ratio_short, 5)), show_len)
+                    print(str(cur) + " " + str(MA10_cur) + " " + str(MA20_cur) + " " +
+                          str(ma10_ratio) + " " + str(ma20_ratio) + " " +
+                          str(round(ma10_ratio_ratio, 5)) + " " + str(round(ma10_ratio_ratio_ratio, 5)) + " " + str(
+                        round(ma10_ratio_ratio_short, 5)))
+                    assign_froze = 120
+                    wait_point = 360
+                    count += 1
+
+
+            if wait_point > 0:
+                back_units = 60
+                if ma1_s_ratio < ma1_ratio and ma1_ratio < ma10_ratio and \
+                    self.ret["zma1_ratio_short"][position - back_units] < self.ret["zma1_ratio"][position - back_units] and \
+                    self.ret["zma1_ratio"][position - back_units] < self.ret["zma10_ratio"][position - back_units] and \
+                        ma1_s_ratio < self.ret["zma1_ratio_short"][position - back_units] and \
+                        ma1_ratio < self.ret["zma1_ratio"][position - back_units] and \
+                        ma10_ratio < self.ret["zma10_ratio"][position - back_units] :
+                    #plots.add_annotate(position, cur, 1,
+                    #                   "Look!!!"
+                    #                   , 50)
+                    wait_point = 0
+
+           #### End this round
+            if assign_froze > 0:
+                assign_froze -= 1
+            if wait_point > 0:
+                wait_point -= 1
+
+            position += 1
+
+        return count
+
     def mark_bear_rrcross(self, plots):
         ma10_r_r_r_value = -0.002
         ma20_many_head = -2
@@ -819,9 +1206,12 @@ class daytest:
         #start = 1200 + 121 + 360 + 120 + 1
         start = 120
         position = start
-        print("start ",str(start))
 
-        vally_count = 0
+        count = 0
+        state = 0
+        assign_froze = 0
+        wait_time_froze = 0
+        once_high = 0
         ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
         while position < self.count:
             ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
@@ -833,16 +1223,49 @@ class daytest:
             ma20_ratio = self.ret["ma20_ratio"][position]
             cur = self.ret["cur"][position]
 
-            if ma10_ratio < ma20_ratio and self.ret["zma10_ratio"][position-1] >= self.ret["ma20_ratio"][position-1] and \
-                     ma10_ratio_ratio_short <= -0.01 and \
-                     ma10_ratio <= 0 and \
-                     ma10_ratio_ratio < 0 and \
-                     ma20_ratio - self.ret["ma20_ratio"][position - 120] < 0:
-                gap = cur - self.ret["cur"][position - 360]
+            if ma10_ratio + 20 * ma10_ratio_ratio_short < ma20_ratio and self.ret["zma10_ratio"][position-1] >= self.ret["ma20_ratio"][position-1] and \
+                abs(MA10_cur - MA20_cur) < 15 and \
+                assign_froze == 0:
+                     #ma10_ratio_ratio < 0 and \
+                     #ma20_ratio - self.ret["ma20_ratio"][position - 120] < 0:
+                #gap_cur = cur - self.ret["cur"][position - 360]
+                #gap_ma10 = cur - MA10_cur
+                #if gap_cur <= -10 and gap_ma10 <= -10 :
                 plots.add_annotate(position, cur, 1,
-                                   str(self.ret["time"][position]) + "\n" + "cur:" + str(cur) + "\n" + str(gap) + "\n" + str(cur - MA10_cur), -200)
+                                   str(self.ret["time"][position]) + "Cross \n" + "cur:" + str(cur) + "\n", -200)
+                state = 1
+                wait_time = 600
+                assign_froze = 60
+                wait_time_froze = 120
+                print(str(self.ret["time"][position]), "assign state")
+
+            if state == 1 and wait_time_froze == 0:
+                if ma10_ratio_ratio_short >= -0.001:
+                    once_high = 1
+
+                if wait_time > 0:
+                    if ma10_ratio_ratio_short <= -0.000 and self.ret["zma10_ratio_ratio_short"][position - 1] > -0.000 and once_high == 1:
+                        if ma20_ratio < -1 and ma10_ratio <= -2 and \
+                                cur < MA10_cur and cur < MA20_cur:
+                            plots.add_annotate(position, cur, 1,str(self.ret["time"][position]) + "aaaaaa\n" + "cur:" + str(cur) + "\n" , -200)
+                            count += 1
+                            print(str(self.ret["time"][position]), "reset state due to good")
+                        print(str(self.ret["time"][position]), "reset state due to bad")
+                        state = 0
+                        wait_time = 0
+                        once_high = 0
+                    wait_time -= 1
+                else:
+                    state = 0
+                    once_high = 0
+
+
+            if assign_froze > 0:
+                assign_froze -= 1
+            if wait_time_froze > 0:
+                wait_time_froze -= 1
             position += 1
-        return 1
+        return count
 
     def mark_undefine(self, plots):
         ma10_r_r_r_value = -0.002
@@ -987,12 +1410,11 @@ class daytest:
             ma20_ratio = self.ret["ma20_ratio"][position]
             cur = self.ret["cur"][position]
 
-            if ma20_ratio >= - 2 and ma20_ratio <= 0.5:
-                if ma10_ratio > ma20_ratio and self.ret["zma10_ratio"][position - 1] <= self.ret["ma20_ratio"][position - 1] and \
-                        ma10_ratio_ratio_short >= 0.01:
+            if ma10_ratio > ma20_ratio and self.ret["zma10_ratio"][position - 1] <= self.ret["ma20_ratio"][position - 1] and \
+                    ma10_ratio_ratio_short >= 0.01 and \
+                    ma10_ratio >= 0 and \
+                    ma10_ratio_ratio < 0:
                     plots.add_annotate(position, cur, 1, str(self.ret["time"][position]) + "\n" + "cur:" + str(cur), -200)
-
-
             position += 1
         return 1
 
@@ -1401,6 +1823,16 @@ class daytest:
         self.count = self.daytestcount
         #self.cal_bull_decrease()
         #self.cal_zmab()
+        self.cal_ma50()
+        self.cal_zma5()
+        self.cal_zma5_ratio_simple()
+        self.cal_zma5_ratio_simple_ratio()
+        self.cal_zma1()
+        self.cal_zma1_ratio_simple()
+        self.cal_zma1_ratio_short_simple()
+        #self.cal_zma1_ratio_ratio()
+        #self.cal_zma1_zma10_gap()
+        #self.cal_zma1_zma10_gap_scope()
         #self.cal_bear_increase()
 
     def insert_para_test(self):
@@ -1444,10 +1876,13 @@ if __name__ == "__main__":
                  "2017-08-08",
                  "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
                  "2017-08-21",  "2017-08-24", "2017-08-25"]
-    stored_date_list_all = ["2017-07-27", "2017-07-28", "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
+
+    stored_date_list_all = \
+                ["2017-07-27", "2017-07-28", "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
                  "2017-08-08", "2017-08-09",
                  "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
-                 "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29","2017-08-30","2017-08-31"]
+                 "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29","2017-08-30","2017-08-31",
+                 "2017-09-01","2017-09-04","2017-09-05","2017-09-06","2017-09-07"]
     not_stored = []
 
     test = daytest()
@@ -1477,30 +1912,43 @@ if __name__ == "__main__":
 
 ########For plos
 
-    plot_date_day = []
+    plot_date_day = ["2017-09-04"]
     for plot_date in stored_date_list_all:
+        s = time.time()
         start_time = plot_date + " " + "9:20:00"
         end_time = plot_date + " " + "16:00:00"
         test.read_history(start_time, end_time)
         #test.get_data_direct(start_time, end_time)
         plots = show_plots(test)
-        plots.init_plot(5, plot_date+"-bull002")
-
+        plots.init_plot(4, plot_date+"-bull002")
         test.mark_base(plots)
 
+
         # 8/29 8/28 8/24 8/21 8/18 8/16 8/15 8/11 8/8 8/2 | 08/14
-        #test.mark_bear_start(plots)
+        # ret = test.mark_bear_start(plots)
         #test.mark_bear_continue(plots)
 
         # 3 8 10 17 21
         #test.mark_bear_about_die(plots)
 
         #test.mark_pure004(plots)
-        test.mark_bear_rrcross(plots)
+        # ret = test.mark_bear_rrcross(plots)
+        # ret = test.mark_bear_rrcross_pure(plots)
+        ret = test.mark_bear_zma1_zma10_cross(plots)
 
-        #test.mark_rr_cross(plots)
+        # ret = test.mark_rr_cross(plots)
         #test.export_ret()
-        plots.show_plot()
+
+        zma1_r_r_tl = test.ret["zma1_ratio_ratio"]
+        plots.prepare_plot(zma1_r_r_tl, 4)
+        e = time.time()
+        print("Data finished:" + str( e - s ))
+
+        if ret != 0:
+            plots.show_plot()
+        else:
+            #plots.show_plot()
+            plots.close_plot_all()
 
 
 

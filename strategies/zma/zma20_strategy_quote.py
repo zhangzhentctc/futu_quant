@@ -50,6 +50,7 @@ class zma20_strategy_quote(threading.Thread):
         self.vol_last = 0
         self.vol_now = 0
         self.vol_break = 0
+        self.running = 0
 
         data= []
         for i in range(0, 60000):
@@ -1118,6 +1119,7 @@ class zma20_strategy_quote(threading.Thread):
 
 
     def run(self):
+        self.running = 1
         stock_quote = self.stock_quote
         stock_quote.start()
         while stock_quote.ready != 1 :
@@ -1249,6 +1251,11 @@ class zma20_strategy_quote(threading.Thread):
 
             if self.ret.iloc[self.count, TIME_POS] == self.ret.iloc[self.count - 10, TIME_POS]:
                 break
+
+            if self.count >= 59990:
+                break
+
         print("MAIN THREAD DIE!!!!!!!!!!!")
+        self.running = 0
 
 
