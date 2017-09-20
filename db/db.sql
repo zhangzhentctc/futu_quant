@@ -99,7 +99,7 @@ zma10_ratio_ratio_short          float
 );
 
 create table day_data_new_b(
-id                      int(10),
+id                      int(10) primary key,,
 cur                     float not null,
 time                    datetime,
 zmab                    float,

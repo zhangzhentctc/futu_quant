@@ -808,51 +808,56 @@ class daytest:
         print("BUY:", mark,"\n", self.ret.iloc[position,])
 
     def mark_base(self, plots):
-        cur_tl = self.ret["cur"]
-        zma10_tl = self.ret["zma10"]
-        ma20_tl = self.ret["ma20"]
-        ma50_tl = self.ret["ma50"]
-        zma1_r_tl = self.ret["zma1_ratio"]
-        zma1_r_s_tl = self.ret["zma1_ratio_short"]
-        # zma1_r_r_tl = self.ret["zma1_ratio_ratio"]
-        zma5_r_tl = self.ret["zma5_ratio"]
-        zma5_r_r_tl = self.ret["zma5_ratio_ratio"]
-        zma10_r_tl = self.ret["zma10_ratio"]
-        ma20_r_tl = self.ret["ma20_ratio"]
-        zma10_r_r_tl = self.ret["zma10_ratio_ratio"]
-        zma10_r_r_s_tl = self.ret["zma10_ratio_ratio_short"]
-        zma10_r_r_r_tl = self.ret["zma10_ratio_ratio_ratio"]
-        bull_decrease = self.ret["bull_decrease"]
-        zma5_tl = self.ret["zma5"]
-        zma1_tl = self.ret["zma1"]
-        zma1_zma10_gap_tl = self.ret["zma1_zma10_gap"]
-        zma1_zma10_gap_scope_tl = self.ret["zma1_zma10_gap_scope"]
+        cur_tl = self.ret[STR_cur]
+        zmab_tl = self.ret[STR_zmab]
+        zmab_r_tl = self.ret[STR_zmab_r]
+        zmab_r_s_tl = self.ret[STR_zmab_r_s]
+        zmab_r_r_tl = self.ret[STR_zmab_r_r]
+        zma1_tl = self.ret[STR_zma1]
+        zma1_r_tl = self.ret[STR_zma1_r]
+        zma1_r_s_tl = self.ret[STR_zma1_r_s]
+        zma1_r_r_tl = self.ret[STR_zma1_r_r]
+        zma5_tl = self.ret[STR_zma5]
+        zma5_r_tl = self.ret[STR_zma5_r]
+        zma5_r_r_tl = self.ret[STR_zma5_r_r]
+        zma10_tl = self.ret[STR_zma10]
+        zma10_r_tl = self.ret[STR_zma10_r]
+        zma10_r_r_tl = self.ret[STR_zma10_r_r]
+        zma10_r_r_s_tl = self.ret[STR_zma10_r_r_s]
+        zma10_r_r_r_tl = self.ret[STR_zma10_r_r_r]
+        ma20_tl = self.ret[STR_ma20]
+        ma20_r_tl = self.ret[STR_ma20_r]
+        zma50_tl = self.ret[STR_zma50]
+        zma1_zma10_gap_tl = self.ret[STR_zma1_zma10_gap]
+        zma1_zma10_gap_scope_tl = self.ret[STR_zma1_zma10_gap_scope]
 
         plots.prepare_plot(cur_tl, 1)
+        plots.prepare_plot(zmab_tl, 1)
         plots.prepare_plot(zma1_tl, 1)
         plots.prepare_plot(zma5_tl, 1)
         plots.prepare_plot(zma10_tl, 1)
         plots.prepare_plot(ma20_tl, 1)
-        plots.prepare_plot(ma50_tl, 1)
+        plots.prepare_plot(zma50_tl, 1)
 
-
+        plots.prepare_plot(zmab_r_tl, 2)
+        plots.prepare_plot(zmab_r_s_tl, 2)
         plots.prepare_plot(zma1_r_tl, 2)
         plots.prepare_plot(zma1_r_s_tl, 2)
         plots.prepare_plot(zma5_r_tl, 2)
         #plots.prepare_plot(zma10_r_tl, 2)
         #plots.prepare_plot(ma20_r_tl, 2)
 
+        plots.prepare_plot(zmab_r_r_tl, 3)
+        plots.prepare_plot(zma1_r_r_tl, 3)
         plots.prepare_plot(zma5_r_r_tl, 3)
         plots.prepare_plot(zma10_r_r_tl, 3)
         #plots.prepare_plot(zma10_r_r_s_tl, 3)
 
-        #plots.prepare_plot(zma1_zma10_gap_scope_tl, 3)
+        # plots.prepare_plot(zma10_r_r_r_tl, 4)
 
+        #plots.prepare_plot(zma1_zma10_gap_scope_tl, 3)
         #plots.prepare_plot(zma1_r_r_tl, 4)
         #plots.prepare_plot(zma1_zma10_gap_tl, 4)
-        #plots.prepare_plot(zma10_r_r_r_tl, 4)
-
-
         #plots.prepare_plot(bull_decrease,5 )
 
 
@@ -1798,6 +1803,8 @@ class daytest:
     def export_ret(self):
         self.ret.to_csv("C:\\export.csv", index = False)
 
+
+
 if __name__ == "__main__":
 #    Usage
 
@@ -1831,8 +1838,8 @@ if __name__ == "__main__":
     for date in not_stored:
         start_time = date + " " + "9:20:00"
         end_time = date + " " + "16:00:00"
-        test.store_history(start_time, end_time)
         s = time.time()
+        test.store_history(start_time, end_time)
         #test.get_data_direct(start_time, end_time)
         #test.read_history(start_time, end_time)
         e = time.time()
@@ -1857,7 +1864,7 @@ if __name__ == "__main__":
         test.read_history(start_time, end_time)
         #test.get_data_direct(start_time, end_time)
         plots = show_plots(test)
-        plots.init_plot(4, plot_date+"-bull002")
+        plots.init_plot(4, plot_date + "-bull002")
         test.mark_base(plots)
 
 
@@ -1874,12 +1881,13 @@ if __name__ == "__main__":
         ret = test.mark_bear_zma1_zma10_cross(plots)
 
         # ret = test.mark_rr_cross(plots)
-        #test.export_ret()
+        # test.export_ret()
 
         zma1_r_r_tl = test.ret["zma1_ratio_ratio"]
         plots.prepare_plot(zma1_r_r_tl, 4)
         e = time.time()
         print("Data finished:" + str( e - s ))
+
 
         if ret != 0:
             plots.show_plot()

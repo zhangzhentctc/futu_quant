@@ -115,15 +115,15 @@ class dbop_ma_trand:
             str(data_pkg.zma1_zma10_gap) + "," + str(data_pkg.zma1_zma10_gap_scope)
 
 
-        sql = "insert into " \
-              "day_data_new_a" + "(" + self.tl_day_data_structure_str +")" + \
+        sql = "insert into " + \
+              "day_data_new_b" + "(" + self.tl_day_data_structure_str + ")" + \
               "values(" + val_str + ");"
         db_basic.insertMysql(sql)
 
 
 
     def dbop_read_day_data(self, db_basic, time_start, time_end):
-        sql = "select * from day_data_new_a where time > '" + str(time_start) + "' and time < '" + str(time_end) + "';"
+        sql = "select * from day_data_new_b where time > '" + str(time_start) + "' and time < '" + str(time_end) + "';"
         self.count = db_basic.queryMysql(sql)
         self.position = 0
         return self.count
