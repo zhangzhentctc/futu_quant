@@ -115,7 +115,7 @@ class show_plots:
         plt.plot(data_list)
         return 0
 
-    def add_annotate(self, x, y, num, words, place = 50):
+    def add_annotate(self, x, y, num, words, color = "black", place = 50):
         if num > self.total_num or num <= 0:
             print("Bad Sub Plot Num!")
             return -1
@@ -128,6 +128,7 @@ class show_plots:
             xy=(x, y),
             xytext=(x, y + place),
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
+            color = color
         )
         return ano
 

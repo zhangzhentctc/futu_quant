@@ -1003,6 +1003,10 @@ class daytest:
         trade_status = 0
         trade_pos = 0
         data=[]
+        penetrate_type = 0
+        penetrate_pos = 0
+        marked_state = 0
+
         ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
         while position < self.count:
             ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
@@ -1027,20 +1031,62 @@ class daytest:
 
 
 ## We need to mark which line is penetrated
-            if  ( zma1 > MA20_cur and self.ret["zma1"][position - 1] <= self.ret["ma20"][position - 1] ) or \
-                ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["zma50"][position - 1] and position > 2000)    :
-
+            ## Detect zma1/MA20 Penetration
+            if  ( zma1 > MA20_cur and self.ret["zma1"][position - 1] <= self.ret["ma20"][position - 1] ):
                 plots.add_annotate(position, cur, 1,
-                              "P\n"
+                              "P2\n"
                                , 50)
+                penetrate_type = 2
+                penetrate_pos = position
                 wait_vally = wait_time
                 marked = 0
 
+            ## Detect zma1/MA50 Penetration
+            if ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["zma50"][position - 1] and position > 2000):
+                plots.add_annotate(position, cur, 1,
+                                   "P5\n"
+                                , 50)
+                penetrate_type = 5
+                penetrate_pos = position
+                wait_vally = wait_time
+                marked = 0
+
+            ### Mark Graph Type
+            if penetrate_type != 0:
+                if ma5_ratio > ma10_ratio and ma10_ratio > ma20_ratio:
+                    state =  3
+                    str = "+++"
+                if ma10_ratio > ma5_ratio and ma5_ratio > ma20_ratio:
+                    state =  2
+                    str = "++"
+                if ma5_ratio > ma20_ratio and ma20_ratio > ma10_ratio:
+                    state =  1
+                    str = "+"
+                if ma10_ratio > ma20_ratio and ma20_ratio > ma5_ratio:
+                    state = -1
+                    str = "-"
+                if ma20_ratio > ma10_ratio and ma10_ratio > ma5_ratio:
+                    state = -2
+                    str = "--"
+                if ma20_ratio > ma10_ratio and ma10_ratio > ma5_ratio:
+                    state = -3
+                    str = "---"
+                if marked_state != state:
+                    plots.add_annotate(position, cur, 1,
+                                       str
+                                       , 30)
+                    #print("mark",state)
+                    marked_state = state
+
+
+            ## Detect zmab/zma5 Penetration
             if mab_ratio > ma5_ratio and self.ret["zmab_ratio"][position - 1] <= self.ret["zma5_ratio"][position - 1]:
                 plots.add_annotate(position, cur, 1,
-                              "Cr\n"
+                              "C-b-5\n"
                                , 50)
 
+
+            ## Sell Point 1.
             if MA5_cur < MA10_cur and self.ret["zma5"][position - 1] >= self.ret["zma10"][position - 1]:
                 #### Natural Sell Point
                 if trade_status == 1:
@@ -1059,7 +1105,7 @@ class daytest:
                     plots.add_annotate(position, cur, 1,
                                        "sell"
                                        , 50)
-
+            ## Sell Point 2.
             if cur + 1 > MA50_cur and self.ret["cur"][position - 1] + 1 < self.ret["zma50"][position - 1]:
                 #### Meet MA50 Sell Point
                 if trade_status == 2:
@@ -1076,6 +1122,7 @@ class daytest:
                                        , 50)
 
 
+            ## Things After Penetration
             if wait_vally > 0 and wait_vally < wait_time -240 and up_trend < 20:
                 #if zma1 < MA10_cur:
                     #wait_vally = 0
@@ -1112,6 +1159,8 @@ class daytest:
 
                 basic_condition = 99
 
+
+                ## Detect Buy Point
                 if (basic_condition != 0 or 1) and marked == 0:
                     if count % 2 == 0:
                         show_len = -250
@@ -1125,11 +1174,13 @@ class daytest:
                             (ma1_s_ratio >= ma20_ratio or ma1_s_ratio >= ma10_ratio) and \
                             (ma1_ratio >= ma20_ratio or ma1_ratio >= ma10_ratio) and  \
                              ma1_ratio > 0 and \
-                            ma5_ratio > 3 and \
+                             ma5_ratio > 3 and \
                              ma5_ratio_ratio * 1000 >= 1 and \
-                            ( (MA50_cur - cur > 20) or MA50_cur == cur or cur > MA50_cur):
+                            ((MA50_cur - cur > 20) or MA50_cur == cur or cur > MA50_cur):
 
-                        if trade_status == 0:
+                        if trade_status == 0 and \
+                            ((penetrate_type == 2 and ((MA50_cur - cur > 20) or self.ret["cur"][penetrate_pos] > self.ret["zma50"][penetrate_pos])) or \
+                             (penetrate_type == 5 )):
                             plots.add_annotate(position, cur, 1,
                                                "BULL!!!"
                                                , show_len)
@@ -1148,17 +1199,22 @@ class daytest:
                             up_trend = 20
                             marked = 1
 
-
+                    ## Reset
                     if up_trend == 20:
                         wait_vally = 0
                         up_trend = 0
+                        penetrate_type = 0
+                        penetrate_pos = 0
 
                     count += 1
 
+            ## One cycle Done.
             if wait_vally > 0:
                 wait_vally -= 1
 
             position += 1
+
+
 
         self.trade = pd.DataFrame(data, columns=[
             STR_number, STR_cur, STR_time,

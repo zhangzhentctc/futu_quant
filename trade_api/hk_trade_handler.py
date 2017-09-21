@@ -7,6 +7,11 @@ STATUS_WAIT_OPEN = 4
 STATUS_BEAR_FORCE_SELL = 1
 STATUS_BEAR_FORCE_BUY = 2
 STATUS_BEAR_WAIT_PROFIT = 3
+
+STATUS_BULL_FORCE_SELL = 5
+STATUS_BULL_FORCE_BUY = 6
+STATUS_BULL_WAIT_PROFIT = 7
+
 class hk_trade_handler(threading.Thread):
 ## Single Class
 ## Status:
@@ -437,5 +442,11 @@ class hk_trade_handler(threading.Thread):
                     self.busy = 0
                 continue
 
+            if status == STATUS_BULL_FORCE_BUY:
+                pass
+            if status == STATUS_BULL_FORCE_SELL:
+                pass
+            if status == STATUS_BULL_WAIT_PROFIT:
+                pass
 
             time.sleep(0.2)
