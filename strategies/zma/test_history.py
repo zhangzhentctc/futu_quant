@@ -111,6 +111,7 @@ class daytest:
         self.trend_c_cnt = 0
         self.trend = 0
         self.trend_p_cnt = 0
+        self.data = []
 
     def Initialize(self):
         self.db = MySQLCommand("localhost", 3306, "root", "123456", "trend2")
@@ -842,10 +843,10 @@ class daytest:
         plots.prepare_plot(ma20_tl, 1)
         plots.prepare_plot(zma50_tl, 1)
 
-        plots.prepare_plot(zmab_r_tl, 2)
+        #plots.prepare_plot(zmab_r_tl, 2)
         plots.prepare_plot(zmab_r_s_tl, 2)
         plots.prepare_plot(zma1_r_tl, 2)
-        plots.prepare_plot(zma1_r_s_tl, 2)
+        #plots.prepare_plot(zma1_r_s_tl, 2)
         plots.prepare_plot(zma5_r_tl, 2)
         plots.prepare_plot(zma10_r_tl, 2)
         plots.prepare_plot(ma20_r_tl, 2)
@@ -940,6 +941,39 @@ class daytest:
 
             position += 1
 
+    def sell_bull(self, data, buy_pos, trade_start_delay, max_profit, end_profit):
+        line = self.ret.iloc[buy_pos,]
+
+        data.append({
+            STR_number: line[NO_POS], STR_cur: line[CUR_POS], STR_time: line[TIME_POS],
+            STR_zmab: line[ZMAB_POS], STR_zmab_r: line[ZMAB_RATIO_POS], STR_zmab_r_s: line[ZMAB_RATIO_SHORT_POS],
+            STR_zmab_r_r: line[ZMAB_RATIO_RATIO_POS],
+            STR_zma1: line[ZMA1_POS], STR_zma1_r: line[ZMA1_RATIO_POS], STR_zma1_r_s: line[ZMA1_RATIO_SHORT_POS],
+            STR_zma1_r_r: line[ZMA1_RATIO_RATIO_POS],
+            STR_zma5: line[ZMA5_POS], STR_zma5_r: line[ZMA5_RATIO_POS], STR_zma5_r_r: line[ZMA5_RATIO_RATIO_POS],
+            STR_zma10: line[ZMA10_POS], STR_zma10_r: line[ZMA10_RATIO_POS], STR_zma10_r_r: line[ZMA10_RATIO_RATIO_POS],
+            STR_zma10_r_r_s: line[ZMA10_RATIO_RATIO_SHORT_POS], STR_zma10_r_r_r:line[ZMA10_RATIO_RATIO_RATIO_POS],
+            STR_ma20: line[MA20_POS], STR_ma20_r: line[MA20_RATIO_POS],
+            STR_zma50: line[ZMA50_POS], STR_zma50_r: line[ZMA50_RATIO_POS],
+            STR_zma1_zma10_gap: line[ZMA1_ZMA10_GAP_POS], STR_zma1_zma10_gap_scope: line[ZMA1_ZMA10_GAP_SCOPE_POS],
+            "max_profit":max_profit, "end_profit":end_profit, "trade_start_delay":trade_start_delay
+        })
+
+        self.data.append({
+            STR_number: line[NO_POS], STR_cur: line[CUR_POS], STR_time: line[TIME_POS],
+            STR_zmab: line[ZMAB_POS], STR_zmab_r: line[ZMAB_RATIO_POS], STR_zmab_r_s: line[ZMAB_RATIO_SHORT_POS],
+            STR_zmab_r_r: line[ZMAB_RATIO_RATIO_POS],
+            STR_zma1: line[ZMA1_POS], STR_zma1_r: line[ZMA1_RATIO_POS], STR_zma1_r_s: line[ZMA1_RATIO_SHORT_POS],
+            STR_zma1_r_r: line[ZMA1_RATIO_RATIO_POS],
+            STR_zma5: line[ZMA5_POS], STR_zma5_r: line[ZMA5_RATIO_POS], STR_zma5_r_r: line[ZMA5_RATIO_RATIO_POS],
+            STR_zma10: line[ZMA10_POS], STR_zma10_r: line[ZMA10_RATIO_POS], STR_zma10_r_r: line[ZMA10_RATIO_RATIO_POS],
+            STR_zma10_r_r_s: line[ZMA10_RATIO_RATIO_SHORT_POS], STR_zma10_r_r_r:line[ZMA10_RATIO_RATIO_RATIO_POS],
+            STR_ma20: line[MA20_POS], STR_ma20_r: line[MA20_RATIO_POS],
+            STR_zma50: line[ZMA50_POS], STR_zma50_r: line[ZMA50_RATIO_POS],
+            STR_zma1_zma10_gap: line[ZMA1_ZMA10_GAP_POS], STR_zma1_zma10_gap_scope: line[ZMA1_ZMA10_GAP_SCOPE_POS],
+            "max_profit":max_profit, "end_profit":end_profit, "trade_start_delay":trade_start_delay
+        })
+
 
     def mark_bear_zma1_zma10_cross(self, plots):
         ma10_r_r_r_value = -0.002
@@ -966,6 +1000,9 @@ class daytest:
         up_trend = 0
         wait_time = 2400
         marked = 0
+        trade_status = 0
+        trade_pos = 0
+        data=[]
         ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
         while position < self.count:
             ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
@@ -974,6 +1011,8 @@ class daytest:
             ma10_ratio = self.ret["zma10_ratio"][position]
             ma5_ratio = self.ret["zma5_ratio"][position]
             ma5_ratio_ratio = self.ret["zma5_ratio_ratio"][position]
+            mab_ratio = self.ret["zmab_ratio"][position]
+            mab_s_ratio = self.ret["zmab_ratio_short"][position]
             ma1_ratio = self.ret["zma1_ratio"][position]
             ma1_s_ratio = self.ret["zma1_ratio_short"][position]
             zma1 =  self.ret["zma1"][position]
@@ -986,8 +1025,10 @@ class daytest:
             basic_condition = 0
             started = 0
 
+
+## We need to mark which line is penetrated
             if  ( zma1 > MA20_cur and self.ret["zma1"][position - 1] <= self.ret["ma20"][position - 1] ) or \
-                ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["zma50"][position - 1])    :
+                ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["zma50"][position - 1] and position > 2000)    :
 
                 plots.add_annotate(position, cur, 1,
                               "P\n"
@@ -995,9 +1036,43 @@ class daytest:
                 wait_vally = wait_time
                 marked = 0
 
-            if MA5_cur < MA10_cur and self.ret["zma5"][position - 1] >= self.ret["zma10"][position - 1]:
+            if mab_ratio > ma5_ratio and self.ret["zmab_ratio"][position - 1] <= self.ret["zma5_ratio"][position - 1]:
                 plots.add_annotate(position, cur, 1,
+                              "Cr\n"
+                               , 50)
+
+            if MA5_cur < MA10_cur and self.ret["zma5"][position - 1] >= self.ret["zma10"][position - 1]:
+                #### Natural Sell Point
+                if trade_status == 1:
+                    max = self.ret["cur"][trade_pos]
+                    for pos in range(trade_pos, position):
+                        if self.ret["cur"][pos] > max:
+                            max = self.ret["cur"][pos]
+                    max_profit = max - self.ret["cur"][trade_pos]
+                    end_profit = self.ret["cur"][position] - self.ret["cur"][trade_pos]
+                    trade_status = 0
+                    self.sell_bull(data, trade_pos, trade_start_delay, max_profit, end_profit)
+                    plots.add_annotate(position, cur, 1,
+                                       "sell" + "\n" + str(max_profit) + "\n" + str(end_profit)
+                                       , 50)
+                else:
+                    plots.add_annotate(position, cur, 1,
                                        "sell"
+                                       , 50)
+
+            if cur + 1 > MA50_cur and self.ret["cur"][position - 1] + 1 < self.ret["zma50"][position - 1]:
+                #### Meet MA50 Sell Point
+                if trade_status == 2:
+                    max = self.ret["cur"][trade_pos]
+                    for pos in range(trade_pos, position):
+                        if self.ret["cur"][pos] > max:
+                            max = self.ret["cur"][pos]
+                    max_profit = max - self.ret["cur"][trade_pos]
+                    end_profit = self.ret["cur"][position] - self.ret["cur"][trade_pos]
+                    trade_status = 0
+                    self.sell_bull(data, trade_pos, trade_start_delay, max_profit, end_profit)
+                    plots.add_annotate(position, cur, 1,
+                                       "sell" + "\n" + str(max_profit) + "\n" + str(end_profit)
                                        , 50)
 
 
@@ -1042,6 +1117,7 @@ class daytest:
                         show_len = -250
                     else:
                         show_len = -450
+
                     #up_trend += 1
                     if ma10_ratio >= 1.5 and \
                             ( (ma1_s_ratio >= ma20_ratio and MA20_cur < MA10_cur) or \
@@ -1050,22 +1126,28 @@ class daytest:
                             (ma1_ratio >= ma20_ratio or ma1_ratio >= ma10_ratio) and  \
                              ma1_ratio > 0 and \
                             ma5_ratio > 3 and \
-                             ma5_ratio_ratio * 1000 >= 1:
-                        #plots.add_annotate(position, cur, 1,
-                        #"BULL!!!\n" + str(round(ma1_ratio,3)) + "\n" + str(round(ma5_ratio,3)) + "\n" + str(round(ma10_ratio,3)) + "\n" + str(ma20_ratio) + "\n" +
-                         #str(round(ma5_ratio_ratio*1000,2)) + "\n"+ str(round(ma10_ratio_ratio*1000,2)) + "\n" +
-                         #str((wait_time-wait_vally)/2) + "s" + "\n" + str(basic_condition)
-                        # , show_len)
+                             ma5_ratio_ratio * 1000 >= 1 and \
+                            ( (MA50_cur - cur > 20) or MA50_cur == cur or cur > MA50_cur):
 
-                        plots.add_annotate(position, cur, 1,
-                            "BULL!!!"
-                             , show_len)
+                        if trade_status == 0:
+                            plots.add_annotate(position, cur, 1,
+                                               "BULL!!!"
+                                               , show_len)
 
-                        print("BULL!!!" + str(round(ma1_ratio, 3)) + " " + str(round(ma5_ratio, 3)) + " " + str(round(ma10_ratio, 3)) + " " + str(ma20_ratio) + " " +
-                              str(round(ma5_ratio_ratio * 1000, 2)) + " " + str(round(ma10_ratio_ratio * 1000, 2)) + " " +
-                              str((wait_time-wait_vally)/2) + "s" + " " + str(basic_condition))
-                        up_trend = 20
-                        marked = 1
+                            print("BULL!!!" + str(round(ma1_ratio, 3)) + " " + str(round(ma5_ratio, 3)) + " " + str(
+                                round(ma10_ratio, 3)) + " " + str(ma20_ratio) + " " +
+                                  str(round(ma5_ratio_ratio * 1000, 2)) + " " + str(
+                                round(ma10_ratio_ratio * 1000, 2)) + " " +
+                                  str((wait_time - wait_vally) / 2) + "s" + " " + str(basic_condition))
+                            trade_status = 1
+                            trade_pos = position
+                            trade_start_delay = str((wait_time - wait_vally) / 2)
+                            if MA50_cur - cur > 20:
+                                trade_status = 2
+                                trade_pos = position
+                            up_trend = 20
+                            marked = 1
+
 
                     if up_trend == 20:
                         wait_vally = 0
@@ -1077,6 +1159,18 @@ class daytest:
                 wait_vally -= 1
 
             position += 1
+
+        self.trade = pd.DataFrame(data, columns=[
+            STR_number, STR_cur, STR_time,
+            STR_zmab, STR_zmab_r, STR_zmab_r_s, STR_zmab_r_r,
+            STR_zma1, STR_zma1_r, STR_zma1_r_s, STR_zma1_r_r,
+            STR_zma5, STR_zma5_r, STR_zma5_r_r,
+            STR_zma10, STR_zma10_r, STR_zma10_r_r, STR_zma10_r_r_s, STR_zma10_r_r_r,
+            STR_ma20, STR_ma20_r,
+            STR_zma50, STR_zma50_r,
+            STR_zma1_zma10_gap, STR_zma1_zma10_gap_scope,
+            "max_profit", "end_profit","trade_start_delay"
+            ])
 
         return count
 
@@ -1265,6 +1359,7 @@ class daytest:
 
             if ma10_ratio < ma20_ratio and self.ret["zma10_ratio"][position-1] >= self.ret["ma20_ratio"][position-1] and \
                      ma10_ratio_ratio_short <= -0.01 and \
+                     ma10_ratio <= 0 and \
                      ma10_ratio <= 0 and \
                      ma10_ratio_ratio < 0 and \
                      ma20_ratio - self.ret["ma20_ratio"][position - 120] < 0:
@@ -1803,10 +1898,31 @@ class daytest:
               "\nMA10_rr" + str(ma10_ratio_ratio) + "\nma10_rrr" + str(ma10_ratio_ratio_ratio)
         return s
 
-    def export_ret(self):
-        self.ret.to_csv("C:\\export.csv", index = False)
+    def export_ret(self, date):
+        self.ret.to_csv("C:\\ret_" + date + ".csv", index = False)
 
+    def export_trade_ret(self, date):
+        try:
+            self.trade.to_csv("C:\\trade_ret_" + date + ".csv", index = False)
+        except:
+            print("no trade result")
 
+    def export_trade_ret_all(self):
+        self.trade_all = pd.DataFrame(self.data, columns=[
+            STR_number, STR_cur, STR_time,
+            STR_zmab, STR_zmab_r, STR_zmab_r_s, STR_zmab_r_r,
+            STR_zma1, STR_zma1_r, STR_zma1_r_s, STR_zma1_r_r,
+            STR_zma5, STR_zma5_r, STR_zma5_r_r,
+            STR_zma10, STR_zma10_r, STR_zma10_r_r, STR_zma10_r_r_s, STR_zma10_r_r_r,
+            STR_ma20, STR_ma20_r,
+            STR_zma50, STR_zma50_r,
+            STR_zma1_zma10_gap, STR_zma1_zma10_gap_scope,
+            "max_profit", "end_profit", "trade_start_delay"
+            ])
+        try:
+            self.trade_all.to_csv("C:\\trade_ret_" + "all" + ".csv", index = False)
+        except:
+            print("no trade result")
 
 if __name__ == "__main__":
 #    Usage
@@ -1883,7 +1999,8 @@ if __name__ == "__main__":
         # ret = test.mark_bear_rrcross_pure(plots)
         ret = test.mark_bear_zma1_zma10_cross(plots)
         # ret = test.mark_rr_cross(plots)
-        # test.export_ret()
+        # test.export_ret(plot_date)
+        test.export_trade_ret(plot_date)
 
         #zma1_r_r_tl = test.ret["zma1_ratio_ratio"]
         #plots.prepare_plot(zma1_r_r_tl, 4)
@@ -1893,9 +2010,10 @@ if __name__ == "__main__":
 
         if ret != 0:
             plots.show_plot()
+            #plots.close_plot_all()
         else:
             #plots.show_plot()
             plots.close_plot_all()
 
-
+    test.export_trade_ret_all()
 
