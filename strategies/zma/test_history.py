@@ -25,7 +25,7 @@ ZMA1_RATIO_RATIO_POS = 10
 
 ZMA5_POS = 11
 ZMA5_RATIO_POS = 12
-ZMA5_RATIO_RATIO_POS = 12
+ZMA5_RATIO_RATIO_POS = 13
 
 ZMA10_POS = 14
 ZMA10_RATIO_POS = 15
@@ -286,7 +286,7 @@ class daytest:
             return -1
 
         for i in range(0, len + 1):
-            self.ret.iloc[i, ZMAB_POS] = self.ret["cur"][0]
+            self.ret.iloc[i, ZMAB_POS] = self.ret["cur"][i]
 
         for j in range(0, len):
             avg_sum += self.ret["cur"][len - 1 - j]/len
@@ -340,7 +340,7 @@ class daytest:
             return -1
 
         for i in range(0, len + 1):
-            self.ret.iloc[i, ZMA1_POS] = self.ret["cur"][0]
+            self.ret.iloc[i, ZMA1_POS] = self.ret["cur"][i]
 
         for j in range(0, len):
             avg_sum += self.ret["cur"][len - 1 - j]/len
@@ -393,7 +393,7 @@ class daytest:
             return -1
 
         for i in range(0, len + 1):
-            self.ret.iloc[i, ZMA5_POS] = self.ret["cur"][0]
+            self.ret.iloc[i, ZMA5_POS] = self.ret["cur"][i]
 
         for j in range(0, len):
             avg_sum += self.ret["cur"][len - 1 - j]/len
@@ -443,6 +443,9 @@ class daytest:
         start_pos = len - 1
         if self.count < len:
             return -1
+        for i in range(0, len + 1):
+            self.ret.iloc[i, ZMA10_POS] = self.ret["cur"][i]
+
         for j in range(0, len):
             sum += self.ret["cur"][len - 1 - j]
         avr0 = sum / len
@@ -844,14 +847,14 @@ class daytest:
         plots.prepare_plot(zma1_r_tl, 2)
         plots.prepare_plot(zma1_r_s_tl, 2)
         plots.prepare_plot(zma5_r_tl, 2)
-        #plots.prepare_plot(zma10_r_tl, 2)
-        #plots.prepare_plot(ma20_r_tl, 2)
+        plots.prepare_plot(zma10_r_tl, 2)
+        plots.prepare_plot(ma20_r_tl, 2)
 
-        plots.prepare_plot(zmab_r_r_tl, 3)
-        plots.prepare_plot(zma1_r_r_tl, 3)
+        #### plots.prepare_plot(zmab_r_r_tl, 3)
+        #### plots.prepare_plot(zma1_r_r_tl, 3)
         plots.prepare_plot(zma5_r_r_tl, 3)
         plots.prepare_plot(zma10_r_r_tl, 3)
-        #plots.prepare_plot(zma10_r_r_s_tl, 3)
+        plots.prepare_plot(zma10_r_r_s_tl, 3)
 
         # plots.prepare_plot(zma10_r_r_r_tl, 4)
 
@@ -977,14 +980,14 @@ class daytest:
             MA5_cur = self.ret["zma5"][position]
             MA10_cur = self.ret["zma10"][position]
             MA20_cur = self.ret["ma20"][position]
-            MA50_cur = self.ret["ma50"][position]
+            MA50_cur = self.ret["zma50"][position]
             ma20_ratio = self.ret["ma20_ratio"][position]
             cur = self.ret["cur"][position]
             basic_condition = 0
             started = 0
 
             if  ( zma1 > MA20_cur and self.ret["zma1"][position - 1] <= self.ret["ma20"][position - 1] ) or \
-                ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["ma50"][position - 1])    :
+                ( zma1 > MA50_cur and self.ret["zma1"][position - 1] <= self.ret["zma50"][position - 1])    :
 
                 plots.add_annotate(position, cur, 1,
                               "P\n"
@@ -1879,12 +1882,11 @@ if __name__ == "__main__":
         # ret = test.mark_bear_rrcross(plots)
         # ret = test.mark_bear_rrcross_pure(plots)
         ret = test.mark_bear_zma1_zma10_cross(plots)
-
         # ret = test.mark_rr_cross(plots)
         # test.export_ret()
 
-        zma1_r_r_tl = test.ret["zma1_ratio_ratio"]
-        plots.prepare_plot(zma1_r_r_tl, 4)
+        #zma1_r_r_tl = test.ret["zma1_ratio_ratio"]
+        #plots.prepare_plot(zma1_r_r_tl, 4)
         e = time.time()
         print("Data finished:" + str( e - s ))
 

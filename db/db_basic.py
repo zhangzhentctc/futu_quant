@@ -35,7 +35,7 @@ class MySQLCommand(object):
         return 0
 
     def insertMysql(self, sql):
-#        print("execute " + sql)
+        #print("execute " + sql)
         try:
             self.cursor.execute(sql)
             self.conn.commit()
