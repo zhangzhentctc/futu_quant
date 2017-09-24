@@ -132,10 +132,29 @@ def _example_stock_basic(quote_ctx):
     print("stock_basic")
     print(ret_data)
 
+def is_trade_morning_time(cur_time):
+    morning_start = "09:15:00"
+    morning_start_list = morning_start.split(":")
+    morning_start_second = int(morning_start_list[0]) * 3600 + int(morning_start_list[1]) * 60 + int(morning_start_list[2])
+
+    cur_time_list = cur_time.split(":")
+    cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+    if cur_time_second > morning_start_second:
+        return 1
+    return 0
 
 if __name__ == "__main__":
 #    test = daytest()
 #    test.daytest()
+    while(1):
+        now_time = datetime.now()
+        now_time_str = datetime.strftime(now_time, '%Y-%m-%d %H:%M:%S')
+        if is_trade_morning_time(now_time_str[11:]) == 1:
+            break
+        time.sleep(1)
+
+
     print("Init API")
     init = Initialize('127.0.0.1', 11111)
     quote_context = init.initialize()

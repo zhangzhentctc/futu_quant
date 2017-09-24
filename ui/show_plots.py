@@ -96,8 +96,8 @@ class show_plots:
             #ax4.yaxis.set_minor_locator(yminorLocator_4)
             #ax4.xaxis.grid(True, which='major')  # x坐标轴的网格使用主刻度
             #ax4.yaxis.grid(True, which='minor')  # y坐标轴的网格使用次刻度
-            ymajorLocator_4 = MultipleLocator(0.005)
-            yminorLocator_4 = MultipleLocator(0.005)
+            ymajorLocator_4 = MultipleLocator(5)
+            yminorLocator_4 = MultipleLocator(5)
             ax4.yaxis.set_major_locator(ymajorLocator_4)
             ax4.yaxis.set_minor_locator(yminorLocator_4)
             ax4.xaxis.grid(True, which='major')
@@ -115,7 +115,7 @@ class show_plots:
         plt.plot(data_list)
         return 0
 
-    def add_annotate(self, x, y, num, words, color = "black", place = 50):
+    def add_annotate(self, x, y, num, words, place = 50, color = "red"):
         if num > self.total_num or num <= 0:
             print("Bad Sub Plot Num!")
             return -1
@@ -127,8 +127,7 @@ class show_plots:
             words,
             xy=(x, y),
             xytext=(x, y + place),
-            arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
-            color = color
+            arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2")
         )
         return ano
 
