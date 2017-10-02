@@ -843,7 +843,7 @@ class daytest:
         plots.prepare_plot(zma5_tl, 1)
         plots.prepare_plot(zma10_tl, 1)
         plots.prepare_plot(ma20_tl, 1)
-        #plots.prepare_plot(zma50_tl, 1)
+        plots.prepare_plot(zma50_tl, 1)
 
         #plots.prepare_plot(zmab_r_tl, 2)
         #plots.prepare_plot(zmab_r_s_tl, 2)
@@ -1582,7 +1582,6 @@ class daytest:
             position += 1
         return 1
 
-
     def mark_bull_draw(self, plots):
         start = 121
         position = start
@@ -1594,7 +1593,8 @@ class daytest:
         STAT_TURN_NULL = 9
         STAT_TURN_IDLE = 10
         STAT_TURN_HILL = 11
-        STAT_TURN_FLAT = 12
+        STAT_TURN_UP_FLAT = 12
+        STAT_TURN_DOWN_FLAT = 13
 
         state = STAT_IDLE
         turn_state = STAT_TURN_NULL
@@ -1602,6 +1602,10 @@ class daytest:
         hill_max = 0
         hill_start_time = 0
         hill_dur = 0
+        up_dur = 0
+
+        zma10_turn_point = []
+        zma10_cal_sum = 0
 
         ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
         while position < self.count:
@@ -1620,34 +1624,94 @@ class daytest:
             good_draw = 0
             turn_point =STAT_TURN_NULL
 
-            if bull_draw > 0 and self.ret["undefined"][position - 1] <= 0:
+            ## Add ZMA10 Turn Point
+            if ma10_ratio > 0 and self.ret["zma10_ratio"][position - 1] <= 0:
+                zma10_turn_point.append((position, zma10_cal_sum))
+                zma10_cal_sum = 0
+
+            if ma10_ratio < 0 and self.ret["zma10_ratio"][position - 1] >= 0:
+                zma10_turn_point.append((position, zma10_cal_sum))
+                zma10_cal_sum = 0
+
+            zma10_cal_sum += ma10_ratio
+
+
+            #### Detect Status
+            # flat to hill
+            if self.ret["undefined"][position - 1] == 0 and bull_draw > 0:
                 state = STAT_HILL
                 turn_state = STAT_TURN_HILL
 
-            elif bull_draw == 0 and self.ret["undefined"][position - 1] > 0:
+            # drop down to flat
+            elif self.ret["undefined"][position - 1] > hill_max * 0.2 and bull_draw <= hill_max * 0.2 and bull_draw > 0:
                 state = STAT_FLAT
-                turn_state = STAT_TURN_FLAT
+                turn_state = STAT_TURN_UP_FLAT
 
-            elif bull_draw == -1 and self.ret["undefined"][position - 1] != -1:
+            # drop down to flat
+            #elif self.ret["undefined"][position - 1] < hill_max * 0.2 and bull_draw >= hill_max * 0.2:
+                #state = STAT_FLAT
+                #turn_state = STAT_TURN_DOWN_FLAT
+
+            # idle to flat
+            elif self.ret["undefined"][position - 1] == -1 and bull_draw == 0:
+                state = STAT_FLAT
+                turn_state = STAT_TURN_DOWN_FLAT
+
+            # Cut off to idle
+            elif self.ret["undefined"][position - 1] != -1 and bull_draw == -1:
                 state = STAT_IDLE
                 turn_state = STAT_TURN_IDLE
 
             else:
                 turn_state = STAT_TURN_NULL
 
+            #### Actions of Status
             if state == STAT_IDLE:
-                pass
+                if turn_state != STAT_TURN_NULL :
+                    up_dur = 0
 
             if state == STAT_FLAT:
-                if turn_state == STAT_TURN_FLAT:
+                up_dur += 1
+                if turn_state == STAT_TURN_UP_FLAT:
+                    # and zmab - MA5_cur < 10 and up_dur / 2 < 400
                     if hill_max > 5:
                         good_draw = 1
-                        plots.add_annotate(position, cur, 1, "H" + "\nMAX:" + str(round(hill_max, 2)) + "\nDur:" + str(hill_dur/2) + "\nGap:" + str(round(zmab - MA5_cur, 2)))
+
+
+                        ## Check Turn point
+                        turn_point_len = len(zma10_turn_point)
+                        ptr = turn_point_len - 1
+                        pos, sum = zma10_turn_point[ptr]
+                        sum_cal =sum
+                        up500_flag = 0
+                        up500_pos = 0
+                        up500_ptr = 0
+                        while sum_cal > -500  and ptr > 0:
+                            ptr -= 1
+                            pos, sum = zma10_turn_point[ptr]
+                            sum_cal =sum
+                            if sum_cal > 500 and up500_flag == 0:
+                                up500_pos = pos
+                                up500_flag = 1
+                                up500_ptr = ptr
+                        if up500_flag == 1:
+                            check_ret = 0
+                            if up500_ptr - 1 >= 0:
+                                pos, sum = zma10_turn_point[up500_ptr - 1]
+                            else:
+                                pos = 0
+                            up_dur = position - pos
+                            plots.add_annotate(pos, cur, 1,
+                                               "<")
+                        if zmab - MA5_cur < 10 and hill_max < 4 * ma10_ratio and up_dur/2 < 400:
+                            plots.add_annotate(position, cur, 1,
+                                           "H" + "\nMAX:" + str(round(hill_max, 2)) + "\nDur:" + str(hill_dur / 2) + "\nGap:" + str(round(zmab - MA5_cur, 2)) + "\nUP:" + str(round(up_dur / 2, 2)))
                     hill_max = 0
                     hill_start_time = 0
                     hill_dur = 0
 
             if state == STAT_HILL:
+                up_dur += 1
                 if turn_state == STAT_TURN_HILL:
                     hill_max = bull_draw
                     hill_start_time = position
@@ -1657,6 +1721,86 @@ class daytest:
                         hill_max = bull_draw
                     hill_dur += 1
 
+            ## End if this interval
+            position += 1
+
+
+        return 1
+
+    def mark_zma10_ca(self, plots):
+        start = 121
+        position = start
+
+        STAT_IDLE = 0
+        STAT_HILL = 1
+        STAT_FLAT = 2
+
+        STAT_TURN_NULL = 9
+        STAT_TURN_IDLE = 10
+        STAT_TURN_HILL = 11
+        STAT_TURN_UP_FLAT = 12
+        STAT_TURN_DOWN_FLAT = 13
+
+        state = STAT_IDLE
+        turn_state = STAT_TURN_NULL
+
+        hill_max = 0
+        hill_start_time = 0
+        hill_dur = 0
+        up_dur = 0
+        sum = 0
+        count = 0
+
+        ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
+        while position < self.count:
+            ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
+            ma10_ratio_ratio = self.ret["zma10_ratio_ratio"][position]
+            ma10_ratio_ratio_short = self.ret["zma10_ratio_ratio_short"][position]
+            ma10_ratio = self.ret["zma10_ratio"][position]
+            MA5_cur = self.ret["zma5"][position]
+            MA10_cur = self.ret["zma10"][position]
+            MA20_cur = self.ret["ma20"][position]
+            ma20_ratio = self.ret["ma20_ratio"][position]
+            cur = self.ret["cur"][position]
+            zmab = self.ret["zmab"][position]
+            bull_draw = self.ret["undefined"][position]
+
+            good_draw = 0
+            turn_point =STAT_TURN_NULL
+
+
+            if ma10_ratio > 0 and self.ret["zma10_ratio"][position-1] <= 0:
+                count += 1
+                if count%2 == 0:
+                    show_pos = 1
+                if count % 2 == 1:
+                    show_pos = -1
+                if abs(sum) < 100:
+                    show_pos *= 2
+                show_pos *= 50
+                plots.add_annotate(position, cur, 1, str(round(sum,1)), show_pos)
+                sum = 0
+
+
+            if ma10_ratio < 0 and self.ret["zma10_ratio"][position-1] >= 0:
+                count += 1
+                if count % 2 ==0:
+                    show_pos = 1
+                if count % 2 == 1:
+                    show_pos = -1
+                if abs(sum) < 100:
+                    show_pos *= 2
+                show_pos *= 50
+                plots.add_annotate(position, cur, 1, str(round(sum,1)), show_pos)
+                sum = 0
+
+
+            sum+=ma10_ratio
+
+
+
+
+            ## End if this interval
             position += 1
         return 1
 
@@ -2164,6 +2308,7 @@ if __name__ == "__main__":
         # test.export_ret(plot_date)
         #test.export_trade_ret(plot_date)
         test.mark_bull_draw(plots)
+        test.mark_zma10_ca(plots)
         ret = 1
         #zma1_r_r_tl = test.ret["zma1_ratio_ratio"]
         #plots.prepare_plot(zma1_r_r_tl, 4)
