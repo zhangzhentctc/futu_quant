@@ -216,7 +216,7 @@ class daytest:
                 STR_ma20:  line[MA20_POS],  STR_ma20_r: line[MA20_RATIO_POS],
                 STR_zma50: line[ZMA50_POS], STR_zma50_r:line[ZMA50_RATIO_POS],
                 STR_zma1_zma10_gap: line[ZMA1_ZMA10_GAP_POS], STR_zma1_zma10_gap_scope: line[ZMA1_ZMA10_GAP_SCOPE_POS],
-                "undefined":0
+                "undefined":0, "undefined2":0
             })
 
         self.ret = pd.DataFrame(data, columns=[
@@ -228,7 +228,7 @@ class daytest:
             STR_ma20, STR_ma20_r,
             STR_zma50, STR_zma50_r,
             STR_zma1_zma10_gap, STR_zma1_zma10_gap_scope,
-            "undefined"
+            "undefined", "undefined2"
             ])
         return self.ret
 
@@ -903,6 +903,48 @@ class daytest:
             self.ret.iloc[position, 25] = gap
 
             position += 1
+
+        print("Phase2")
+        ## CAL MA
+        position = start
+        up_start = 0
+        ma_cycle = 240
+        while position < self.count:
+            gap = self.ret["undefined"][position]
+            if gap == -1:
+                self.ret.iloc[position, 26] = -1
+                up_start = 0
+                position += 1
+                #print(".", end=' ')
+                continue
+            if gap != -1 and self.ret["undefined"][position - 1] == -1:
+                up_start = position
+                #print("Boost")
+
+            if position < up_start + ma_cycle:
+                self.ret.iloc[position, 26] = -1
+                #print("wait", end=' ')
+            else:
+                avr = 0
+                for i in range(0, ma_cycle):
+                    val = self.ret["undefined"][position - i]/ma_cycle
+                    avr += val
+                self.ret.iloc[position, 26] = avr
+                #print("Done", end=' ')
+
+            position += 1
+
+    def mark_bull_decrease_break(self, plots):
+        print("Phase3")
+        ## CAL MA
+        start = 120
+        position = start
+        while position < self.count:
+            cur = self.ret["cur"][position]
+            if self.ret["undefined"][position] >= self.ret["undefined2"][position] * 2:
+                plots.add_annotate(position, cur, 1, "H", 50)
+            position += 1
+
 
     def cal_bear_increase(self):
         print("Bear INCREASE CAL")
@@ -1600,7 +1642,9 @@ class daytest:
         turn_state = STAT_TURN_NULL
 
         hill_max = 0
+        hill_max_pos = 0
         hill_start_time = 0
+        hill_double_pos = 0
         hill_dur = 0
         up_dur = 0
 
@@ -1620,7 +1664,7 @@ class daytest:
             cur = self.ret["cur"][position]
             zmab = self.ret["zmab"][position]
             bull_draw = self.ret["undefined"][position]
-
+            bull_draw_ma = self.ret["undefined2"][position]
             good_draw = 0
             turn_point =STAT_TURN_NULL
 
@@ -1646,6 +1690,8 @@ class daytest:
             elif self.ret["undefined"][position - 1] > hill_max * 0.2 and bull_draw <= hill_max * 0.2 and bull_draw > 0:
                 state = STAT_FLAT
                 turn_state = STAT_TURN_UP_FLAT
+                #print("hill max", hill_max_pos)
+                #print("position", position)
 
             # drop down to flat
             #elif self.ret["undefined"][position - 1] < hill_max * 0.2 and bull_draw >= hill_max * 0.2:
@@ -1673,11 +1719,16 @@ class daytest:
             if state == STAT_FLAT:
                 up_dur += 1
                 if turn_state == STAT_TURN_UP_FLAT:
+                    #plots.add_annotate(position, cur, 1, "turn", 50)
                     # and zmab - MA5_cur < 10 and up_dur / 2 < 400
-                    if hill_max > 5:
+                    #if hill_max > 5:
+                    if self.ret["undefined"][hill_double_pos] > 2 * self.ret["undefined2"][hill_double_pos] and \
+                        self.ret["undefined"][hill_double_pos] > 0 and self.ret["undefined2"][hill_double_pos] > 0 and \
+                        hill_double_pos!=0:
+
                         good_draw = 1
 
-
+                        #plots.add_annotate(hill_max_pos, bull_draw, 4, "Here", 50)
                         ## Check Turn point
                         turn_point_len = len(zma10_turn_point)
                         ptr = turn_point_len - 1
@@ -1703,23 +1754,30 @@ class daytest:
                             up_dur = position - pos
                             plots.add_annotate(pos, cur, 1,
                                                "<")
+
                         if zmab - MA5_cur < 10 and hill_max < 4 * ma10_ratio and up_dur/2 < 400:
                             plots.add_annotate(position, cur, 1,
-                                           "H" + "\nMAX:" + str(round(hill_max, 2)) + "\nDur:" + str(hill_dur / 2) + "\nGap:" + str(round(zmab - MA5_cur, 2)) + "\nUP:" + str(round(up_dur / 2, 2)))
+                                           "U" + "\nMAX:" + str(round(hill_max, 2)) + "\nDur:" + str(hill_dur / 2) + "\nGap:" + str(round(zmab - MA5_cur, 2)) + "\nUP:" + str(round(up_dur / 2, 2)))
                     hill_max = 0
                     hill_start_time = 0
                     hill_dur = 0
+                    hill_max_pos = 0
+                    hill_double_pos = 0
 
             if state == STAT_HILL:
                 up_dur += 1
                 if turn_state == STAT_TURN_HILL:
                     hill_max = bull_draw
+                    hill_max_pos = position
                     hill_start_time = position
                     hill_dur = 1
                 else:
                     if bull_draw > hill_max:
                         hill_max = bull_draw
+                        hill_max_pos = position
                     hill_dur += 1
+                if bull_draw > bull_draw_ma * 2 and bull_draw > 0 and bull_draw_ma > 0:
+                    hill_double_pos = position
 
             ## End if this interval
             position += 1
@@ -1750,7 +1808,7 @@ class daytest:
         up_dur = 0
         sum = 0
         count = 0
-
+        mark_double = 0
         ##"No.", "cur", "time", "zma10", "ma20", "zma10_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "trade_mark"
         while position < self.count:
             ma10_ratio_ratio_ratio = self.ret["zma10_ratio_ratio_ratio"][position]
@@ -1764,7 +1822,7 @@ class daytest:
             cur = self.ret["cur"][position]
             zmab = self.ret["zmab"][position]
             bull_draw = self.ret["undefined"][position]
-
+            bull_draw_ma = self.ret["undefined2"][position]
             good_draw = 0
             turn_point =STAT_TURN_NULL
 
@@ -1780,6 +1838,7 @@ class daytest:
                 show_pos *= 50
                 plots.add_annotate(position, cur, 1, str(round(sum,1)), show_pos)
                 sum = 0
+                mark_double = 0
 
 
             if ma10_ratio < 0 and self.ret["zma10_ratio"][position-1] >= 0:
@@ -1793,12 +1852,16 @@ class daytest:
                 show_pos *= 50
                 plots.add_annotate(position, cur, 1, str(round(sum,1)), show_pos)
                 sum = 0
+                mark_double = 0
 
 
             sum+=ma10_ratio
 
 
-
+            if bull_draw > bull_draw_ma * 2 and bull_draw > 0 and bull_draw_ma > 0:
+                if mark_double == 0:
+                    plots.add_annotate(position, bull_draw, 4, "Double", -50)
+                    mark_double = 1
 
             ## End if this interval
             position += 1
@@ -2236,13 +2299,16 @@ if __name__ == "__main__":
                  "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
                  "2017-08-21",  "2017-08-24", "2017-08-25"]
 
-    stored_date_list_all = \
+    stored_date_list_all0 = \
                 ["2017-07-27", "2017-07-28", "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04", "2017-08-07",
                  "2017-08-08", "2017-08-09",
                  "2017-08-10", "2017-08-11", "2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
                  "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29","2017-08-30","2017-08-31",
                  "2017-09-01","2017-09-04","2017-09-05","2017-09-06","2017-09-07"]
-
+    stored_date_list_all = \
+                ["2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18",
+                 "2017-08-21", "2017-08-22","2017-08-24", "2017-08-25","2017-08-28","2017-08-29","2017-08-30","2017-08-31",
+                 "2017-09-01","2017-09-04","2017-09-05","2017-09-06","2017-09-07"]
     bull_date_list_all = \
     ["2017-07-27",  "2017-07-31", "2017-08-02", "2017-08-03", "2017-08-04",
      "2017-08-08", "2017-08-09",
@@ -2280,7 +2346,7 @@ if __name__ == "__main__":
 ########For plos
 
     plot_date_day = ["2017-09-04"]
-    for plot_date in bull_date_list_all:
+    for plot_date in stored_date_list_all:
         s = time.time()
         start_time = plot_date + " " + "9:20:00"
         end_time = plot_date + " " + "16:00:00"
@@ -2292,7 +2358,9 @@ if __name__ == "__main__":
         test.cal_bull_decrease()
         bull_decrease = test.ret["undefined"]
         plots.prepare_plot(bull_decrease, 4)
-
+        bull_decrease_ma = test.ret["undefined2"]
+        plots.prepare_plot(bull_decrease_ma, 4)
+        #test.mark_bull_decrease_break(plots)
         # 8/29 8/28 8/24 8/21 8/18 8/16 8/15 8/11 8/8 8/2 | 08/14
         # ret = test.mark_bear_start(plots)
         #test.mark_bear_continue(plots)
@@ -2322,6 +2390,6 @@ if __name__ == "__main__":
         else:
             #plots.show_plot()
             plots.close_plot_all()
-
+        print("Round Finished")
     test.export_trade_ret_all()
 
