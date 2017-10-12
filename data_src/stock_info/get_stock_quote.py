@@ -198,11 +198,14 @@ class get_stock_quote(threading.Thread):
             kline = self.ma_1m_table
         except:
             return
+        # ma_1m_table has gap where latest val equals 0
+        if kline.iloc[K_NO - 1, 3] == 0:
+            return
         ma5_list = []
         for i in range(0, 10):
             tmp = 0
             for j in range(0, 5):
-                tmp += kline.iloc[K_NO - 2 - i - j, 3]
+                tmp += kline.iloc[K_NO - 1 - i - j, 3]
             ma5 = tmp / 5
             ma5 = round(ma5, 2)
             ma5_list.append(ma5)
@@ -238,7 +241,7 @@ class get_stock_quote(threading.Thread):
         self.deltaMA10_ma5 = round(self.deltaMA10_ma5, 2)
 
         self.deltaMA50_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 52, 3])/50
-        self.deltaMA50_cur = round(self.deltaMA10_cur, 2)
+        self.deltaMA50_cur = round(self.deltaMA50_cur, 2)
 
         # MA5
         tmp = 0

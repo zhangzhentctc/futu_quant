@@ -467,7 +467,8 @@ class zma20_strategy_quote(threading.Thread):
                 return
 
     def guard_bear2(self):
-        count = 26
+        K_NO = 56
+        count = K_NO
 
         open_pos = 2
         high_pos = 3
@@ -723,6 +724,56 @@ class zma20_strategy_quote(threading.Thread):
                 if bear_start == 2222:
                     self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
                     self.zma10_new_trend = -9999
+
+        ## Require zma10_decrease
+    def buy_bear_13th_oct(self):
+        K_NO = 56
+        if self.count < 1700:
+            return
+
+        ma5_list = self.MA5_list
+
+        vol_now = self.vol_now
+        vol_last = self.vol_last
+        MA20_vol = self.MA20_vol
+        cur =  self.cur
+        MA5_cur = ma5_list[0]
+        MA10_cur = self.MA10_cur
+        MA20_cur = self.MA20_cur
+        MA50_cur = self.MA50_cur
+
+        down_count = 0
+        up_count = 0
+        point = 0
+        ma5_ok = 0
+        ## VOL Break, and
+        ## Red bar
+        if vol_now >= MA20_vol * 1.05 and self.ma_1m_table["open"][K_NO - 1] > self.ma_1m_table["close"][K_NO - 1] + 2:
+            if ma5_list[0] - ma5_list[1] < -1.8:
+                for i in range(0, 9):
+                    if ma5_list[i] < ma5_list[i + 1]:
+                        down_count += 1
+                        point += 1
+                    else:
+                        break
+
+                if point >= 9:
+                    return
+
+                for i in range(point, 9):
+                    if ma5_list[i] >= ma5_list[i + 1]:
+                        up_count += 1
+
+                if down_count <= 3 and up_count >= 2:
+                    ma5_ok = 1
+
+                if ma5_ok == 1:
+                    if cur < MA5_cur and MA5_cur < MA10_cur and MA5_cur < MA20_cur and \
+                        MA10_cur - 3 < MA20_cur and \
+                        ( cur > MA50_cur + 10 or cur < MA50_cur - 10):
+                        self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
+
+        return
 
 
     def guard_vol_break(self):
@@ -1113,6 +1164,8 @@ class zma20_strategy_quote(threading.Thread):
         print(str(self.MA50_cur) + " " + str(self.MA50_3))
         print("MA5 List")
         print(str(self.MA5_list))
+        print("VOL")
+        print(str(self.vol_now) + " " + str(self.vol_last) + " " + str(self.MA20_vol))
 
     def cal_cur_speed(self):
         if self.count > 40:
@@ -1210,8 +1263,8 @@ class zma20_strategy_quote(threading.Thread):
                 #self.guard_bear()
                 self.guard_bear2()
 
-                self.detect_empty_start()
-
+                #self.detect_empty_start()
+                self.buy_bear_13th_oct()
                 #self.guard_bull()
                 #self.empty_head()
                 #self.many_head()
