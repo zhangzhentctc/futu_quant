@@ -20,6 +20,8 @@ class get_stock_quote(threading.Thread):
         self.deltaMA20_cur = 0
         self.deltaMA20_ma3 = 0
         self.deltaMA20_ma5 = 0
+        self.k_num = 56
+
         ### For Quote
         self.bull_bid = -1
         self.bull_ask = -1
@@ -33,6 +35,8 @@ class get_stock_quote(threading.Thread):
         self.MA20_vol = 0
         self.vol_last = 0
         self.vol_now = 0
+
+        self.ma5_list = []
 
     def subscribe_stock(self, type):
         # subscribe "QUOTE"
@@ -156,7 +160,7 @@ class get_stock_quote(threading.Thread):
                 return self.ma_1m_table
 
     def cal_vol_ma(self):
-        K_NO = 26
+        K_NO = self.k_num
         try:
             kline = self.ma_1m_table
         except:
@@ -184,12 +188,41 @@ class get_stock_quote(threading.Thread):
     def get_vol_now(self):
         return self.vol_now
 
-    def cal_delta_ma(self):
-        K_NO = 26
+    # From new to old
+    def cal_MA5_list(self):
+        K_NO = self.k_num
+        if K_NO < 17:
+            return
+
         try:
             kline = self.ma_1m_table
         except:
             return
+        ma5_list = []
+        for i in range(0, 10):
+            tmp = 0
+            for j in range(0, 5):
+                tmp += kline.iloc[K_NO - 2 - i - j, 3]
+            ma5 = tmp / 5
+            ma5 = round(ma5, 2)
+            ma5_list.append(ma5)
+
+        self.ma5_list = ma5_list
+        return
+
+
+
+    def cal_delta_ma(self):
+        K_NO = self.k_num
+        if K_NO < 56:
+            return
+
+        try:
+            kline = self.ma_1m_table
+        except:
+            return
+
+
         self.deltaMA20_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 22, 3])/20
         self.deltaMA20_cur = round(self.deltaMA20_cur, 2)
         self.deltaMA20_ma3 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] - kline.iloc[K_NO - 22, 3] - kline.iloc[K_NO - 23, 3] - kline.iloc[K_NO - 24, 3])/60
@@ -204,6 +237,17 @@ class get_stock_quote(threading.Thread):
         self.deltaMA10_ma5 = (kline.iloc[K_NO - 2, 3] + kline.iloc[K_NO - 3, 3] + kline.iloc[K_NO - 4, 3] + kline.iloc[K_NO - 5, 3] + kline.iloc[K_NO - 6, 3] - kline.iloc[K_NO - 12, 3] - kline.iloc[K_NO - 13, 3] - kline.iloc[K_NO - 14, 3] - kline.iloc[K_NO - 15, 3] - kline.iloc[K_NO - 16, 3]) / 50
         self.deltaMA10_ma5 = round(self.deltaMA10_ma5, 2)
 
+        self.deltaMA50_cur = (kline.iloc[K_NO - 2, 3] - kline.iloc[K_NO - 52, 3])/50
+        self.deltaMA50_cur = round(self.deltaMA10_cur, 2)
+
+        # MA5
+        tmp = 0
+        for i in range(0, 5):
+            tmp += kline.iloc[K_NO - 2 - i, 3]
+        self.MA5_cur = tmp / 5
+        self.MA5_cur = round(self.MA5_cur, 2)
+
+        # MA10
         tmp = 0
         for i in range(0, 10):
             tmp += kline.iloc[K_NO - 2 - i, 3]
@@ -216,6 +260,7 @@ class get_stock_quote(threading.Thread):
         self.MA10_3 = tmp/10
         self.MA10_3 = round(self.MA10_3, 2)
 
+        # MA20
         tmp = 0
         for i in range(0, 20):
             tmp += kline.iloc[K_NO - 2 - i, 3]
@@ -228,7 +273,23 @@ class get_stock_quote(threading.Thread):
         self.MA20_3 = tmp/20
         self.MA20_3 = round(self.MA20_3, 2)
 
+        # MA50
+        tmp = 0
+        for i in range(0, 50):
+            tmp += kline.iloc[K_NO - 2 - i, 3]
+        self.MA50_cur = tmp/50
+        self.MA50_cur = round(self.MA50_cur, 2)
+
+        tmp = 0
+        for i in range(0, 50):
+            tmp += kline.iloc[K_NO - 4 - i, 3]
+        self.MA50_3 = tmp/50
+        self.MA50_3 = round(self.MA50_3, 2)
+
         return
+
+    def get_deltaMA50_cur(self):
+        return self.deltaMA50_cur
 
     def get_deltaMA20_cur(self):
         return self.deltaMA20_cur
@@ -248,6 +309,9 @@ class get_stock_quote(threading.Thread):
     def get_deltaMA10_ma5(self):
         return self.deltaMA10_ma5
 
+    def get_MA5_List(self):
+        return self.ma5_list
+
     def get_MA10_cur(self):
         return self.MA10_cur
 
@@ -259,6 +323,12 @@ class get_stock_quote(threading.Thread):
 
     def get_MA20_3(self):
         return self.MA20_3
+
+    def get_MA50_cur(self):
+        return self.MA50_cur
+
+    def get_MA50_3(self):
+        return self.MA50_3
 
     def get_bull_bid(self):
         return self.bull_bid
@@ -323,7 +393,6 @@ class get_stock_quote(threading.Thread):
 
         i = 180
         while(1):
-            #print("Loop")
             start = time.time()
             ret = self.get_cur_stock_quoto()
             if ret == RET_ERROR:
@@ -340,8 +409,9 @@ class get_stock_quote(threading.Thread):
                 if ret == RET_ERROR:
                     continue
 
-            self.get_ma_1m(26)
+            self.get_ma_1m(self.k_num)
             self.cal_delta_ma()
+            self.cal_MA5_list()
             self.cal_vol_ma()
             self.ready = 1
             end = time.time()

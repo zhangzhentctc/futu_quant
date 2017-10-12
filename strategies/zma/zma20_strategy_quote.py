@@ -1099,6 +1099,8 @@ class zma20_strategy_quote(threading.Thread):
         return RET_OK, zma_quote
 
     def print_ma(self):
+        print("delta MA50")
+        print(str(self.deltaMA50_cur))
         print("delta MA20")
         print(str(self.deltaMA20_cur) + " " + str(self.deltaMA20_ma3) + " " + str(self.deltaMA20_ma5))
         print("delta MA10")
@@ -1107,7 +1109,10 @@ class zma20_strategy_quote(threading.Thread):
         print(str(self.MA10_cur) + " " + str(self.MA10_3))
         print("MA20")
         print(str(self.MA20_cur) + " " + str(self.MA20_3))
-
+        print("MA50")
+        print(str(self.MA50_cur) + " " + str(self.MA50_3))
+        print("MA5 List")
+        print(str(self.MA5_list))
 
     def cal_cur_speed(self):
         if self.count > 40:
@@ -1165,16 +1170,20 @@ class zma20_strategy_quote(threading.Thread):
                     ret, tmp = stock_quote.get_1mK_line()
                     if ret == 1:
                         self.ma_1m_table = tmp
+                    self.deltaMA50_cur = stock_quote.get_deltaMA50_cur()
                     self.deltaMA20_cur = stock_quote.get_deltaMA20_cur()
                     self.deltaMA20_ma3 = stock_quote.get_deltaMA20_ma3()
                     self.deltaMA20_ma5 = stock_quote.get_deltaMA20_ma5()
                     self.deltaMA10_cur = stock_quote.get_deltaMA10_cur()
                     self.deltaMA10_ma3 = stock_quote.get_deltaMA10_ma3()
                     self.deltaMA10_ma5 = stock_quote.get_deltaMA10_ma5()
+                    self.MA5_list = stock_quote.get_MA5_List()
                     self.MA10_cur = stock_quote.get_MA10_cur()
                     self.MA10_3 = stock_quote.get_MA10_3()
                     self.MA20_cur = stock_quote.get_MA20_cur()
                     self.MA20_3 = stock_quote.get_MA20_3()
+                    self.MA50_cur = stock_quote.get_MA50_cur()
+                    self.MA50_3 = stock_quote.get_MA50_3()
                     self.MA20_vol = stock_quote.get_ma10_vol()
                     self.vol_last = stock_quote.get_vol_last()
                     self.vol_now = stock_quote.get_vol_now()
@@ -1214,7 +1223,7 @@ class zma20_strategy_quote(threading.Thread):
                 #self.warn_ma_low()
                 #self.disable_adverse_bull()
                 #self.disable_adverse_bear()
-
+                self.print_ma()
 
                 #print(self.ret.iloc[self.count,])
                 end = time.time()
