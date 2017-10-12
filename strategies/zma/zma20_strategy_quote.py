@@ -59,7 +59,7 @@ class zma20_strategy_quote(threading.Thread):
                                                "zma20_ratio_ratio", "zma_gap", "zma_gap_ratio", "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 69535
+        self.bear_code = 68741
         self.bull_code = 64237
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
