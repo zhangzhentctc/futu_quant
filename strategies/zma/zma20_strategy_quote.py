@@ -725,10 +725,12 @@ class zma20_strategy_quote(threading.Thread):
                     self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
                     self.zma10_new_trend = -9999
 
+
+
         ## Require zma10_decrease
     def buy_bear_13th_oct(self):
         K_NO = 56
-        if self.count < 1700:
+        if self.count < 3000:
             return
 
         ma5_list = self.MA5_list
@@ -749,7 +751,7 @@ class zma20_strategy_quote(threading.Thread):
         ## VOL Break, and
         ## Red bar
         if vol_now >= MA20_vol * 1.05 and self.ma_1m_table["open"][K_NO - 1] > self.ma_1m_table["close"][K_NO - 1] + 2:
-            if ma5_list[0] - ma5_list[1] < -1.8:
+            if ma5_list[0] - ma5_list[1] < -2:
                 for i in range(0, 9):
                     if ma5_list[i] < ma5_list[i + 1]:
                         down_count += 1
@@ -772,6 +774,61 @@ class zma20_strategy_quote(threading.Thread):
                         MA10_cur - 3 < MA20_cur and \
                         ( cur > MA50_cur + 10 or cur < MA50_cur - 10):
                         self.hk_trade_handler.bear_force_buy(self.trade_qty, 1)
+
+        return
+
+        ## Require zma10_decrease
+    def buy_bull_13th_oct(self):
+        K_NO = 56
+        if self.count < 3000:
+            return
+
+        ma5_list = self.MA5_list
+
+        vol_now = self.vol_now
+        vol_last = self.vol_last
+        MA20_vol = self.MA20_vol
+        MA20_vol_last = self.MA20_vol_last
+        cur =  self.cur
+        MA5_cur = ma5_list[0]
+        MA10_cur = self.MA10_cur
+        MA20_cur = self.MA20_cur
+        MA50_cur = self.MA50_cur
+        deltaMA10_cur = self.deltaMA10_cur
+        deltaMA20_cur = self.deltaMA20_cur
+
+        down_count = 0
+        up_count = 0
+        point = 0
+        ma5_ok = 0
+        ## VOL Break, and
+        ## Red bar
+        if vol_last >= MA20_vol_last and vol_last <= MA20_vol_last * 3 and \
+            self.ma_1m_table["open"][K_NO - 1] < self.ma_1m_table["close"][K_NO - 1]:
+            if ma5_list[0] - ma5_list[1] >= 2 and \
+                    (deltaMA10_cur >= 1 or deltaMA20_cur >= 0.8):
+                for i in range(0, 9):
+                    if ma5_list[i] > ma5_list[i + 1]:
+                        up_count += 1
+                        point += 1
+                    else:
+                        break
+
+                if point >= 9:
+                    return
+
+                for i in range(point, 9):
+                    if ma5_list[i] <= ma5_list[i + 1]:
+                        down_count += 1
+
+                if up_count <= 3 and down_count >= 1:
+                    ma5_ok = 1
+
+                if ma5_ok == 1:
+                    if cur > MA5_cur and  MA10_cur > MA20_cur and \
+                            MA5_cur > MA20_cur:
+                        #### BUY BULL
+                        pass
 
         return
 
@@ -1237,7 +1294,8 @@ class zma20_strategy_quote(threading.Thread):
                     self.MA20_3 = stock_quote.get_MA20_3()
                     self.MA50_cur = stock_quote.get_MA50_cur()
                     self.MA50_3 = stock_quote.get_MA50_3()
-                    self.MA20_vol = stock_quote.get_ma10_vol()
+                    self.MA20_vol = stock_quote.get_ma20_vol()
+                    self.MA20_vol_last = stock_quote.get_ma20_vol_last()
                     self.vol_last = stock_quote.get_vol_last()
                     self.vol_now = stock_quote.get_vol_now()
                     self.bull_bid_seller = stock_quote.get_bull_bid_seller()
@@ -1276,7 +1334,7 @@ class zma20_strategy_quote(threading.Thread):
                 #self.warn_ma_low()
                 #self.disable_adverse_bull()
                 #self.disable_adverse_bear()
-                self.print_ma()
+                #self.print_ma()
 
                 #print(self.ret.iloc[self.count,])
                 end = time.time()

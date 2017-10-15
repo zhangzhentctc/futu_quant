@@ -229,6 +229,36 @@ class hk_trade_handler(threading.Thread):
             ability_qty = ability_pen * 10000
             self.buy_qty = ability_qty
 
+
+    def bull_force_sell(self):
+        if self.status != STATUS_WAIT_OPEN:
+            self.status = STATUS_BULL_FORCE_SELL
+
+    def bull_force_buy(self, qty, wait_profit_ratio = 0.5):
+        if self.status != STATUS_WAIT_OPEN and self.busy != 1:
+            self.status = STATUS_BULL_FORCE_BUY
+            self.buy_qty = qty
+            self.check_sufficiency_bear(qty)
+            if wait_profit_ratio > 1 or wait_profit_ratio <= 0:
+                self.wait_profit_qty_ratio = 1
+            else:
+                self.wait_profit_qty_ratio = wait_profit_ratio
+
+    def bull_wait_profit(self):
+        if self.status != STATUS_WAIT_OPEN:
+            self.status = STATUS_BULL_WAIT_PROFIT
+
+    def check_sufficiency_bull(self, qty):
+        bull_ask_seller = self.stock_quote.get_bull_ask_seller()
+        avail_cash = self.hk_trade_opt.get_avail_cash()
+        if bull_ask_seller == -1 or avail_cash == -1:
+            return -1
+        if qty * bull_ask_seller >= avail_cash:
+            ability_pen = math.floor((avail_cash / (bull_ask_seller - 0.001))/10000)
+            ability_qty = ability_pen * 10000
+            self.buy_qty = ability_qty
+
+
     def run(self):
         while(1):
             ## Get Status
@@ -443,10 +473,181 @@ class hk_trade_handler(threading.Thread):
                 continue
 
             if status == STATUS_BULL_FORCE_BUY:
-                pass
+                dealt_ask = 0
+                if self.buy_qty <= 0:
+                    print("Bad Qty. Force Buy Bull Stop!")
+                    self.set_idle()
+                    continue
+                else:
+                    bull_force_buy_status = 1
+                    qty = self.buy_qty
+                    wait_bad_quote = 30
+                    dealt_ask = 0
+                    while bull_force_buy_status != 0:
+                        print("Force Buy")
+                        bull_bid = self.stock_quote.get_bull_bid()
+                        bull_ask = self.stock_quote.get_bull_ask()
+                        print(bull_bid, bull_ask)
+                        if bull_ask * 1000 - bull_bid * 1000 <= 2:
+                            localid = self.hk_trade_opt.buy_stock_code_qty(self.bull_code, bull_ask, qty)
+                            dealt_ask = bull_ask
+                            if localid == -1:
+                                break
+                            time.sleep(1)
+
+                            # status = 2 when not all dealt
+                            # status = 0 when all dealt
+                            ret = self.hk_trade_opt.check_dealt_all(localid)
+                            if ret == -1:
+                                # if not all dealt, get dealt and delete order
+                                dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
+                                if dealt_qty == -1:
+                                    ## If it is simulation
+                                    if self.hk_trade_opt.envtype == 1:
+                                        break
+                                    break
+                                # new qty
+                                qty -= int(dealt_qty)
+                                bull_force_buy_status = 2
+                            elif ret == 0:
+                                bull_force_buy_status = 0
+                            else:
+                                break
+                        else:
+                            if wait_bad_quote == 0:
+                                print("Bad Bull Quoto")
+                            else:
+                                time.sleep(0.2)
+                                wait_bad_quote -= 1
+                        # Check if status if changed by others
+                        try:
+                            check_status = self.status
+                        except:
+                            continue
+                        if check_status != STATUS_BULL_FORCE_BUY:
+                            break
+                if dealt_ask == 0:
+                    print("FORCE BUY FINISHED")
+                    self.set_idle()
+                else:
+                    print("FORCE BUY SUCCESS")
+                    self.dealt_ask = dealt_ask
+                    self.bull_wait_profit()
+                continue
+
             if status == STATUS_BULL_FORCE_SELL:
-                pass
+                ## Check Position
+                qty_p = self.hk_trade_opt.query_position_stock_qty(self.bull_code)
+                if qty_p == -1 or qty_p == 0:
+                    # print("No Position. Force Sell Bear Stop!")
+                    self.set_idle()
+                    continue
+                else:
+                    ## SELL
+                    bull_force_sell_status = 1
+                    qty = qty_p
+                    wait_bad_quote = 30
+                    while bull_force_sell_status != 0:
+                        bull_bid = self.stock_quote.get_bull_bid()
+                        bull_ask = self.stock_quote.get_bull_ask()
+                        # print(bear_bid, bear_ask)
+                        if bull_ask * 1000 - bull_bid * 1000 <= 2:
+                            localid = self.hk_trade_opt.sell_stock_code_qty(self.bull_code, bull_bid, qty)
+                            if localid == -1:
+                                break
+                            time.sleep(1)
+
+                            # status = 2 when not all dealt
+                            # status = 0 when all dealt
+                            ret = self.hk_trade_opt.check_dealt_all(localid)
+                            if ret == -1:
+                                # if not all dealt, get dealt and delete order
+                                dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
+                                if dealt_qty == -1:
+                                    ## If it is simulation
+                                    if self.hk_trade_opt.envtype == 1:
+                                        break
+                                    break
+                                # new qty
+                                qty -= int(dealt_qty)
+                                bull_force_sell_status = 2
+                            elif ret == 0:
+                                bull_force_sell_status = 0
+                            else:
+                                break
+                        else:
+                            if wait_bad_quote == 0:
+                                break
+                            else:
+                                time.sleep(0.2)
+                                wait_bad_quote -= 1
+
+                        # Check if status if changed by others
+                        try:
+                            check_status = self.status
+                        except:
+                            continue
+                        if check_status != STATUS_BULL_FORCE_SELL:
+                            break
+                # print("FORCE SELL FINISHED")
+                self.set_idle()
+                self.busy = 0
+                continue
+
             if status == STATUS_BULL_WAIT_PROFIT:
-                pass
+                ## Check Position
+                sell_qty = 0
+                qty_p = self.hk_trade_opt.query_position_stock_qty(self.bull_code)
+                if qty_p == -1 or qty_p == 0 or self.dealt_ask == 0:
+                    if self.dealt_ask == 0:
+                        print("Bad Dealt Ask")
+                    print("No Position. WAIT BULL PROFIT Stop!")
+                    self.set_idle()
+                else:
+                    sell_pencil = math.ceil((int(qty_p) / 10000) * self.wait_profit_qty_ratio)
+                    sell_qty = sell_pencil * 10000
+                    qty = sell_qty
+                    wait_bull_profit_status = 1
+                    while wait_bull_profit_status != 0:
+                        bull_bid = self.stock_quote.get_bull_bid()
+                        if bull_bid * 1000 - self.dealt_ask * 1000 >= 1:
+                            localid = self.hk_trade_opt.sell_stock_code_qty(self.bear_code, bull_bid, qty)
+                            if localid == -1:
+                                break
+                            time.sleep(1)
+
+                            # status = 2 when not all dealt
+                            # status = 0 when all dealt
+                            ret = self.hk_trade_opt.check_dealt_all(localid)
+                            if ret == -1:
+                                # if not all dealt, get dealt and delete order
+                                dealt_qty = self.hk_trade_opt.get_dealt_qty_localid_and_recall(localid)
+                                if dealt_qty == -1:
+                                    ## If it is simulation
+                                    if self.hk_trade_opt.envtype == 1:
+                                        break
+                                    break
+                                # new qty
+                                qty -= int(dealt_qty)
+                                wait_bull_profit_status = 2
+                            elif ret == 0:
+                                wait_bull_profit_status = 0
+                            else:
+                                break
+                        else:
+                            time.sleep(0.2)
+
+                        # Check if status if changed by others
+                        try:
+                            check_status = self.status
+                        except:
+                            continue
+                        if check_status != STATUS_BULL_WAIT_PROFIT:
+                            break
+                print("BULL WAIT PROFIT FINISHED")
+                self.set_idle()
+                if sell_qty == qty_p:
+                    self.busy = 0
+                continue
 
             time.sleep(0.2)

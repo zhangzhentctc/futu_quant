@@ -33,6 +33,7 @@ class get_stock_quote(threading.Thread):
         self.bear_ask_seller = -1
 
         self.MA20_vol = 0
+        self.MA20_vol_last = 0
         self.vol_last = 0
         self.vol_now = 0
 
@@ -165,13 +166,19 @@ class get_stock_quote(threading.Thread):
             kline = self.ma_1m_table
         except:
             return
-        # [0, 25]
+
         tmp = 0
-        #print(kline)
         for i in range(0, 20):
             tmp += int(kline.iloc[K_NO - 1 - i, 6])
         MA20_vol = tmp/20
         self.MA20_vol = round(MA20_vol, 2)
+
+        tmp = 0
+        for i in range(0, 20):
+            tmp += int(kline.iloc[K_NO - 2 - i, 6])
+        MA20_vol_last = tmp/20
+        self.MA20_vol_last = round(MA20_vol_last, 2)
+
 
         self.vol_last = int(kline.iloc[K_NO - 2, 6])
         self.vol_now = int(kline.iloc[K_NO - 1, 6])
@@ -179,8 +186,11 @@ class get_stock_quote(threading.Thread):
 
         return
 
-    def get_ma10_vol(self):
+    def get_ma20_vol(self):
         return self.MA20_vol
+
+    def get_ma20_vol_last(self):
+        return self.MA20_vol_last
 
     def get_vol_last(self):
         return self.vol_last
