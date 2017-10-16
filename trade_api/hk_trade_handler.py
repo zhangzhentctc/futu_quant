@@ -484,10 +484,10 @@ class hk_trade_handler(threading.Thread):
                     wait_bad_quote = 30
                     dealt_ask = 0
                     while bull_force_buy_status != 0:
-                        print("Force Buy")
+                        #print("Force Buy")
                         bull_bid = self.stock_quote.get_bull_bid()
                         bull_ask = self.stock_quote.get_bull_ask()
-                        print(bull_bid, bull_ask)
+                        #print(bull_bid, bull_ask)
                         if bull_ask * 1000 - bull_bid * 1000 <= 2:
                             localid = self.hk_trade_opt.buy_stock_code_qty(self.bull_code, bull_ask, qty)
                             dealt_ask = bull_ask
