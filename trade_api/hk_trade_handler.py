@@ -522,4 +522,6 @@ class hk_trade_handler(threading.Thread):
                     self.busy = 0
                 continue
 
+
+            # All Cases finished
             time.sleep(0.2)
