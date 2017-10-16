@@ -165,7 +165,7 @@ class hk_trade_handler(threading.Thread):
                         bear_bid = self.stock_quote.get_bear_bid()
                         bear_ask = self.stock_quote.get_bear_ask()
                         #print(bear_bid, bear_ask)
-                        if bear_ask * 1000 - bear_bid * 1000 <= 2:
+                        if bear_ask * 1000 - bear_bid * 1000 <= 1:
                             localid = self.hk_trade_opt.sell_stock_code_qty(self.bear_code, bear_bid, qty)
                             if localid == -1:
                                 break
@@ -228,7 +228,7 @@ class hk_trade_handler(threading.Thread):
                         bear_bid = self.stock_quote.get_bear_bid()
                         bear_ask = self.stock_quote.get_bear_ask()
                         print(bear_bid, bear_ask)
-                        if bear_ask * 1000 - bear_bid * 1000 <= 2:
+                        if bear_ask * 1000 - bear_bid * 1000 <= 1:
                             localid = self.hk_trade_opt.buy_stock_code_qty(self.bear_code, bear_ask, qty)
                             dealt_ask = bear_ask
                             if localid == -1:
@@ -355,7 +355,7 @@ class hk_trade_handler(threading.Thread):
                         bull_bid = self.stock_quote.get_bull_bid()
                         bull_ask = self.stock_quote.get_bull_ask()
                         #print(bull_bid, bull_ask)
-                        if bull_ask * 1000 - bull_bid * 1000 <= 2:
+                        if bull_ask * 1000 - bull_bid * 1000 <= 1:
                             localid = self.hk_trade_opt.buy_stock_code_qty(self.bull_code, bull_ask, qty)
                             dealt_ask = bull_ask
                             if localid == -1:
@@ -422,7 +422,7 @@ class hk_trade_handler(threading.Thread):
                         bull_bid = self.stock_quote.get_bull_bid()
                         bull_ask = self.stock_quote.get_bull_ask()
                         # print(bear_bid, bear_ask)
-                        if bull_ask * 1000 - bull_bid * 1000 <= 2:
+                        if bull_ask * 1000 - bull_bid * 1000 <= 1:
                             localid = self.hk_trade_opt.sell_stock_code_qty(self.bull_code, bull_bid, qty)
                             if localid == -1:
                                 break
