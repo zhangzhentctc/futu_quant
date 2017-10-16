@@ -23,6 +23,7 @@ ZMA10_RATIO_RATIO_RATIO_POS = 12
 ZMA5_POS = 13
 ZMAQ_POS = 14
 BULL_DECREASE_POS = 15
+BEAR_DECREASE_POS = 16
 BUY = 0
 SELL = 1
 
@@ -65,7 +66,7 @@ class zma20_strategy_quote(threading.Thread):
         self.ret = pd.DataFrame(data, columns=["No.", "cur", "time", "zma10", "zma20",
                                                "zma10_ratio", "zma20_ratio","zma20_ratio_ratio", "zma_gap", "zma_gap_ratio",
                                                "zma_gap_ratio_ratio", "zma10_ratio_ratio", "zma10_ratio_ratio_ratio", "zma5", "zmaq",
-                                               "bull_decrease"])
+                                               "bull_decrease", "bear_decrease"])
         # 120K
         self.trade_qty = 15 * 10000
         self.bear_code = 68741
@@ -882,7 +883,101 @@ class zma20_strategy_quote(threading.Thread):
 
 
         ## Require zma10_decrease
-    def buy_bull_13th_oct(self):
+
+    def buy_bull_13th_oct_no_delay(self):
+        K_NO = 56
+        if self.count < 3000:
+            return
+
+        ma5_list = self.MA5_list
+        vol_now = self.vol_now
+        vol_last = self.vol_last
+        MA20_vol = self.MA20_vol
+        MA20_vol_last = self.MA20_vol_last
+        cur = self.cur
+        MA5_now = ma5_list[0]
+        MA10_now = self.MA10_now
+        MA20_now = self.MA20_now
+        #MA50_cur = self.MA50_cur
+        deltaMA10_now = self.deltaMA10_now
+        deltaMA20_now = self.deltaMA20_now
+
+
+        down_count = 0
+        up_count = 0
+        point = 0
+        ma5_ok = 0
+        ## VOL Break, and
+        if vol_now >= MA20_vol and \
+            self.ma_1m_table["open"][K_NO - 1] < self.ma_1m_table["close"][K_NO - 1]:
+
+            ## 1. General Bull
+            if ma5_list[0] - ma5_list[1] >= 2 and \
+                (deltaMA10_now >= 0.9 or deltaMA20_now >= 0.72):
+                for i in range(0, 9):
+                    if ma5_list[i] > ma5_list[i + 1]:
+                        up_count += 1
+                        point += 1
+                    else:
+                        break
+
+                if point >= 9:
+                    return
+
+                for i in range(point, 9):
+                    if ma5_list[i] <= ma5_list[i + 1]:
+                        down_count += 1
+
+                if up_count <= 3 and down_count >= 1:
+                    ma5_ok = 1
+
+                if ma5_ok == 1:
+                    if cur > MA5_now and \
+                        MA10_now > MA20_now and \
+                        MA5_now > MA20_now:
+                        #### BUY BULL
+                        if self.buy_bull == 0:
+                            self.buy_bull = 1
+                            self.hk_trade_handler.bull_force_buy(self.trade_qty, 1)
+
+
+            ## 2. Quick Bull Start
+            down_count = 0
+            up_count = 0
+            point = 0
+            ma5_quick_ok = 0
+            if ma5_list[0] - ma5_list[1] >= 5 and \
+                (deltaMA10_now >= 0 or deltaMA20_now >= -0.4):
+                for i in range(0, 9):
+                    if ma5_list[i] > ma5_list[i + 1]:
+                        up_count += 1
+                        point += 1
+                    else:
+                        break
+
+                if point >= 9:
+                    return
+
+                for i in range(point, 9):
+                    if ma5_list[i] <= ma5_list[i + 1]:
+                        down_count += 1
+
+                if up_count <= 3 and down_count >= 1:
+                    ma5_quick_ok = 1
+
+                if ma5_quick_ok == 1:
+                    if cur > MA5_now and \
+                        MA10_now <= MA20_now and \
+                        cur > MA10_now and cur > MA20_now :
+                        #### BUY BULL
+                        if self.buy_bull == 0:
+                            self.buy_bull = 1
+                            self.hk_trade_handler.bull_force_buy(self.trade_qty, 1)
+
+        return
+
+
+    def buy_bull_13th_oct_delay(self):
         K_NO = 56
         if self.count < 3000:
             return
@@ -1025,218 +1120,12 @@ class zma20_strategy_quote(threading.Thread):
                 #print("Guard Bull: wait with deposit " + str(self.deposit_top))
                 return
 
-    def empty_head(self):
-        K_NO = 26
-        MA10_THRESHOLD = 1.4
-        MA20_THRESHOLD = 0.7
-        GAP_DOWN = 0.5
-        GAP_UP = 20
-        K_GROW_THRESHOLD = 10
 
-        ret_0 = 99
-        str_0 = "ERROR``````````````````````"
-        ret_1 = 99
-        str_1 = "ERROR````````"
-        # MA Conditions
-        if self.deltaMA10_ma3 < 0 and \
-                        self.deltaMA20_ma3 < 0 and \
-                        self.MA10_cur < self.MA20_cur:
-            if abs(self.deltaMA10_ma3) > MA10_THRESHOLD and \
-                    abs(self.deltaMA20_ma3) > MA20_THRESHOLD:
-                gap = self.MA20_3 - self.MA10_3
-                if gap > GAP_DOWN and gap < GAP_UP:
-                    ret_0 = 0
-                else:
-                    # GAP problem
-                    ret_0 = 3
-            else:
-                # Rates are too small
-                ret_0 = 2
-        else:
-            # Not goes down together
-            ret_0 = 1
 
-        # K-line conditions
 
-        ### Increase Calculation
-        key_values = [self.ma_1m_table.iloc[K_NO - 3, 2], self.ma_1m_table.iloc[K_NO - 3, 3], self.ma_1m_table.iloc[K_NO - 2, 3], self.ma_1m_table.iloc[K_NO - 1, 3]]
-        color = [0, 0, 0]
-        if key_values[1] - key_values[0] > 0:
-            color[0] = 1
 
-        if key_values[2] - key_values[1] > 0:
-            color[1] = 1
 
-        if key_values[3] - key_values[2] > 0:
-            color[2] = 1
 
-        increase = 0
-        if color[1] == 1 and color[1] == 1 and color[2] == 1:
-            increase = key_values[3] - key_values[0]
-
-        if color[1] == 1 and color[1] == 1 and color[2] == 0:
-            increase = key_values[2] - key_values[0]
-
-        if color[1] == 1 and color[1] == 0 and color[2] == 1:
-            if key_values[0] > key_values[2]:
-                val1 = key_values[1] - key_values[0]
-                val2 = key_values[3] - key_values[2]
-                if val1 > val2:
-                    increase = val1
-                else:
-                    increase = val2
-            else:
-                increase = key_values[3] - key_values[0]
-
-        if color[1] == 1 and color[1] == 0 and color[2] == 0:
-            increase = key_values[1] - key_values[0]
-
-        if color[0] == 0 and color[1] == 1 and color[2] == 1:
-            increase = key_values[3] - key_values[1]
-
-        if color[0] == 0 and color[1] == 1 and color[2] == 0:
-            increase = key_values[2] - key_values[1]
-
-        if color[0] == 0 and color[1] == 0 and color[2] == 1:
-            increase = key_values[3] - key_values[2]
-
-        if color[0] == 0 and color[1] == 0 and color[2] == 0:
-            increase = 0
-
-        #### Compare with Threshold
-        if increase >= K_GROW_THRESHOLD:
-            ret_1 = 1
-        else:
-            ret_1 = 0
-
-        if ret_0 == 0:
-            str_0 = "MA is OK```````````````````"
-        if ret_0 == 1:
-            str_0 = "MA do not go down``````````"
-        if ret_0 == 2:
-            str_0 = "MA changes rate are not big"
-        if ret_0 == 3:
-            str_0 = "MA Gap is not proper```````"
-        if ret_1 == 0:
-            str_1 = "K-Line is OK`"
-        if ret_1 == 1:
-            str_1 = "K-Line is bad"
-        if ret_0 == 0 and ret_1 == 0:
-            ret = "GO GO GO"
-            self.play.play_start_bear()
-        else:
-            ret = "XX XX XX"
-            self.play.stop_play_start_bear()
-        #print("EMPTY HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
-        return
-
-    def many_head(self):
-        K_NO = 26
-        MA10_THRESHOLD = 1.8
-        MA20_THRESHOLD = 1.4
-        GAP_DOWN = 3
-        GAP_UP = 20
-        K_MA10_THRESHOLD = 4
-        # MA Conditions
-        if self.deltaMA10_ma3 > 0 and \
-                        self.deltaMA20_ma3 > 0 and \
-                        self.MA10_cur > self.MA20_cur and \
-                        self.MA10_3 > self.MA20_3:
-            if abs(self.deltaMA10_ma3) > MA10_THRESHOLD and \
-                    abs(self.deltaMA20_ma3) > MA20_THRESHOLD:
-                gap = self.MA10_3 - self.MA20_3
-                if gap > GAP_DOWN and gap < GAP_UP:
-                    ret_0 = 0
-                else:
-                    # GAP problem
-                    ret_0 = 3
-            else:
-                # Rates are too small
-                ret_0 = 2
-        else:
-            # Not goes down together
-            ret_0 = 1
-
-        k_ma10_gap = self.ma_1m_table.iloc[K_NO - 2, 3] - self.MA10_cur
-
-        if (k_ma10_gap <= K_MA10_THRESHOLD and k_ma10_gap >= 0) or k_ma10_gap < 0:
-            ret_1 = 0
-        else:
-            ret_1 = 1
-
-        if ret_0 == 0:
-            str_0 = "MA is OK```````````````````"
-        if ret_0 == 1:
-            str_0 = "MA do not go up````````````"
-        if ret_0 == 2:
-            str_0 = "MA changes rate are not big"
-        if ret_0 == 3:
-            str_0 = "MA Gap is not proper```````"
-        if ret_1 == 0:
-            str_1 = "K-Line is OK`"
-        if ret_1 == 1:
-            str_1 = "K-Line is bad"
-        if ret_0 == 0:
-            ret = "GO GO GO"
-            self.play.play_start_bull()
-        else:
-            ret = "XX XX XX"
-            self.play.stop_play_start_bull()
-        #print("MANY  HEAD" + " | " + ret + " | " + str_0 + " | " + str_1)
-        return
-
-    def warn_recover_bull_down_trend(self):
-        K_NO = 26
-        MA10_THRESHOLD = 1.5
-        MA20_THRESHOLD = 0.8
-
-        ret_0 = 99
-        str_0 = "ERROR``````````````````````"
-        ret_1 = 99
-        str_1 = "ERROR````````"
-        # MA Conditions
-        if self.deltaMA20_ma3 < 0 and \
-                        self.MA10_cur < self.MA20_cur:
-            if abs(self.deltaMA10_ma3) < MA10_THRESHOLD and \
-                abs(self.deltaMA20_ma3) > MA20_THRESHOLD and \
-                    abs(self.deltaMA10_ma3) < abs(self.deltaMA20_ma3):
-                ret_0 = 0
-            else:
-                # Rates are too small
-                ret_0 = 2
-        else:
-            # Not goes down together
-            ret_0 = 1
-
-        if ret_0 == 0:
-            str_0 = "MA is OK```````````````````"
-        if ret_0 == 1:
-            str_0 = "MA do not go down``````````"
-        if ret_0 == 2:
-            str_0 = "MA changes rate bad````````"
-        if ret_0 == 0:
-            ret = "GO GO GO"
-            self.play.play_bull_recover_down_trend()
-        else:
-            ret = "XX XX XX"
-            self.play.stop_play_bull_recover_down_trend()
-        #print("BullRecover" + "| " + ret + " | " + str_0 + " | " + str_1)
-        return
-
-    def warn_bogus_break(self):
-        MA20_THRESHOLD = -0.6
-        CH_RATE_THRESHOLD = -0.5
-        try:
-            ch_rate_20s = self.cur_gap_20s
-            deltaMA20 = self.deltaMA20_ma3
-        except:
-            return
-
-        if deltaMA20 > MA20_THRESHOLD and ch_rate_20s < CH_RATE_THRESHOLD:
-            self.play.play_warn_bogus_break()
-        else:
-            self.play.stop_play_warn_bogus_break()
-        return
 
     def warn_low_amplitude(self):
         try:
@@ -1261,37 +1150,9 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
-    def disable_adverse_bull(self):
-        # Disable Bull when MA20 decreases sharply
-        MA20_THRESHOLD = -2
-        try:
-            deltaMA20 = self.deltaMA20_ma3
-        except:
-            return
 
-        if deltaMA20 <= MA20_THRESHOLD:
-            self.opt.disble_order_stock_code(self.bull_code)
 
-        return
 
-    def disable_adverse_bear(self):
-        # Disable Bear when cur > MA10 and MA10,Ma20 increase
-        MA10_THRESHOLD = 0.7
-        MA20_THRESHOLD = 0.5
-        try:
-            deltaMA20 = self.deltaMA20_ma3
-            deltaMA10 = self.deltaMA10_ma3
-            ma10 = self.MA10_cur
-            ma20 = self.MA20_cur
-            cur = self.cur
-        except:
-            return
-
-        if deltaMA20 >= MA20_THRESHOLD and deltaMA10 >= MA10_THRESHOLD and \
-                ma10 > ma20 and cur > ma10:
-            self.opt.disble_order_stock_code(self.bear_code)
-
-        return
 
     def is_trade_time(self, cur_time):
         #return 1
@@ -1421,15 +1282,20 @@ class zma20_strategy_quote(threading.Thread):
                     if ret == 1:
                         self.ma_1m_table = tmp
                     self.deltaMA50_cur = stock_quote.get_deltaMA50_cur()
+                    self.deltaMA20_now = stock_quote.get_deltaMA20_now()
                     self.deltaMA20_cur = stock_quote.get_deltaMA20_cur()
                     self.deltaMA20_ma3 = stock_quote.get_deltaMA20_ma3()
                     self.deltaMA20_ma5 = stock_quote.get_deltaMA20_ma5()
+                    self.deltaMA10_now = stock_quote.get_deltaMA10_now()
                     self.deltaMA10_cur = stock_quote.get_deltaMA10_cur()
                     self.deltaMA10_ma3 = stock_quote.get_deltaMA10_ma3()
                     self.deltaMA10_ma5 = stock_quote.get_deltaMA10_ma5()
+                    self.MA5_now = stock_quote.get_MA5_now()
                     self.MA5_list = stock_quote.get_MA5_List()
+                    self.MA10_now = stock_quote.get_MA10_now()
                     self.MA10_cur = stock_quote.get_MA10_cur()
                     self.MA10_3 = stock_quote.get_MA10_3()
+                    self.MA20_now = stock_quote.get_MA20_now()
                     self.MA20_cur = stock_quote.get_MA20_cur()
                     self.MA20_3 = stock_quote.get_MA20_3()
                     self.MA50_cur = stock_quote.get_MA50_cur()
@@ -1464,7 +1330,7 @@ class zma20_strategy_quote(threading.Thread):
                 #self.detect_empty_start()
 
 
-                self.buy_bull_13th_oct()
+                self.buy_bull_13th_oct_delay()
                 self.sell_bull_15th_oct()
                 #self.guard_bull()
                 #self.empty_head()
