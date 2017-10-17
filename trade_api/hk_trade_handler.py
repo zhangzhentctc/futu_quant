@@ -160,7 +160,7 @@ class hk_trade_handler(threading.Thread):
                     ## SELL
                     bear_force_sell_status = 1
                     qty = qty_p
-                    wait_bad_quote = 30
+                    wait_bad_quote = 50
                     while bear_force_sell_status != 0:
                         bear_bid = self.stock_quote.get_bear_bid()
                         bear_ask = self.stock_quote.get_bear_ask()
@@ -329,6 +329,8 @@ class hk_trade_handler(threading.Thread):
                             continue
                         if check_status != STATUS_BEAR_WAIT_PROFIT:
                             break
+                if self.status != STATUS_BULL_WAIT_PROFIT:
+                    continue
                 print("BEAR WAIT PROFIT FINISHED")
                 self.set_idle()
                 if sell_qty == qty_p:
@@ -417,12 +419,12 @@ class hk_trade_handler(threading.Thread):
                     ## SELL
                     bull_force_sell_status = 1
                     qty = qty_p
-                    wait_bad_quote = 30
+                    wait_bad_quote = 100
                     while bull_force_sell_status != 0:
                         bull_bid = self.stock_quote.get_bull_bid()
                         bull_ask = self.stock_quote.get_bull_ask()
-                        # print(bear_bid, bear_ask)
                         if bull_ask * 1000 - bull_bid * 1000 <= 1:
+                            print(bull_bid, bull_ask)
                             localid = self.hk_trade_opt.sell_stock_code_qty(self.bull_code, bull_bid, qty)
                             if localid == -1:
                                 break
@@ -516,6 +518,9 @@ class hk_trade_handler(threading.Thread):
                             continue
                         if check_status != STATUS_BULL_WAIT_PROFIT:
                             break
+
+                if self.status != STATUS_BULL_WAIT_PROFIT:
+                    continue
                 print("BULL WAIT PROFIT FINISHED")
                 self.set_idle()
                 if sell_qty == qty_p:
