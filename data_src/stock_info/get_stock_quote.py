@@ -214,8 +214,10 @@ class get_stock_quote(threading.Thread):
         return self.vol_now
 
     # From new to old
-    def cal_MA5_list(self):
+    def cal_MA3_list(self):
         K_NO = self.k_num
+        ma_length = 3
+        list_count = 10
         if K_NO < 17:
             return
 
@@ -226,16 +228,42 @@ class get_stock_quote(threading.Thread):
         # ma_1m_table has gap where latest val equals 0
         if kline.iloc[K_NO - 1, 3] == 0:
             return
-        ma5_list = []
-        for i in range(0, 10):
+        list = []
+        for i in range(0, list_count):
             tmp = 0
-            for j in range(0, 5):
+            for j in range(0, ma_length):
                 tmp += kline.iloc[K_NO - 1 - i - j, 3]
-            ma5 = tmp / 5
-            ma5 = round(ma5, 2)
-            ma5_list.append(ma5)
+            val = tmp / ma_length
+            val = round(val, 2)
+            list.append(val)
 
-        self.ma5_list = ma5_list
+        self.ma3_list = list
+        return
+
+    def cal_MA5_list(self):
+        K_NO = self.k_num
+        ma_length = 5
+        list_count = 10
+        if K_NO < 17:
+            return
+
+        try:
+            kline = self.ma_1m_table
+        except:
+            return
+        # ma_1m_table has gap where latest val equals 0
+        if kline.iloc[K_NO - 1, 3] == 0:
+            return
+        list = []
+        for i in range(0, list_count):
+            tmp = 0
+            for j in range(0, ma_length):
+                tmp += kline.iloc[K_NO - 1 - i - j, 3]
+            val = tmp / ma_length
+            val = round(val, 2)
+            list.append(val)
+
+        self.ma5_list = list
         return
 
     def cal_ma_60m(self):
@@ -378,6 +406,9 @@ class get_stock_quote(threading.Thread):
 
     def get_deltaMA10_ma5(self):
         return self.deltaMA10_ma5
+
+    def get_MA3_List(self):
+        return self.ma3_list
 
     def get_MA5_now(self):
         return self.MA5_now
