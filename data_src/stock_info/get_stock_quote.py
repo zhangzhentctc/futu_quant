@@ -535,6 +535,7 @@ class get_stock_quote(threading.Thread):
 
             self.get_ma_1m(self.k_num)
             self.get_ma_60m()
+
             self.cal_delta_ma()
             self.cal_ma_60m()
             self.cal_MA5_list()

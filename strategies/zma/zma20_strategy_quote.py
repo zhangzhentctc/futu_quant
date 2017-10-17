@@ -770,16 +770,24 @@ class zma20_strategy_quote(threading.Thread):
                     self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.7)
                     self.zma10_new_trend = -9999
 
+    def call_buy_bear(self, fake = 0):
+        if self.buy_bear == 0 and fake == 0:
+            self.buy_bear = 1
+            self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
+        if fake == 1:
+            print("Fake")
+        print("buy bear", self.ret.iloc[self.count,])
 
 
         ## Require zma10_decrease
     def  buy_bear_13th_oct_no_delay(self):
         K_NO = 56
+        fake = 1
         if self.oct_13th_strategy_trade_time() == 0:
             return
 
         ma5_list = self.MA5_list
-
+        ma3_list = self.MA3_list
         vol_now = self.vol_now
         vol_last = self.vol_last
         MA20_vol = self.MA20_vol
@@ -788,78 +796,67 @@ class zma20_strategy_quote(threading.Thread):
         MA10_now = self.MA10_now
         MA20_now = self.MA20_now
         MA50_cur = self.MA50_cur
+        deltaMA5_now = ma5_list[0] - ma5_list[1]
         deltaMA10_now = self.deltaMA10_now
         deltaMA20_now = self.deltaMA20_now
         down_count = 0
         up_count = 0
         point = 0
         ma5_ok = 0
+        ma3_ok = 0
         ## VOL Break, and
         ## Red bar
         if vol_now >= MA20_vol and \
             self.ma_1m_table["open"][K_NO - 1] > self.ma_1m_table["close"][K_NO - 1] + 2:
-            if ma5_list[0] - ma5_list[1] < -2:
-                for i in range(0, 9):
-                    if ma5_list[i] < ma5_list[i + 1]:
-                        down_count += 1
-                        point += 1
-                    else:
-                        break
 
-                if point >= 9:
-                    return
-
-                for i in range(point, 9):
-                    if ma5_list[i] >= ma5_list[i + 1]:
-                        up_count += 1
-
+            # General
+            if deltaMA5_now < -2 and \
+                deltaMA10_now < 0 and \
+                deltaMA20_now < 0.2:
+                down_count, up_count = self.ma_list_delta(ma5_list)
                 if down_count <= 2 and up_count >= 1:
                     ma5_ok = 1
                 if down_count == 3 and up_count >= 2:
                     ma5_ok = 1
 
-                if ma5_ok == 1 and self.is_trap_zone() == 0:
+                down_count, up_count = self.ma_list_delta(ma3_list)
+                if down_count <= 2 and up_count >= 1:
+                    ma3_ok = 1
+                if down_count == 3 and up_count >= 2:
+                    ma3_ok = 1
+
+                if (ma5_ok == 1 or ma3_ok == 1) and self.is_trap_zone() == 0:
+                    self.call_buy_bear()
                     if cur < MA5_now and \
                         (MA5_now < MA10_now or MA5_now < MA20_now ) and \
                         MA10_now - 3 < MA20_now :
-                        if self.buy_bear == 0:
-                            self.buy_bear = 1
-                            self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
-                            print("buy bear", self.ret.iloc[self.count,])
+                        self.call_buy_bear(fake)
 
+                ## Quick
                 down_count = 0
                 up_count = 0
                 point = 0
                 ma5_ok = 0
-                if ma5_list[0] - ma5_list[1] < -4:
-                    for i in range(0, 9):
-                        if ma5_list[i] < ma5_list[i + 1]:
-                            down_count += 1
-                            point += 1
-                        else:
-                            break
-
-                    if point >= 9:
-                        return
-
-                    for i in range(point, 9):
-                        if ma5_list[i] >= ma5_list[i + 1]:
-                            up_count += 1
-
+                ma3_ok = 0
+                if deltaMA5_now < -4 and \
+                    deltaMA10_now < 0 and \
+                    deltaMA20_now < 0.2:
+                    down_count, up_count = self.ma_list_delta(ma5_list)
                     if down_count <= 2 and up_count >= 1:
                         ma5_ok = 1
                     if down_count == 3 and up_count >= 2:
                         ma5_ok = 1
 
-                    if ma5_ok == 1 and self.is_trap_zone() == 0:
-                        if cur < MA5_now and \
-                                deltaMA10_now < 0 and deltaMA20_now < 0.2:
-                            if self.buy_bear == 0:
-                                self.buy_bear = 1
-                                self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
-                                print("buy bear q", self.ret.iloc[self.count,])
+                    down_count, up_count = self.ma_list_delta(ma3_list)
+                    if down_count <= 2 and up_count >= 1:
+                        ma3_ok = 1
+                    if down_count == 3 and up_count >= 2:
+                        ma3_ok = 1
 
-
+                    if(ma5_ok == 1 or ma3_ok == 1) and self.is_trap_zone() == 0:
+                        self.call_buy_bear()
+                        if cur < MA5_now:
+                            self.call_buy_bear(fake)
 
 
         return
@@ -980,14 +977,45 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
+    def ma_list_delta(self, list):
+        down_count = 0
+        up_count = 0
+        point = 0
+        length = len(list)
+        if length != 10:
+            return down_count, up_count
 
+        for i in range(0, 9):
+            if list[i] > list[i + 1]:
+                up_count += 1
+                point += 1
+            else:
+                break
 
+        if point >= 9:
+            return down_count, up_count
+
+        for i in range(point, 9):
+            if list[i] <= list[i + 1]:
+                down_count += 1
+
+        return down_count, up_count
+
+    def call_buy_bull(self, fake = 0):
+        if self.buy_bull == 0 and fake == 0:
+            self.buy_bull = 1
+            self.hk_trade_handler.bull_force_buy(self.trade_qty, 0.5)
+        if fake == 1:
+            print("Fake")
+        print("buy bull ", self.ret.iloc[self.count,])
+        return
 
     def buy_bull_13th_oct_no_delay(self):
+        fake = 1
         K_NO = 56
         if self.oct_13th_strategy_trade_time() == 0:
             return
-
+        ma3_list = self.MA3_list
         ma5_list = self.MA5_list
         vol_now = self.vol_now
         vol_last = self.vol_last
@@ -998,6 +1026,7 @@ class zma20_strategy_quote(threading.Thread):
         MA10_now = self.MA10_now
         MA20_now = self.MA20_now
         #MA50_cur = self.MA50_cur
+        deltaMA5_now = ma5_list[0] - ma5_list[1]
         deltaMA10_now = self.deltaMA10_now
         deltaMA20_now = self.deltaMA20_now
 
@@ -1006,76 +1035,57 @@ class zma20_strategy_quote(threading.Thread):
         up_count = 0
         point = 0
         ma5_ok = 0
+        ma3_ok = 0
         ## VOL Break, and
         if vol_now >= MA20_vol and \
             self.ma_1m_table["open"][K_NO - 1] < self.ma_1m_table["close"][K_NO - 1]:
 
+
             ## 1. General Bull
-            if ma5_list[0] - ma5_list[1] >= 2 and \
+            if deltaMA5_now >= 2 and \
                 (deltaMA10_now >= 0.9 or deltaMA20_now >= 0.72):
-                for i in range(0, 9):
-                    if ma5_list[i] > ma5_list[i + 1]:
-                        up_count += 1
-                        point += 1
-                    else:
-                        break
 
-                if point >= 9:
-                    return
-
-                for i in range(point, 9):
-                    if ma5_list[i] <= ma5_list[i + 1]:
-                        down_count += 1
-
+                down_count, up_count = self.ma_list_delta(ma5_list)
                 if up_count <= 3 and down_count >= 1:
                     ma5_ok = 1
 
-                if ma5_ok == 1 and self.is_trap_zone() == 0:
+                down_count, up_count = self.ma_list_delta(ma3_list)
+                if up_count <= 3 and down_count >= 1:
+                    ma3_ok = 1
+
+                if (ma5_ok == 1 or ma3_ok == 1) and self.is_trap_zone() == 0:
+                    self.call_buy_bull()
                     if cur > MA5_now and \
                         MA10_now > MA20_now and \
                         MA5_now > MA20_now:
-                        #### BUY BULL
-                        if self.buy_bull == 0:
-                            self.buy_bull = 1
-                            self.hk_trade_handler.bull_force_buy(self.trade_qty, 0.5)
-                        print("buy bull", self.ret.iloc[self.count,])
+                        self.call_buy_bull(fake)
 
 
             ## 2. Quick Bull Start
             down_count = 0
             up_count = 0
             point = 0
-            ma5_quick_ok = 0
-            if ma5_list[0] - ma5_list[1] >= 4 and \
+            ma5_ok = 0
+            ma3_ok = 0
+            if deltaMA5_now >= 4 and \
                 (deltaMA10_now >= 0 or deltaMA20_now >= -0.4):
-                for i in range(0, 9):
-                    if ma5_list[i] > ma5_list[i + 1]:
-                        up_count += 1
-                        point += 1
-                    else:
-                        break
-
-                if point >= 9:
-                    return
-
-                for i in range(point, 9):
-                    if ma5_list[i] <= ma5_list[i + 1]:
-                        down_count += 1
-
+                down_count, up_count = self.ma_list_delta(ma5_list)
                 if up_count <= 3 and down_count >= 1:
-                    ma5_quick_ok = 1
+                    ma5_ok = 1
 
-                if ma5_quick_ok == 1 and self.is_trap_zone() == 0:
+                down_count, up_count = self.ma_list_delta(ma3_list)
+                if up_count <= 3 and down_count >= 1:
+                    ma3_ok = 1
+
+                if (ma5_ok == 1 or ma3_ok == 1) and self.is_trap_zone() == 0:
+                    self.call_buy_bull()
                     if cur > MA5_now and \
                         MA10_now <= MA20_now and \
                         cur > MA10_now and cur > MA20_now :
-                        #### BUY BULL
-                        if self.buy_bull == 0:
-                            self.buy_bull = 1
-                            self.hk_trade_handler.bull_force_buy(self.trade_qty, 0.5)
-                            print("buy bull q", self.ret.iloc[self.count,])
+                        self.call_buy_bull(fake)
 
         return
+
 
 
     def buy_bull_13th_oct_delay(self):
@@ -1423,6 +1433,7 @@ class zma20_strategy_quote(threading.Thread):
                     self.deltaMA10_cur = stock_quote.get_deltaMA10_cur()
                     self.deltaMA10_ma3 = stock_quote.get_deltaMA10_ma3()
                     self.deltaMA10_ma5 = stock_quote.get_deltaMA10_ma5()
+                    self.MA3_list = stock_quote.get_MA3_List()
                     self.MA5_now = stock_quote.get_MA5_now()
                     self.MA5_list = stock_quote.get_MA5_List()
                     self.MA10_now = stock_quote.get_MA10_now()
