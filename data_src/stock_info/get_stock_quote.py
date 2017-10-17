@@ -160,6 +160,21 @@ class get_stock_quote(threading.Thread):
                 self.ma_1m_table = kline_table
                 return self.ma_1m_table
 
+    def get_ma_60m(self, number=10):
+
+        stock_code_list = [self.stock_code_list[0]]
+        sub_type_list = ["K_60M"]
+
+        for code in stock_code_list:
+            for ktype in ["K_60M"]:
+                ret_code, ret_data = self.__quote_ctx.get_cur_kline(code, number, ktype)
+                if ret_code == RET_ERROR:
+                    print(code, ktype, ret_data)
+                    return
+                kline_table = ret_data
+                self.ma_60m_table = kline_table
+                return self.ma_60m_table
+
     def cal_vol_ma(self):
         K_NO = self.k_num
         try:
@@ -223,6 +238,21 @@ class get_stock_quote(threading.Thread):
         self.ma5_list = ma5_list
         return
 
+    def cal_ma_60m(self):
+        try:
+            kline = self.ma_60m_table
+        except:
+            return
+
+        # MA10
+        tmp = 0
+        for i in range(0, 10):
+            tmp += kline.iloc[10 - 1 - i, 3]
+        self.MA10h_now = tmp/10
+        self.MA10h_now = round(self.MA10h_now, 2)
+
+    def get_MA10h_now(self):
+        return self.MA10h_now
 
 
     def cal_delta_ma(self):
@@ -459,6 +489,7 @@ class get_stock_quote(threading.Thread):
                     continue
 
             self.get_ma_1m(self.k_num)
+            self.get_ma_60m()
             self.cal_delta_ma()
             self.cal_MA5_list()
             self.cal_vol_ma()
