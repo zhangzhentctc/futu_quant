@@ -847,7 +847,7 @@ class zma20_strategy_quote(threading.Thread):
                     if down_count <= 3 and up_count >= 1:
                         ma5_ok = 1
 
-                    if ma5_ok == 1:
+                    if ma5_ok == 1 and self.is_trap_zone() == 0:
                         if cur < MA5_now and \
                                 deltaMA10_now < 0 and deltaMA20_now < 0.2:
                             if self.buy_bear == 0:
@@ -1026,7 +1026,7 @@ class zma20_strategy_quote(threading.Thread):
                 if up_count <= 3 and down_count >= 1:
                     ma5_ok = 1
 
-                if ma5_ok == 1:
+                if ma5_ok == 1 and self.is_trap_zone() == 0:
                     if cur > MA5_now and \
                         MA10_now > MA20_now and \
                         MA5_now > MA20_now:
@@ -1061,7 +1061,7 @@ class zma20_strategy_quote(threading.Thread):
                 if up_count <= 3 and down_count >= 1:
                     ma5_quick_ok = 1
 
-                if ma5_quick_ok == 1:
+                if ma5_quick_ok == 1 and self.is_trap_zone() == 0:
                     if cur > MA5_now and \
                         MA10_now <= MA20_now and \
                         cur > MA10_now and cur > MA20_now :
@@ -1121,7 +1121,7 @@ class zma20_strategy_quote(threading.Thread):
                 if up_count <= 3 and down_count >= 1:
                     ma5_ok = 1
 
-                if ma5_ok == 1:
+                if ma5_ok == 1 and self.is_trap_zone() == 0:
                     if cur > MA5_cur and  MA10_cur > MA20_cur and \
                             MA5_cur > MA20_cur:
                         #### BUY BULL
@@ -1152,7 +1152,7 @@ class zma20_strategy_quote(threading.Thread):
                 else:
                     ma5_quick_ok = 0
 
-                if ma5_quick_ok == 1:
+                if ma5_quick_ok == 1 and self.is_trap_zone() == 0:
                     if cur > MA5_cur and  cur > MA10_cur and cur > MA20_cur and \
                         MA10_cur <= MA20_cur:
                         #### BUY BULL
@@ -1181,6 +1181,18 @@ class zma20_strategy_quote(threading.Thread):
 
         return 0
 
+
+    def is_trap_zone(self):
+        cur = self.cur
+        MA10h_now = self.MA10h_now
+        deltaMA20_now = self.deltaMA20_now
+        thresh = 20
+
+        if cur >= MA10h_now - thresh and cur <= MA10h_now + thresh and \
+            abs(deltaMA20_now) < 2.5:
+            return 1
+        else:
+            return 0
 
     def guard_vol_break(self):
         #print("VOL MA20:",self.MA20_vol, "Last:", self.vol_last, " now:",self.vol_now)
@@ -1417,6 +1429,7 @@ class zma20_strategy_quote(threading.Thread):
                     self.MA20_3 = stock_quote.get_MA20_3()
                     self.MA50_cur = stock_quote.get_MA50_cur()
                     self.MA50_3 = stock_quote.get_MA50_3()
+                    self.MA10h_now = stock_quote.get_MA10h_now()
                     self.MA20_vol = stock_quote.get_ma20_vol()
                     self.MA20_vol_last = stock_quote.get_ma20_vol_last()
                     self.vol_last = stock_quote.get_vol_last()
