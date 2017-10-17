@@ -813,10 +813,12 @@ class zma20_strategy_quote(threading.Thread):
                     if ma5_list[i] >= ma5_list[i + 1]:
                         up_count += 1
 
-                if down_count <= 3 and up_count >= 1:
+                if down_count <= 2 and up_count >= 1:
+                    ma5_ok = 1
+                if down_count == 3 and up_count >= 2:
                     ma5_ok = 1
 
-                if ma5_ok == 1:
+                if ma5_ok == 1 and self.is_trap_zone() == 0:
                     if cur < MA5_now and \
                         (MA5_now < MA10_now or MA5_now < MA20_now ) and \
                         MA10_now - 3 < MA20_now :
@@ -844,7 +846,9 @@ class zma20_strategy_quote(threading.Thread):
                         if ma5_list[i] >= ma5_list[i + 1]:
                             up_count += 1
 
-                    if down_count <= 3 and up_count >= 1:
+                    if down_count <= 2 and up_count >= 1:
+                        ma5_ok = 1
+                    if down_count == 3 and up_count >= 2:
                         ma5_ok = 1
 
                     if ma5_ok == 1 and self.is_trap_zone() == 0:
