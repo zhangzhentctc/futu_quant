@@ -37,7 +37,9 @@ class get_stock_quote(threading.Thread):
         self.vol_last = 0
         self.vol_now = 0
 
+        self.MA10h_now = 0
         self.ma5_list = []
+        self.ma3_list = []
 
     def subscribe_stock(self, type):
         # subscribe "QUOTE"
@@ -215,6 +217,7 @@ class get_stock_quote(threading.Thread):
 
     # From new to old
     def cal_MA3_list(self):
+
         K_NO = self.k_num
         ma_length = 3
         list_count = 10
@@ -491,6 +494,17 @@ class get_stock_quote(threading.Thread):
             return -1
 
         for i in range (0, self.subscribe_trail):
+            ret_status, ret_data = self.subscribe_stock("K_60M")
+            if ret_status == RET_OK:
+                break
+            print("subscribe fail. Retry.")
+            time.sleep(0.5)
+
+        if ret_status == RET_ERROR:
+            print("subscribe fail 3 times")
+            return -1
+
+        for i in range (0, self.subscribe_trail):
             ret_status, ret_data = self.subscribe_stock("ORDER_BOOK")
             if ret_status == RET_OK:
                 break
@@ -522,7 +536,9 @@ class get_stock_quote(threading.Thread):
             self.get_ma_1m(self.k_num)
             self.get_ma_60m()
             self.cal_delta_ma()
+            self.cal_ma_60m()
             self.cal_MA5_list()
+            self.cal_MA3_list()
             self.cal_vol_ma()
             self.ready = 1
             end = time.time()
