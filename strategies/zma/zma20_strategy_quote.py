@@ -788,7 +788,8 @@ class zma20_strategy_quote(threading.Thread):
         MA10_now = self.MA10_now
         MA20_now = self.MA20_now
         MA50_cur = self.MA50_cur
-
+        deltaMA10_now = self.deltaMA10_now
+        deltaMA20_now = self.deltaMA20_now
         down_count = 0
         up_count = 0
         point = 0
@@ -823,6 +824,39 @@ class zma20_strategy_quote(threading.Thread):
                             self.buy_bear = 1
                             self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
                             print("buy bear", self.ret.iloc[self.count,])
+
+                down_count = 0
+                up_count = 0
+                point = 0
+                ma5_ok = 0
+                if ma5_list[0] - ma5_list[1] < -4:
+                    for i in range(0, 9):
+                        if ma5_list[i] < ma5_list[i + 1]:
+                            down_count += 1
+                            point += 1
+                        else:
+                            break
+
+                    if point >= 9:
+                        return
+
+                    for i in range(point, 9):
+                        if ma5_list[i] >= ma5_list[i + 1]:
+                            up_count += 1
+
+                    if down_count <= 3 and up_count >= 1:
+                        ma5_ok = 1
+
+                    if ma5_ok == 1:
+                        if cur < MA5_now and \
+                                deltaMA10_now < 0 and deltaMA20_now < 0.2:
+                            if self.buy_bear == 0:
+                                self.buy_bear = 1
+                                self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
+                                print("buy bear q", self.ret.iloc[self.count,])
+
+
+
 
         return
 
@@ -887,7 +921,7 @@ class zma20_strategy_quote(threading.Thread):
             if self.bear_decrease_ma10_down == 1:
 
                 if curq > self.bear_decrease_max:
-                    gap = self.bear_decrease_max - curq
+                    gap = curq -  self.bear_decrease_max
                 else:
                     self.bear_decrease_max = curq
                     gap = 0
@@ -911,11 +945,13 @@ class zma20_strategy_quote(threading.Thread):
             if self.buy_bear == 1:
                 self.buy_bear = 0
                 self.hk_trade_handler.bear_force_sell()
+                print("buy bear5", self.ret.iloc[self.count,])
 
         if zma5 >= zma10 and self.ret["zma5"][position - 1] < self.ret["zma10"][position - 1]:
             if self.buy_bear == 1:
                 self.buy_bear = 0
                 self.hk_trade_handler.bear_force_sell()
+                print("buy bearx", self.ret.iloc[self.count,])
 
         return
 
@@ -930,11 +966,13 @@ class zma20_strategy_quote(threading.Thread):
             if self.buy_bull == 1:
                 self.buy_bull = 0
                 self.hk_trade_handler.bull_force_sell()
+                print("buy bull5", self.ret.iloc[self.count,])
 
         if zma5 <= zma10 and self.ret["zma5"][position - 1] > self.ret["zma10"][position - 1]:
             if self.buy_bull == 1:
                 self.buy_bull = 0
                 self.hk_trade_handler.bull_force_sell()
+                print("buy bullx", self.ret.iloc[self.count,])
 
         return
 
@@ -1031,7 +1069,7 @@ class zma20_strategy_quote(threading.Thread):
                         if self.buy_bull == 0:
                             self.buy_bull = 1
                             self.hk_trade_handler.bull_force_buy(self.trade_qty, 0.5)
-                            print("buy bull", self.ret.iloc[self.count,])
+                            print("buy bull q", self.ret.iloc[self.count,])
 
         return
 
