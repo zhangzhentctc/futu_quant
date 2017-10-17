@@ -69,8 +69,8 @@ class zma20_strategy_quote(threading.Thread):
                                                "bull_decrease", "bear_decrease"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 68741
-        self.bull_code = 64237
+        self.bear_code = 61000
+        self.bull_code = 64563
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '584679')
@@ -775,7 +775,7 @@ class zma20_strategy_quote(threading.Thread):
         ## Require zma10_decrease
     def  buy_bear_13th_oct_no_delay(self):
         K_NO = 56
-        if self.count < 3000:
+        if self.oct_13th_strategy_trade_time() == 0:
             return
 
         ma5_list = self.MA5_list
@@ -822,6 +822,7 @@ class zma20_strategy_quote(threading.Thread):
                         if self.buy_bear == 0:
                             self.buy_bear = 1
                             self.hk_trade_handler.bear_force_buy(self.trade_qty, 0.5)
+                            print("buy bear", self.ret.iloc[self.count,])
 
         return
 
@@ -942,7 +943,7 @@ class zma20_strategy_quote(threading.Thread):
 
     def buy_bull_13th_oct_no_delay(self):
         K_NO = 56
-        if self.count < 3000:
+        if self.oct_13th_strategy_trade_time() == 0:
             return
 
         ma5_list = self.MA5_list
@@ -995,6 +996,7 @@ class zma20_strategy_quote(threading.Thread):
                         if self.buy_bull == 0:
                             self.buy_bull = 1
                             self.hk_trade_handler.bull_force_buy(self.trade_qty, 0.5)
+                        print("buy bull", self.ret.iloc[self.count,])
 
 
             ## 2. Quick Bull Start
@@ -1002,7 +1004,7 @@ class zma20_strategy_quote(threading.Thread):
             up_count = 0
             point = 0
             ma5_quick_ok = 0
-            if ma5_list[0] - ma5_list[1] >= 5 and \
+            if ma5_list[0] - ma5_list[1] >= 4 and \
                 (deltaMA10_now >= 0 or deltaMA20_now >= -0.4):
                 for i in range(0, 9):
                     if ma5_list[i] > ma5_list[i + 1]:
@@ -1029,13 +1031,14 @@ class zma20_strategy_quote(threading.Thread):
                         if self.buy_bull == 0:
                             self.buy_bull = 1
                             self.hk_trade_handler.bull_force_buy(self.trade_qty, 0.5)
+                            print("buy bull", self.ret.iloc[self.count,])
 
         return
 
 
     def buy_bull_13th_oct_delay(self):
         K_NO = 56
-        if self.count < 3000:
+        if self.oct_13th_strategy_trade_time() == 0:
             return
 
         ma5_list = self.MA5_list
@@ -1087,9 +1090,10 @@ class zma20_strategy_quote(threading.Thread):
                         if self.buy_bull == 0:
                             self.buy_bull = 1
                             self.hk_trade_handler.bull_force_buy(self.trade_qty, 1)
+                            print("buy bull", self.ret.iloc[self.count,])
 
             ## Quick Bull Start
-            if ma5_list[1] - ma5_list[2] >= 5 and \
+            if ma5_list[1] - ma5_list[2] >= 4 and \
                     (deltaMA10_cur >= 0 or deltaMA20_cur >= 0):
                 for i in range(1, 9):
                     if ma5_list[i] > ma5_list[i + 1]:
@@ -1117,9 +1121,27 @@ class zma20_strategy_quote(threading.Thread):
                         if self.buy_bull == 0:
                             self.buy_bull = 1
                             self.hk_trade_handler.bull_force_buy(self.trade_qty, 1)
+                            print("buy bull", self.ret.iloc[self.count,])
 
 
         return
+
+
+    def oct_13th_strategy_trade_time(self):
+        cur_time = self.data_time
+        morning_start = "09:40:00"
+
+        morning_start_list = morning_start.split(":")
+        morning_start_second = int(morning_start_list[0]) * 3600 + int(morning_start_list[1]) * 60 + int(morning_start_list[2])
+
+
+        cur_time_list = cur_time.split(":")
+        cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+        if cur_time_second > morning_start_second:
+            return 1
+
+        return 0
 
 
     def guard_vol_break(self):
@@ -1325,6 +1347,7 @@ class zma20_strategy_quote(threading.Thread):
                 self.cal_zmaq(self.count)
                 self.cal_zma5(self.count)
                 self.cal_bull_decrease(self.count)
+                self.cal_bear_decrease(self.count)
                 self.is_available = 1
 
                 if stock_quote.ready == 1:
