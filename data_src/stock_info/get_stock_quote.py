@@ -39,6 +39,7 @@ class get_stock_quote(threading.Thread):
 
         self.MA10h_now = 0
         self.ma5_list = []
+        self.ma5_list_reverse = []
         self.ma3_list = []
 
     def subscribe_stock(self, type):
@@ -266,7 +267,14 @@ class get_stock_quote(threading.Thread):
             val = round(val, 2)
             list.append(val)
 
+        list_reverse = []
+        for i in range(list_count, 0, -1):
+            list_reverse.append(list[i - 1])
+
         self.ma5_list = list
+        self.ma5_list_reverse = list_reverse
+        print(list)
+        print(list_reverse)
         return
 
     def cal_ma_60m(self):
