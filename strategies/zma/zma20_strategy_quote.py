@@ -27,6 +27,12 @@ BEAR_DECREASE_POS = 16
 BUY = 0
 SELL = 1
 
+MA5_NO_BREAK = 0
+MA5_UP_LOWER = 1
+MA5_UP_UPPER = 2
+MA5_DOWN_LOWER = 3
+MA5_DOWN_UPPER = 4
+
 class zma20_strategy_quote(threading.Thread):
     def __init__(self, qc, play, interval = 0.5 ):
         super(zma20_strategy_quote, self).__init__()
@@ -56,6 +62,8 @@ class zma20_strategy_quote(threading.Thread):
         self.vol_break = 0
         self.running = 0
 
+        self.rough_zone = 999
+
 ## Trade
         self.buy_bull = 0
         self.buy_bear = 0
@@ -69,11 +77,11 @@ class zma20_strategy_quote(threading.Thread):
                                                "bull_decrease", "bear_decrease"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 61000
-        self.bull_code = 64563
+        self.bear_code = 62057
+        self.bull_code = 69523
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
-        self.hk_trade.unlock_trade('88888888', '584679')
+        self.hk_trade.unlock_trade('88888888', '920209')
         self.opt_real = hk_trade_opt(self.hk_trade, 0)
         self.opt_simulation = hk_trade_opt(self.hk_trade)
         ### Change Trade Type Here
@@ -339,6 +347,32 @@ class zma20_strategy_quote(threading.Thread):
         B /= 2
         for i in range(start, end + 1):
             cur = self.ret[column][i]
+            A += xi * cur
+            avr_x += xi / t
+            avr_y += cur/t
+            xi += 1
+        M = t * avr_x
+        ratio = (A - M * avr_y) / (B - M * avr_x) *(-1)
+        return 1, ratio
+
+    def optimized_least_square_method_4_list(self, count, list):
+        length = len(list)
+        if length <= count:
+            return -1, 0
+
+        end = length - 1
+        start = end - count
+        A = 0
+        B = 0
+        xi = 0
+        t = end - start + 1
+        avr_x = 0
+        avr_y = 0
+
+        B = (t - 1) * t
+        B /= 2
+        for i in range(start, end + 1):
+            cur = list[i]
             A += xi * cur
             avr_x += xi / t
             avr_y += cur/t
@@ -780,6 +814,45 @@ class zma20_strategy_quote(threading.Thread):
 
 
         ## Require zma10_decrease
+    def  buy_bear_19th_oct_no_delay(self):
+        K_NO = 56
+        fake = 1
+        if self.oct_13th_strategy_trade_time() == 0:
+            return
+
+        ma5_list = self.MA5_list
+        ma3_list = self.MA3_list
+        vol_now = self.vol_now
+        vol_last = self.vol_last
+        MA20_vol = self.MA20_vol
+        cur =  self.cur
+        MA5_now = ma5_list[0]
+        MA10_now = self.MA10_now
+        MA20_now = self.MA20_now
+        MA50_cur = self.MA50_cur
+        deltaMA5_now = ma5_list[0] - ma5_list[1]
+        deltaMA10_now = self.deltaMA10_now
+        deltaMA20_now = self.deltaMA20_now
+        down_count = 0
+        up_count = 0
+        point = 0
+        ma5_ok = 0
+        ma3_ok = 0
+        ## VOL Break, and
+        ## Red bar
+        if vol_now >= MA20_vol and \
+            self.ma_1m_table["open"][K_NO - 1] > self.ma_1m_table["close"][K_NO - 1] + 2:
+
+            if deltaMA5_now <= 0 and deltaMA20_now <= -0.2 and \
+                    MA10_now + deltaMA10_now < MA20_now + deltaMA20_now and \
+                    MA5_now + deltaMA5_now < MA10_now + deltaMA10_now:
+                count, scope = self.get_ma5_list_scope()
+
+                if count <= 3 and scope <= -2:
+                    self.call_buy_bear()
+
+        return
+
     def  buy_bear_13th_oct_no_delay(self):
         K_NO = 56
         fake = 1
@@ -860,8 +933,6 @@ class zma20_strategy_quote(threading.Thread):
 
 
         return
-
-
 
     def cal_bull_decrease(self, position):
         start = 1250
@@ -977,6 +1048,106 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
+    def cal_ma5_channel(self):
+        list = self.MA5_list_reverse
+        list_ma5_channel = []
+        length = len(list)
+        MA5 = 5
+        if length < 6:
+            return
+
+        for i in range(MA5 - 1, length):
+            tmp = 0
+            for j in range(0, 5):
+                tmp += list[i - 4 + j]
+            list_ma5_channel.append(tmp)
+        self.MA5_list_Channel = list_ma5_channel
+        return
+
+    def cal_ma5_channel_zone(self):
+        ma5_list_channel = self.MA5_list_Channel
+        ma5_list_reverse = self.MA5_list_reverse
+        channel_len = len(self.MA5_list_Channel)
+        list_len = len(self.MA5_list_reverse)
+        self.ma5_move_state = MA5_NO_BREAK
+        ### MA5_UP_LOWER
+        if ma5_list_reverse[list_len - 1] > (ma5_list_channel[channel_len - 1] - 5 )and \
+            ma5_list_reverse[list_len - 2] <= (ma5_list_channel[channel_len - 2] - 5):
+            self.ma5_move_state = MA5_UP_LOWER
+
+        if ma5_list_reverse[list_len - 2] > (ma5_list_channel[channel_len - 2] - 5 )and \
+            ma5_list_reverse[list_len - 3] <= (ma5_list_channel[channel_len - 3] - 5):
+            self.ma5_move_state = MA5_UP_LOWER
+
+        ### MA5_UP_UPPER
+        if ma5_list_reverse[list_len - 1] > (ma5_list_channel[channel_len - 1] + 5 )and \
+            ma5_list_reverse[list_len - 2] <= (ma5_list_channel[channel_len - 2] + 5):
+            self.ma5_move_state = MA5_UP_UPPER
+
+        if ma5_list_reverse[list_len - 2] > (ma5_list_channel[channel_len - 2] + 5 )and \
+            ma5_list_reverse[list_len - 3] <= (ma5_list_channel[channel_len - 3] + 5):
+            self.ma5_move_state = MA5_UP_UPPER
+
+        ##MA5_DOWN_UPPER
+        if ma5_list_reverse[list_len- 1] < (ma5_list_channel[channel_len- 1] + 5 )and \
+            ma5_list_reverse[list_len - 2] >= (ma5_list_channel[channel_len - 2] + 5):
+            self.ma5_move_state = MA5_DOWN_UPPER
+
+        if ma5_list_reverse[list_len - 2] > (ma5_list_channel[channel_len - 2] + 5 )and \
+            ma5_list_reverse[list_len - 3] <= (ma5_list_channel[channel_len - 3] + 5):
+            self.ma5_move_state = MA5_DOWN_UPPER
+
+        ##MA5_DOWN_LOWER
+        if ma5_list_reverse[list_len - 1] < (ma5_list_channel[channel_len- 1] - 5 )and \
+            ma5_list_reverse[list_len - 2] >= (ma5_list_channel[channel_len - 2] - 5):
+            self.ma5_move_state = MA5_DOWN_LOWER
+
+        if ma5_list_reverse[list_len - 2] < (ma5_list_channel[channel_len - 2] - 5 )and \
+            ma5_list_reverse[list_len - 3] >= (ma5_list_channel[channel_len - 3] - 5):
+            self.ma5_move_state = MA5_DOWN_LOWER
+
+
+
+
+
+
+    def get_ma5_list_scope(self):
+        list = self.MA5_list_reverse
+        length = len(list)
+        count = 0
+        trend = 0
+        if length < 6:
+            return 0,0
+
+        ## Find the trend, UP or DOWN
+        if list[length - 1] > list[length - 2]:
+            trend = 1
+        else:
+            trend = -1
+
+        ## UP
+        if trend == 1:
+            for i in range(length, 1, -1):
+                if list[i - 1] > list[i - 2]:
+                    count += 1
+                else:
+                    break
+        ## DOWN
+        if trend == -1:
+            for i in range(length, 1, -1):
+                if list[i - 1] <= list[i - 2]:
+                    count += 1
+                else:
+                    break
+
+        ret, scope = self.optimized_least_square_method_4_list(count, list)
+        if ret == 0:
+            return 0,0
+        else:
+            return count, scope
+
+
+
     def ma_list_delta(self, list):
         down_count = 0
         up_count = 0
@@ -985,19 +1156,39 @@ class zma20_strategy_quote(threading.Thread):
         if length != 10:
             return down_count, up_count
 
-        for i in range(0, 9):
-            if list[i] > list[i + 1]:
-                up_count += 1
-                point += 1
-            else:
-                break
+        if list[0] > list[1]:
+            state = 1
+        else:
+            state = -1
 
-        if point >= 9:
-            return down_count, up_count
+        # Bull
+        if state == 1:
+            for i in range(0, length - 1):
+                if list[i] > list[i + 1]:
+                    up_count += 1
+                    point += 1
+                else:
+                    break
+            if point >= 9:
+                return down_count, up_count
+            for i in range(point, length - 1):
+                if list[i] <= list[i + 1]:
+                    down_count += 1
 
-        for i in range(point, 9):
-            if list[i] <= list[i + 1]:
-                down_count += 1
+        # Bear
+        if state == -1:
+            for i in range(0, length - 1):
+                if list[i] < list[i + 1]:
+                    down_count += 1
+                    point += 1
+                else:
+                    break
+            if point >= 9:
+                return down_count, up_count
+
+            for i in range(point, length - 1):
+                if list[i] >= list[i + 1]:
+                    down_count += 1
 
         return down_count, up_count
 
@@ -1086,7 +1277,44 @@ class zma20_strategy_quote(threading.Thread):
 
         return
 
+    def buy_bull_19th_oct_no_delay(self):
+        fake = 1
+        K_NO = 56
+        if self.oct_13th_strategy_trade_time() == 0:
+            return
+        ma3_list = self.MA3_list
+        ma5_list = self.MA5_list
+        vol_now = self.vol_now
+        vol_last = self.vol_last
+        MA20_vol = self.MA20_vol
+        MA20_vol_last = self.MA20_vol_last
+        cur = self.cur
+        MA5_now = ma5_list[0]
+        MA10_now = self.MA10_now
+        MA20_now = self.MA20_now
+        # MA50_cur = self.MA50_cur
+        deltaMA5_now = ma5_list[0] - ma5_list[1]
+        deltaMA10_now = self.deltaMA10_now
+        deltaMA20_now = self.deltaMA20_now
 
+        down_count = 0
+        up_count = 0
+        point = 0
+        ma5_ok = 0
+        ma3_ok = 0
+        ## VOL Break, and
+
+        ## When Positive Bar raise
+        if vol_now >= MA20_vol and \
+            self.ma_1m_table["open"][K_NO - 1] < self.ma_1m_table["close"][K_NO - 1]:
+            if deltaMA5_now >= 0 and deltaMA20_now >= -0.4 and \
+                    MA10_now + deltaMA10_now > MA20_now + deltaMA20_now and \
+                    MA5_now + deltaMA5_now > MA10_now + deltaMA10_now:
+                count, scope = self.get_ma5_list_scope()
+                if count <= 3 and scope >= 2:
+                    self.call_buy_bull()
+
+        return
 
     def buy_bull_13th_oct_delay(self):
         K_NO = 56
@@ -1195,6 +1423,82 @@ class zma20_strategy_quote(threading.Thread):
 
         return 0
 
+    def is_over_time(self, t_time):
+        cur_time = self.data_time
+        morning_start = t_time
+
+        morning_start_list = morning_start.split(":")
+        morning_start_second = int(morning_start_list[0]) * 3600 + int(morning_start_list[1]) * 60 + int(morning_start_list[2])
+
+
+        cur_time_list = cur_time.split(":")
+        cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
+
+        if cur_time_second > morning_start_second:
+            return 1
+
+        return 0
+
+    def cal_list_bow(self, list):
+        if list[0] > list[1]:
+            state = 1
+        else:
+            state = -1
+        length = len(list)
+        point = 0
+        # Bull
+        if state == 1:
+            for i in range(0, length - 1):
+                if list[i] > list[i + 1]:
+                    point += 1
+                else:
+                    break
+
+        # Bear
+        if state == -1:
+            for i in range(0, length - 1):
+                if list[i] < list[i + 1]:
+                    point += 1
+                else:
+                    break
+
+        return state, list[point]
+
+    def estimate_rough_zone(self):
+        MA10h_now = self.MA10h_now
+        MA50_cur = self.MA50_cur
+        MA50_3 = self.MA50_3
+        thresh = 20
+
+        # Startup Val
+        if self.rough_zone == 999:
+            if self.is_over_time("09:30:00") == 1:
+                if MA50_cur > MA10h_now + thresh:
+                    self.rough_zone = 1
+                elif MA50_cur > MA10h_now - thresh:
+                    self.rough_zone = 0
+                else:
+                    self.rough_zone = -1
+
+        if self.rough_zone == -1:
+            if MA50_cur >  MA10h_now + thresh and MA50_3 < MA10h_now + thresh:
+                self.rough_zone = 1
+
+        if self.rough_zone == 1:
+            if MA50_cur <  MA10h_now - thresh and MA50_3 > MA10h_now - thresh:
+                self.rough_zone = -1
+
+        if self.rough_zone == 0:
+            if MA50_cur >  MA10h_now + thresh and MA50_3 < MA10h_now + thresh:
+                self.rough_zone = 1
+
+            if MA50_cur <  MA10h_now - thresh and MA50_3 > MA10h_now - thresh:
+                self.rough_zone = -1
+
+
+
+
+
 
     def is_trap_zone(self):
         cur = self.cur
@@ -1202,11 +1506,79 @@ class zma20_strategy_quote(threading.Thread):
         deltaMA20_now = self.deltaMA20_now
         thresh = 20
 
-        if cur >= MA10h_now - thresh and cur <= MA10h_now + thresh and \
-            abs(deltaMA20_now) < 2.5:
-            return 1
-        else:
-            return 0
+        ma3_list = self.MA3_list
+        ma5_list = self.MA5_list
+
+        trend_ma3, bow_ma3 = self.cal_list_bow(ma3_list)
+        trend_ma5, bow_ma5 = self.cal_list_bow(ma5_list)
+
+        ## Above Avr
+        if self.rough_zone == 1:
+            ## Trend Up
+            if trend_ma5 == 1:
+                # Bow is above 1/2
+                if bow_ma5 > MA10h_now + thresh * 0.5:
+                    return 1
+                # Bow is above -1
+                elif bow_ma5 > MA10h_now - thresh:
+                    return 0
+                # Bow is below -1
+                else:
+                    if cur < MA10h_now - thresh * 0.5:
+                        return 1
+                    else:
+                        return 0
+            ## Trend Down
+            else:
+                # Bow is above 1
+                if bow_ma5 > MA10h_now + thresh:
+                    return 1
+                else:
+                    return 0
+
+        if self.rough_zone == -1:
+            ## Trend Down
+            if trend_ma5 == -1:
+                # Bow is below -1/2
+                if bow_ma5 < MA10h_now - thresh * 0.5:
+                    return 1
+                # Bow is below 1
+                elif bow_ma5 < MA10h_now + thresh:
+                    return 0
+                # Bow is above 1
+                else:
+                    if cur > MA10h_now - thresh * 0.5:
+                        return 1
+                    else:
+                        return 0
+            ## Trend Up
+            else:
+                # Bow is above 1
+                if bow_ma5 < MA10h_now - thresh:
+                    return 1
+                else:
+                    return 0
+
+        if self.rough_zone == 0:
+            ## Trend Down
+            if trend_ma5 == -1:
+                # Bow is below -1/2
+                if bow_ma5 < MA10h_now + thresh * 0.5:
+                    return 1
+                else:
+                    return 0
+
+            ## Trend Up
+            else:
+                # Bow is above 1
+                if bow_ma5 < MA10h_now - thresh * 0.5:
+                    return 1
+                else:
+                    return 0
+
+
+
+
 
     def guard_vol_break(self):
         #print("VOL MA20:",self.MA20_vol, "Last:", self.vol_last, " now:",self.vol_now)
@@ -1436,6 +1808,7 @@ class zma20_strategy_quote(threading.Thread):
                     self.MA3_list = stock_quote.get_MA3_List()
                     self.MA5_now = stock_quote.get_MA5_now()
                     self.MA5_list = stock_quote.get_MA5_List()
+                    self.MA5_list_reverse = stock_quote.get_MA5_List_reverse()
                     self.MA10_now = stock_quote.get_MA10_now()
                     self.MA10_cur = stock_quote.get_MA10_cur()
                     self.MA10_3 = stock_quote.get_MA10_3()
@@ -1466,8 +1839,12 @@ class zma20_strategy_quote(threading.Thread):
                 self.detect_zma10_decrease_start()
                 # Detect Empty and Buy
                 #self.detect_empty_decrease()
+                self.cal_ma5_channel()
+                self.cal_ma5_channel_zone()
+                self.estimate_rough_zone()
 
-                self.buy_bear_13th_oct_no_delay()
+
+                self.buy_bear_19th_oct_no_delay()
                 self.sell_bear_15th_oct()
                 # self.guard_burst()
                 # self.guard_bear()
@@ -1476,7 +1853,7 @@ class zma20_strategy_quote(threading.Thread):
                 #self.detect_empty_start()
 
 
-                self.buy_bull_13th_oct_no_delay()
+                self.buy_bull_19th_oct_no_delay()
                 self.sell_bull_15th_oct()
                 #self.guard_bull()
                 #self.empty_head()

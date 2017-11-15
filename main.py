@@ -147,7 +147,7 @@ def is_trade_morning_time(cur_time):
 if __name__ == "__main__":
 #    test = daytest()
 #    test.daytest()
-    while(1):
+    while(0):
         now_time = datetime.now()
         now_time_str = datetime.strftime(now_time, '%Y-%m-%d %H:%M:%S')
         if is_trade_morning_time(now_time_str[11:]) == 1:

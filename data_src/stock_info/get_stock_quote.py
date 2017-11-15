@@ -418,6 +418,9 @@ class get_stock_quote(threading.Thread):
     def get_deltaMA10_ma5(self):
         return self.deltaMA10_ma5
 
+    def get_MA5_List_reverse(self):
+        return self.ma5_list_reverse
+    
     def get_MA3_List(self):
         return self.ma3_list
 
@@ -476,7 +479,7 @@ class get_stock_quote(threading.Thread):
         return self.bear_ask_seller
 
     def store_kday(self):
-        self.get_ma_1m(100000)
+        self.get_ma_1m(1000000)
         self.ma_1m_table.to_csv("C:\\trade_ret_" + "all" + ".csv", index=False)
 
     def run(self):
@@ -526,7 +529,7 @@ class get_stock_quote(threading.Thread):
         if ret_status == RET_ERROR:
             print("subscribe fail 3 times")
             return -1
-
+        self.test = 0
         i = 180
         while(1):
             start = time.time()
