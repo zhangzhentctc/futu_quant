@@ -1,3 +1,20 @@
+CREATE DATABASE ml_k_analysis;
+USE ml_k_analysis;
+create table onekbar(
+id int(10) primary key not null auto_increment, 
+day int not null,
+num int not null,
+k_start float not null,
+k_end float not null,
+k_high float not null,
+k_low float not null,
+ma5 float not null,
+ma10 float not null,
+ma20 float not null,
+ret int not null
+);
+
+
 CREATE DATABASE trend2;
 USE trend2;
 create table dur2_trend(

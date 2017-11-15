@@ -41,14 +41,51 @@ class MySQLCommand(object):
             self.conn.commit()
         except:
             print("insert failed.:", sql)
+            return -1
+        return 0
+
+    def agency_begin(self):
+        #print("execute " + sql)
+        sql = "begin;"
+        try:
+            self.cursor.execute(sql)
+            self.conn.commit()
+        except:
+            print("agency_begin failed.:", sql)
+            return -1
+        return 0
+
+    def agency_commit(self):
+        #print("execute " + sql)
+        sql = "commit;"
+        try:
+            self.cursor.execute(sql)
+            self.conn.commit()
+        except:
+            print("agency_commit failed.:", sql)
+            return -1
+        return 0
+
+    def agency_rollback(self):
+        #print("execute " + sql)
+        sql = "rollback;"
+        try:
+            self.cursor.execute(sql)
+            self.conn.commit()
+        except:
+            print("agency_rollback failed.:", sql)
+            return -1
+        return 0
 
     def updateMysql(self, sql):
-        print("execute " + sql)
+        #print("execute " + sql)
         try:
             self.cursor.execute(sql)
             self.conn.commit()
         except:
             self.conn.rollback()
+            return -1
+        return 0
 
     def closeMysql(self):
         self.cursor.close()
