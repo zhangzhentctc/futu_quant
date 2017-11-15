@@ -475,6 +475,10 @@ class get_stock_quote(threading.Thread):
     def get_bear_ask_seller(self):
         return self.bear_ask_seller
 
+    def store_kday(self):
+        self.get_ma_1m(100000)
+        self.ma_1m_table.to_csv("C:\\trade_ret_" + "all" + ".csv", index=False)
+
     def run(self):
         self.ready = 0
         ret_status = RET_OK
@@ -543,6 +547,10 @@ class get_stock_quote(threading.Thread):
 
             self.get_ma_1m(self.k_num)
             self.get_ma_60m()
+            if self.test == 0:
+                self.store_kday()
+                self.test = 1
+                continue
 
             self.cal_delta_ma()
             self.cal_ma_60m()
