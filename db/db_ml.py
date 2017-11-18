@@ -44,7 +44,7 @@ class db_ml:
     def dbop_update_day_data_trade_mark(self, db_basic, ret, day, num):
         sql = "update onekbar set ret = " + str(ret) + " where day = " + str(day) + " and num = " + str(num) + ";"
         ret = db_basic.insertMysql(sql)
-        print(sql)
+        #print(sql)
         return ret
 
 ###########Oprations on table samples
