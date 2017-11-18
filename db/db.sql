@@ -14,6 +14,40 @@ ma20 float not null,
 ret int not null
 );
 
+create table samples(
+id int(10) primary key not null auto_increment, 
+day int not null,
+num int not null,
+k_end_1 float not null,
+ma5_1 float not null,
+ma10_1 float not null,
+ma20_1 float not null,
+k_end_2 float not null,
+ma5_2 float not null,
+ma10_2 float not null,
+ma20_2 float not null,
+k_end_3 float not null,
+ma5_3 float not null,
+ma10_3 float not null,
+ma20_3 float not null,
+k_end_4 float not null,
+ma5_4 float not null,
+ma10_4 float not null,
+ma20_4 float not null,
+k_end_5 float not null,
+ma5_5 float not null,
+ma10_5 float not null,
+ma20_5 float not null,
+k_end_6 float not null,
+ma5_6 float not null,
+ma10_6 float not null,
+ma20_6 float not null,
+k_end_7 float not null,
+ma5_7 float not null,
+ma10_7 float not null,
+ma20_7 float not null
+);
+
 
 CREATE DATABASE trend2;
 USE trend2;
