@@ -1,7 +1,7 @@
 import matplotlib
 
 from strategies.ml.test.comparer.inter_comparer import *
-from strategies.ml.test.comparer.sample_comparer import *
+from strategies.ml.test.comparer.sample_dayk_comparer import *
 from strategies.ml.test.data_handler.dayk_handler import *
 from strategies.ml.test.data_handler.sample_handler import *
 
@@ -30,7 +30,7 @@ class sample_tester:
             dayk.init_db()
             dayk.import_dayk_from_DB(date)
             dayk.reset_ret()
-            sp_comp = sample_comparer(dayk, samp_h)
+            sp_comp = sample_dayk_comparer(dayk, samp_h)
             sp_comp.init_compare_data()
             sp_comp.get_sample(2)
 

@@ -3,7 +3,7 @@ import os
 import matplotlib
 
 from strategies.ml.test.comparer.inter_comparer import *
-from strategies.ml.test.comparer.sample_comparer import *
+from strategies.ml.test.comparer.sample_dayk_comparer import *
 from strategies.ml.test.data_handler.dayk_handler import *
 from strategies.ml.test.data_handler.sample_handler import *
 
