@@ -1,9 +1,9 @@
 import matplotlib
+from strategies.ml.comparer.sample_dayk_comparer import *
+from strategies.ml.data_handler.dayk_handler import *
+from strategies.ml.data_handler.sample_handler import *
 
-from strategies.ml.test.comparer.inter_comparer import *
-from strategies.ml.test.comparer.sample_dayk_comparer import *
-from strategies.ml.test.data_handler.dayk_handler import *
-from strategies.ml.test.data_handler.sample_handler import *
+from strategies.ml.comparer.inter_comparer import *
 
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg

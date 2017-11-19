@@ -1,4 +1,4 @@
-from strategies.ml.test.data_handler.sample_handler import *
+from strategies.ml.data_handler.sample_handler import *
 
 
 if __name__ == "__main__":

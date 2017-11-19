@@ -36,7 +36,7 @@ class sample_comparer:
         if distance < 30:
             return 1
         else:
-            return 0
+            return 1
 
     def __cal_distance(self, sample_num):
         if sample_num > self.sample_handler.length - 1 or sample_num < 0:
@@ -70,6 +70,8 @@ class sample_comparer:
                     min_index = index
                     min_distance = self.comp_ret[index][2]
             return min_index
+
+
 
     def norm_compare_data(self):
         all_min = self.__find_compare_data_min()
