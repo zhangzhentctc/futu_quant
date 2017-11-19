@@ -41,6 +41,7 @@ class get_stock_quote(threading.Thread):
         self.ma5_list = []
         self.ma5_list_reverse = []
         self.ma3_list = []
+        self.onemk =[]
 
     def subscribe_stock(self, type):
         # subscribe "QUOTE"
@@ -162,6 +163,8 @@ class get_stock_quote(threading.Thread):
                 # Make Data List
                 self.ma_1m_table = kline_table
                 return self.ma_1m_table
+
+
 
     def get_ma_60m(self, number=10):
 
@@ -292,6 +295,64 @@ class get_stock_quote(threading.Thread):
 
     def get_MA10h_now(self):
         return self.MA10h_now
+
+    def cal_1mk(self, bar_cnt):
+        K_NO = self.k_num
+        list_count = bar_cnt
+        if K_NO < 56:
+            return
+
+        try:
+            kline = self.ma_1m_table
+        except:
+            return
+
+        if kline.iloc[K_NO - 1, 3] == 0:
+            return
+
+        ma_length = 5
+        list_ma5 = []
+        for i in range(0, list_count):
+            tmp = 0
+            for j in range(0, ma_length):
+                tmp += kline.iloc[K_NO - 1 - i - j, 3]
+            val = tmp / ma_length
+            val = round(val, 2)
+            list_ma5.append(val)
+
+        ma_length = 10
+        list_ma10 = []
+        for i in range(0, list_count):
+            tmp = 0
+            for j in range(0, ma_length):
+                tmp += kline.iloc[K_NO - 1 - i - j, 3]
+            val = tmp / ma_length
+            val = round(val, 2)
+            list_ma10.append(val)
+
+        ma_length = 20
+        list_ma20 = []
+        for i in range(0, list_count):
+            tmp = 0
+            for j in range(0, ma_length):
+                tmp += kline.iloc[K_NO - 1 - i - j, 3]
+            val = tmp / ma_length
+            val = round(val, 2)
+            list_ma20.append(val)
+
+        list_close = []
+        for i in range(0, list_count):
+            val = kline.iloc[K_NO - 1 - i, 3]
+            list_close.append(val)
+
+        onemk = []
+        for i in range(0, list_count):
+            onemk.append([list_close[i], list_ma5[i], list_ma10[i], list_ma20[i]])
+        self.onemk = onemk
+        return
+
+    def get_onemk(self):
+        return self.onemk
 
 
     def cal_delta_ma(self):
@@ -555,6 +616,7 @@ class get_stock_quote(threading.Thread):
                 self.test = 1
                 continue
 
+            self.cal_1mk(7)
             self.cal_delta_ma()
             self.cal_ma_60m()
             self.cal_MA5_list()
