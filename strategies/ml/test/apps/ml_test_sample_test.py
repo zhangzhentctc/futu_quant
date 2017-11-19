@@ -1,9 +1,10 @@
-from strategies.ml.sample_handler import *
-from strategies.ml.test.data_handler.dayk_handler import *
-from strategies.ml.test.comparer.sample_comparer import *
-from strategies.ml.test.comparer.inter_comparer import *
-import os
 import matplotlib
+
+from strategies.ml.test.comparer.inter_comparer import *
+from strategies.ml.test.comparer.sample_comparer import *
+from strategies.ml.test.data_handler.dayk_handler import *
+from strategies.ml.test.data_handler.sample_handler import *
+
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
