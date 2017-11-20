@@ -21,7 +21,7 @@ COL_NUM = 13
 
 
 class dayk_handler:
-    def __init__(self, date):
+    def __init__(self, date=""):
         self.count = 0
         self.daytestcount = 0
         self.tmp = 0
