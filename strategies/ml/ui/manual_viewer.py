@@ -7,7 +7,7 @@ from strategies.ml.ui.whatthefuck import *
 import pandas as pd
 
 
-class test_ret_viewer:
+class manual_viewer:
     def __init__(self, comparer):
         self.wtf1 = whatthefuck()
         self.wtf2 = whatthefuck()

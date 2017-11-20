@@ -103,7 +103,7 @@ class sample_comparer:
         if self.s_simu.get_sample_status() == 1:
             return RET_OK
         else:
-            return RET_OK
+            return RET_ERR
 
     def __is_distance_close(self):
         if self.distance < self.distance_T:
@@ -128,15 +128,15 @@ class sample_comparer:
         comp_ret = []
         ui_ret = []
         while self.move_next_quo(1) == RET_OK:
-            if self.__is_sample_avail() == RET_OK:
-                while self.move_next_sap(1) == RET_OK:
+            while self.move_next_sap(1) == RET_OK:
+                if self.__is_sample_avail() == RET_OK:
                     distance = self.distance
                     sample_type = self.__get_sample_type()
                     sample_id = self.__get_sample_id()
                     if self.__is_distance_close() == RET_OK:
                         comp_ret.append([sample_id, sample_type, distance])
                         ui_ret.append([self.q_simu.date, self.__get_quote_point(), sample_type, distance, 0, 0])
-                self.s_simu.reset_point()
+            self.s_simu.reset_point()
         self.comp_ret = comp_ret
         self.ui_ret = ui_ret
         return
