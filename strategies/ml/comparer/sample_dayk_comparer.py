@@ -25,6 +25,13 @@ class sample_dayk_comparer:
         self.sample_handler = sample_handler
 
     def init_compare_data(self):
+        if self.sample_handler.get_sample_type(self.sample_num) < 0:
+            self.mirror_compare_data()
+        else:
+            self.translation_compare_data()
+
+
+    def translation_compare_data(self):
         close_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_END]
         ma5_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_MA5]
         ma10_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_MA10]
@@ -41,6 +48,48 @@ class sample_dayk_comparer:
         if ma20_list_min < all_min:
             all_min = ma20_list_min
 
+        self.close_list = close_list - all_min
+        self.ma5_list = ma5_list - all_min
+        self.ma10_list = ma10_list - all_min
+        self.ma20_list = ma20_list - all_min
+
+    def mirror_compare_data(self):
+        close_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_END]
+        ma5_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_MA5]
+        ma10_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_MA10]
+        ma20_list = self.dayk_handler.day_1ktable.iloc[self.point:self.point + self.inspect_bars, COL_MA20]
+        ## Find Max
+        close_list_max = close_list.max()
+        ma5_list_max = ma5_list.max()
+        ma10_list_max = ma10_list.max()
+        ma20_list_max = ma20_list.max()
+        all_max = close_list_max
+        if ma5_list_max > all_max:
+            all_max = ma5_list_max
+        if ma10_list_max > all_max:
+            all_max = ma10_list_max
+        if ma20_list_max > all_max:
+            all_max = ma20_list_max
+        ## Mirror based on Max
+        ptr = self.point
+        for i in range(0, len(close_list)):
+            close_list[ptr + i] = 2 * all_max - close_list[ptr + i]
+            ma5_list[ptr + i] = 2 * all_max - ma5_list[ptr + i]
+            ma10_list[ptr + i] = 2 * all_max - ma10_list[ptr + i]
+            ma20_list[ptr + i] = 2 * all_max - ma20_list[ptr + i]
+
+        ## Translate
+        close_list_min = close_list.min()
+        ma5_list_min = ma5_list.min()
+        ma10_list_min = ma10_list.min()
+        ma20_list_min = ma20_list.min()
+        all_min = close_list_min
+        if ma5_list_min < all_min:
+            all_min = ma5_list_min
+        if ma10_list_min < all_min:
+            all_min = ma10_list_min
+        if ma20_list_min < all_min:
+            all_min = ma20_list_min
         self.close_list = close_list - all_min
         self.ma5_list = ma5_list - all_min
         self.ma10_list = ma10_list - all_min
@@ -75,6 +124,45 @@ class sample_dayk_comparer:
         ma5_list = self.ma5_list.copy()
         ma10_list = self.ma10_list.copy()
         ma20_list = self.ma20_list.copy()
+        if self.sample_handler.get_sample_type(self.sample_num) < 0:
+            ## Find Max
+            close_list_max = close_list.max()
+            ma5_list_max = ma5_list.max()
+            ma10_list_max = ma10_list.max()
+            ma20_list_max = ma20_list.max()
+            all_max = close_list_max
+            if ma5_list_max > all_max:
+                all_max = ma5_list_max
+            if ma10_list_max > all_max:
+                all_max = ma10_list_max
+            if ma20_list_max > all_max:
+                all_max = ma20_list_max
+            ## Mirror based on Max
+            ptr = self.point
+            for i in range(0, len(close_list)):
+                close_list[ptr + i] = 2 * all_max - close_list[ptr + i]
+                ma5_list[ptr + i]   = 2 * all_max - ma5_list[ptr + i]
+                ma10_list[ptr + i]  = 2 * all_max - ma10_list[ptr + i]
+                ma20_list[ptr + i]  = 2 * all_max - ma20_list[ptr + i]
+
+            ## Translate
+            close_list_min = close_list.min()
+            ma5_list_min = ma5_list.min()
+            ma10_list_min = ma10_list.min()
+            ma20_list_min = ma20_list.min()
+            all_min = close_list_min
+            if ma5_list_min < all_min:
+                all_min = ma5_list_min
+            if ma10_list_min < all_min:
+                all_min = ma10_list_min
+            if ma20_list_min < all_min:
+                all_min = ma20_list_min
+            close_list = close_list - all_min
+            ma5_list = ma5_list - all_min
+            ma10_list = ma10_list - all_min
+            ma20_list = ma20_list - all_min
+
+
         distance_min = self.cal_single_distance(close_list, ma5_list, ma10_list, ma20_list)
         self.distance = distance_min
         return
@@ -146,6 +234,8 @@ class sample_dayk_comparer:
             self.sample_num + step < 0:
             return
         self.sample_num += step
+        id = self.sample_handler.get_sample_id(self.sample_num)
+        print("Sample ID: ", id)
         self.cal_best_distance()
 
 

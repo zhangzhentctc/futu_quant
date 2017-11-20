@@ -15,9 +15,7 @@ onemk = [
 if __name__ == "__main__":
     start = time.time()
     samp_h = sample_handler()
-    samp_h.init_db()
-    samp_h.import_samples_from_db()
-    samp_h.translation_samples()
+    samp_h.prepare_samples()
 
     #samp_c = sample_comparer(samp_h, onemk)
     #samp_c.norm_compare_data()

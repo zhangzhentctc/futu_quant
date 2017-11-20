@@ -2,9 +2,10 @@ import matplotlib
 from strategies.ml.comparer.sample_dayk_comparer import *
 from strategies.ml.data_handler.dayk_handler import *
 from strategies.ml.data_handler.sample_handler import *
-
+from strategies.ml.comparer.sample_dayk_comparer import *
+from strategies.ml.simulator.quote_simulator import *
 from strategies.ml.comparer.inter_comparer import *
-
+from strategies.ml.comparer.sample_comparer import *
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -12,36 +13,29 @@ from tkinter import *
 
 
 
-class sample_tester:
+class simulator_tester:
     def __init__(self):
-        self.distance_t = 30
+        self.distance_t = 100
         self.date_list = ["20171019", "20171020", "20171115", "20171116", "20171117"]
         self.test_ret = []
 
     def auto_test_sample(self):
         test_ret = []
         samp_h = sample_handler()
-        samp_h.init_db()
-        samp_h.import_samples_from_db()
-        samp_h.translation_samples()
+        samp_h.prepare_samples()
 
         for date in self.date_list:
-            dayk = dayk_handler()
-            dayk.init_db()
-            dayk.import_dayk_from_DB(date)
-            dayk.reset_ret()
-            sp_comp = sample_dayk_comparer(dayk, samp_h)
-            sp_comp.init_compare_data()
-            sp_comp.get_sample(2)
-
-            for i in range(0, samp_h.length):
-                for j in range(19, dayk.length - sp_comp.inspect_bars):
-                    sp_comp.get_data(1)
-                    if sp_comp.distance < self.distance_t:
-                        sp_comp.set_ret(self.distance_t)
-                        print("set: ", date, " num:", sp_comp.point)
-                        test_ret.append([date, sp_comp.point, sp_comp.distance, 0, 0])
-                #sp_comp.get_sample(1)
+            q_simu = quote_simulator(date)
+            q_simu.prepare_quote_simulator()
+            while q_simu.get_next_data() == 0:
+                quote_data = q_simu.get_ret_data()
+                samp_c = sample_comparer(samp_h, quote_data)
+                samp_c.distance_T = self.distance_t
+                ret = samp_c.process_compare_single(2)
+                if ret != 0:
+                    q_simu.set_distance(samp_c.best_retset[2])
+                    test_ret.append([date, q_simu.point, samp_c.best_retset[2], 0, 0])
+        print(test_ret)
         self.test_ret = test_ret
 
 
@@ -105,7 +99,7 @@ class test_ret_viewer:
             return
         self.wtf1.add_x(step)
         day = self.tester.date_list[self.wtf1.cnt]
-        dayk = dayk_handler()
+        dayk = dayk_handler(day)
         dayk.init_db()
         dayk.import_dayk_from_DB(day)
         self.all_plot.clear()
@@ -140,7 +134,7 @@ class test_ret_viewer:
         self.__show_unit_plot(day, num)
 
     def __show_unit_plot(self, day, num):
-        dayk = dayk_handler()
+        dayk = dayk_handler(day)
         dayk.init_db()
         dayk.import_dayk_from_DB(day)
         comp = inter_comparer(dayk, dayk)
@@ -163,10 +157,9 @@ class test_ret_viewer:
 
 
 if __name__ == "__main__":
-#    Usage
-    tester = sample_tester()
+    tester = simulator_tester()
     tester.auto_test_sample()
+
     viewer = test_ret_viewer(tester)
     viewer.init_viwer()
     viewer.start_viewer()
-

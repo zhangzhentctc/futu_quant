@@ -15,11 +15,11 @@ class sample_handler:
         self.db.connectMysql()
         self.dbop = db_ml()
 
-    def set_sample(self, day, num, sap_vals):
-        self.dbop.dbop_insert_sample(self.db, day, num, sap_vals)
+    def set_sample(self, day, num, sap_vals, type):
+        self.dbop.dbop_insert_sample(self.db, day, num, sap_vals, type)
 
-    def input_sample_mannual(self, day, num, sample_vals):
-        self.set_sample(day, num, sample_vals)
+    def input_sample_mannual(self, day, num, sample_vals, type):
+        self.set_sample(day, num, sample_vals, type)
         return
 
 
@@ -64,13 +64,30 @@ class sample_handler:
 
 
     def translation_samples(self):
-        for i in range(0, self.length):
-            row_min = self.samples.iloc[i, 2]
-            for j in range(3, 30):
-                if self.samples.iloc[i, j] < row_min:
-                    row_min = self.samples.iloc[i, j]
-            for j in range(2, 30):
-                self.samples.iloc[i, j] -= row_min
+        for sample_num in range(0, self.length):
+            type = self.get_sample_type(sample_num)
+            if type < 0:
+                row_max = self.samples.iloc[sample_num, 2]
+                for j in range(3, 30):
+                    if self.samples.iloc[sample_num, j] > row_max:
+                        row_max = self.samples.iloc[sample_num, j]
+
+                for j in range(2, 30):
+                    self.samples.iloc[sample_num, j] = 2 * row_max - self.samples.iloc[sample_num, j]
+
+                row_min = self.samples.iloc[sample_num, 2]
+                for j in range(3, 30):
+                    if self.samples.iloc[sample_num, j] < row_min:
+                        row_min = self.samples.iloc[sample_num, j]
+                for j in range(2, 30):
+                    self.samples.iloc[sample_num, j] -= row_min
+            if type > 0:
+                row_min = self.samples.iloc[sample_num, 2]
+                for j in range(3, 30):
+                    if self.samples.iloc[sample_num, j] < row_min:
+                        row_min = self.samples.iloc[sample_num, j]
+                for j in range(2, 30):
+                    self.samples.iloc[sample_num, j] -= row_min
         return
 
     def get_sample_status(self, sample_num):
@@ -82,3 +99,8 @@ class sample_handler:
     def get_sample_id(self, sample_num):
         return self.samples.iloc[sample_num, COL_SAMPLE_ID]
 
+    def prepare_samples(self):
+        self.init_db()
+        self.import_samples_from_db()
+        self.translation_samples()
+        

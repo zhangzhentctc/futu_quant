@@ -49,19 +49,19 @@ class db_ml:
 
 ###########Oprations on table samples
     ### k_vals should be a 4 * 7 matrix
-    def dbop_insert_sample(self, db_basic, day, num, k_vals):
+    def dbop_insert_sample(self, db_basic, day, num, k_vals, type):
         sql = "insert into samples(day,num"
         print(k_vals)
         for i in range(1, 8):
             sql += ",k_end_" + str(i) + ",ma5_" + str(i) + ",ma10_" + str(i) + ",ma20_" + str(i)
 
-        sql += ")values(" + \
+        sql += ",type)values(" + \
               str(day) + "," + str(num)
 
         for i in range(0, 7):
             for j in range(0, 4):
                 sql += "," + str(k_vals[i][j])
-
+        sql += "," + str(type)
         sql += ");"
 
         ret = db_basic.insertMysql(sql)

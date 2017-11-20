@@ -21,7 +21,7 @@ COL_NUM = 13
 
 
 class dayk_handler:
-    def __init__(self):
+    def __init__(self, date):
         self.count = 0
         self.daytestcount = 0
         self.tmp = 0
@@ -29,6 +29,7 @@ class dayk_handler:
         self.trend = 0
         self.trend_p_cnt = 0
         self.data = []
+        self.date = date
 
         self.distance = -1
         self.inspect_bars = 7
@@ -153,3 +154,7 @@ class dayk_handler:
             self.day_1ktable.iloc[pos, COL_RET] = 0
             num = self.day_1ktable.iloc[pos, COL_NUM]
             self.dbop.dbop_update_day_data_trade_mark(self.db, 0, self.date, num)
+
+    def prepare_dayk(self):
+        self.init_db()
+        self.import_dayk_from_DB(self.date)
