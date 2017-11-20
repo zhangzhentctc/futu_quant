@@ -49,6 +49,14 @@ class quote_simulator:
         self.__generate_ret()
         return 0
 
+    def reset_point(self):
+        self.point = 19
+        self.__generate_ret()
+        return 0
+
+    def get_point(self):
+        return self.point
+
     def get_ret_data(self):
         return self.ret_data
 

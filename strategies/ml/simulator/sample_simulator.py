@@ -1,5 +1,5 @@
 import math
-from strategies.ml.data_handler.dayk_handler import *
+from strategies.ml.data_handler.sample_handler import *
 
 COL_CODE = 0
 COL_TIME = 1
@@ -21,13 +21,15 @@ COL_NUM = 13
 ## Operation of Pointer to Samples
 ##
 class sample_simulator:
-    def __init__(self, sample_handler):
+    def __init__(self):
         self.point = 0
         self.inspect_bars = 7
-        self.sample_handler = sample_handler
 
         self.ret_data = []
 
+    def prepare_sample_simulator(self):
+        self.sample_handler = sample_handler()
+        self.sample_handler.prepare_samples()
 
     def __generate_ret(self):
         ret_data = []
@@ -42,14 +44,23 @@ class sample_simulator:
 
     def get_next_data(self, step = 1):
         if self.point + step < 0 or self.point + step >= self.sample_handler.length:
-            print("No Next Data")
             return -1
         self.point += step
         self.__generate_ret()
         return 0
 
+    def reset_point(self):
+        self.point = 0
+        self.__generate_ret()
+
     def get_ret_data(self):
         return self.ret_data
 
+    def get_sample_id(self):
+        return self.sample_handler.get_sample_id(self.point)
+
     def get_sample_type(self):
         return self.sample_handler.get_sample_type(self.point)
+
+    def get_sample_status(self):
+        return self.sample_handler.get_sample_status(self.point)
