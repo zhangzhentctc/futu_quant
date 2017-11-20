@@ -541,7 +541,7 @@ class get_stock_quote(threading.Thread):
 
     def store_kday(self):
         self.get_ma_1m(1000000)
-        self.ma_1m_table.to_csv("C:\\trade_ret_" + "all" + ".csv", index=False)
+        self.ma_1m_table.to_csv("C:\\dayk_" + "2017all" + ".csv", index=False)
 
     def run(self):
         self.ready = 0
