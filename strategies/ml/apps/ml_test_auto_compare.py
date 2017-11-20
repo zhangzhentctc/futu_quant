@@ -11,6 +11,7 @@ def add_ui_ret(sub_ui_ret):
 
 if __name__ == "__main__":
     date_list = ["20171019", "20171020", "20171115", "20171116", "20171117"]
+    #date_list=[]
     ui_ret = []
     for date in date_list:
         q_simu = quote_simulator(date)
@@ -20,13 +21,14 @@ if __name__ == "__main__":
         s_simu.prepare_sample_simulator()
 
         comparer = sample_comparer(q_simu, s_simu)
-        comparer.set_distance_t(50)
+        comparer.set_distance_t(40)
         comparer.init_compare_data()
 
         comparer.process_k_distance()
         add_ui_ret(comparer.ui_ret)
 
     print(ui_ret)
+
     if len(ui_ret) == 0:
         print("No Result!")
     else:

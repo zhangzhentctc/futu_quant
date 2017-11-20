@@ -32,7 +32,7 @@ class auto_viewer:
     def __init_text(self):
         mytext = Text(self.root, width=50, height=5)
         mytext.pack()
-        self.__refresh_ret_text(mytext, self.wtf1)
+        self.__refresh_ret_text(mytext, self.wtf2)
 
     def __refresh_ret_text(self, text, wtf):
         string = wtf.string
@@ -55,7 +55,7 @@ class auto_viewer:
         self.canvs.draw()
 
 
-        self.wtf1.string = str(self.ui_ret[0][3])
+        self.wtf2.string = str(self.ui_ret[0][3])
         self.plot_small_quo.clear()
         self.plot_small_quo.plot()
         self.canvs.draw()
@@ -87,7 +87,7 @@ class auto_viewer:
         if self.wtf1.cnt + step > len(self.date_list) - 1 or self.wtf1.cnt + step < 0:
             return
         self.wtf1.add_x(step)
-        self.wtf1.string = str(self.ui_ret[0][3])
+        #self.wtf1.string = str(self.ui_ret[self.wtf1.cnt][3])
         day = self.date_list[self.wtf1.cnt]
 
         self.plot_day_quo(day)
@@ -117,7 +117,8 @@ class auto_viewer:
         if self.wtf2.cnt + step > len(self.ui_ret) - 1 or self.wtf2.cnt + step < 0:
             return
         self.wtf2.add_x(step)
-        self.wtf1.string = str(self.ui_ret[0][3])
+        self.wtf2.string = str(self.ui_ret[self.wtf2.cnt][3])
+        print(self.wtf2.string)
         day = self.ui_ret[self.wtf2.cnt][0]
         num = self.ui_ret[self.wtf2.cnt][1]
         self.plot_unit_quo(day, num)
