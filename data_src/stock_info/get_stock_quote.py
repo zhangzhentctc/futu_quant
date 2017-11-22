@@ -9,7 +9,11 @@ class get_stock_quote(threading.Thread):
         self.__quote_ctx = qc
         self.stock_code_list = [stock_code, bull_code, bear_code]
         self.cur_stock_quoto = 0
+        self.cur_stock_quoto_delta = 0
         self.cur_stock_quoto_index = "last_price"
+        self.cur_stock_quoto_volume = 0
+        self.cur_stock_quoto_volume_delta = 0
+        self.cur_stock_quoto_volume_index = "volume"
         self.data_time = ""
         self.data_time_index = "data_time"
         self.amplitude_index = "amplitude"
@@ -62,13 +66,31 @@ class get_stock_quote(threading.Thread):
             return RET_ERROR
         quote_table = ret_data
         #print("Quoto", ret_data)
+
+
         val = quote_table[self.cur_stock_quoto_index][0]
         cur_time = quote_table[self.data_time_index][0]
         cur_amplitude = quote_table[self.amplitude_index][0]
+        cur_volume = quote_table[self.cur_stock_quoto_volume_index][0]
+
+
         if val == 0:
             print("Get Val = 0 skip")
             return RET_ERROR
-        self.cur_stock_quoto = val
+
+        if self.cur_stock_quoto_volume == 0:
+            self.cur_stock_quoto_volume = cur_volume
+        else:
+            self.cur_stock_quoto_volume_delta = cur_volume - self.cur_stock_quoto_volume
+            self.cur_stock_quoto_volume = cur_volume
+
+        if self.cur_stock_quoto == 0:
+            self.cur_stock_quoto = val
+        else:
+            self.cur_stock_quoto_delta = val - self.cur_stock_quoto
+            self.cur_stock_quoto = val
+
+
         self.data_time = cur_time
         self.cur_amplitude = cur_amplitude
         return RET_OK
@@ -276,8 +298,8 @@ class get_stock_quote(threading.Thread):
 
         self.ma5_list = list
         self.ma5_list_reverse = list_reverse
-        print(list)
-        print(list_reverse)
+        #print(list)
+        #print(list_reverse)
         return
 
     def cal_ma_60m(self):
@@ -623,6 +645,8 @@ class get_stock_quote(threading.Thread):
             self.cal_MA3_list()
             self.cal_vol_ma()
             self.ready = 1
+            print("CUR D:", self.cur_stock_quoto_delta)
+            print("VOL D:", self.cur_stock_quoto_volume_delta)
             end = time.time()
             dur = end - start
             if dur < 0:
