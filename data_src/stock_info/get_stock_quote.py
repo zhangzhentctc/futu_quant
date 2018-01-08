@@ -60,6 +60,13 @@ class get_stock_quote(threading.Thread):
             return RET_ERROR, ret_data
         return RET_OK, ret_data
 
+    def get_rt_ticker(self):
+        ret_status, ret_data = self.__quote_ctx.get_rt_ticker("HK_FUTURE.999010", num=500)
+        if ret_status == RET_ERROR:
+            print("Ticker Error: ", ret_data)
+            return RET_ERROR
+        print("Ticker", ret_data)
+
     def get_cur_stock_quoto(self):
         ret_status, ret_data = self.__quote_ctx.get_stock_quote(self.stock_code_list)
         if ret_status == RET_ERROR:
@@ -612,7 +619,19 @@ class get_stock_quote(threading.Thread):
         if ret_status == RET_ERROR:
             print("subscribe fail 3 times")
             return -1
-        self.test = 0
+
+        for i in range (0, self.subscribe_trail):
+            ret_status, ret_data = self.subscribe_stock("TICKER")
+            if ret_status == RET_OK:
+                break
+            print("subscribe fail. Retry.")
+            time.sleep(0.5)
+
+        if ret_status == RET_ERROR:
+            print("subscribe fail 3 times")
+            return -1
+
+        self.test = 1
         i = 180
         while(1):
             start = time.time()
@@ -620,17 +639,7 @@ class get_stock_quote(threading.Thread):
             if ret == RET_ERROR:
                 continue
 
-            start_time = "09:31:00"
-            cur_time = self.data_time
-            start_time_list = start_time.split(":")
-            start_time_second = int(start_time_list[0]) * 3600 + int(start_time_list[1]) * 60 + int(start_time_list[2])
-            cur_time_list = cur_time.split(":")
-            cur_time_second = int(cur_time_list[0]) * 3600 + int(cur_time_list[1]) * 60 + int(cur_time_list[2])
-            if cur_time_second >=start_time_second:
-                ret = self.get_ask_bid()
-                if ret == RET_ERROR:
-                    continue
-
+            self.get_rt_ticker()
             self.get_ma_1m(self.k_num)
             self.get_ma_60m()
             if self.test == 0:

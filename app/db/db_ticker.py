@@ -23,8 +23,9 @@ class db_ticker:
         time_tl = time_.split(" ")
         sql = "insert into ticker(date, time, price, volume, direction,　sequence) values(" + \
               str(time_tl[0]) + "," + str(time_tl[1]) + "," + str(price) + "," + str(volume) + "," + str(direction) + "," + str(sequence) + ");"
-        ret = db_basic.insertMysql(sql)
-        return ret
+        print(sql)
+        #ret = db_basic.insertMysql(sql)
+        return 1
 
 
     def dbop_get_day_ticker(self, db_basic, day):

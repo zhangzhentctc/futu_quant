@@ -4,7 +4,7 @@ import time
 
 
 class get_stock_quote(threading.Thread):
-    def __init__(self, qc, ticker_buff, bull_code, bear_code, stock_code="HK_FUTURE.999010", cycle= 0.5):
+    def __init__(self, qc, ticker_buff, bull_code = "HK.60347", bear_code = "HK.65241", stock_code="HK_FUTURE.999010", cycle= 0.5):
         super(get_stock_quote, self).__init__()
         self.__quote_ctx = qc
         self.stock_code_list = [stock_code, bull_code, bear_code]
@@ -120,12 +120,11 @@ class get_stock_quote(threading.Thread):
         return RET_OK
 
     def process_new_tickers(self):
-        print(self.ticker_new_list)
+        #print(self.ticker_new_list)
         if self.ticker_buff.mutex_lock.acquire(1):
             self.ticker_buff.open_mmap()
             ret, s = self.ticker_buff.buffer_read()
             if s != "":
-                print("[Server] Get sm:" + s)
                 old_data = json.loads(s)
                 list = old_data["data"]
             else:
@@ -150,7 +149,7 @@ class get_stock_quote(threading.Thread):
         if len(self.ticker_tl_old.index)  != self.ticker_num or len(self.ticker_tl.index) != self.ticker_num:
             return
         for i in range(0, self.ticker_num):
-            if self.ticker_tl_old[""][i] == self.ticker_tl[""][0]:
+            if self.ticker_tl_old["sequence"][i] == self.ticker_tl["sequence"][0]:
                 first_match = i
                 break
 
@@ -162,7 +161,7 @@ class get_stock_quote(threading.Thread):
                 price = self.ticker_tl["price"][i]
                 volume = self.ticker_tl["volume"][i]
                 ticker_direction = self.ticker_tl["ticker_direction"][i]
-                sequence = self.ticker_tl["sequence"][i]
+                sequence = str(self.ticker_tl["sequence"][i])
                 self.ticker_new_list.append([time, price, volume, ticker_direction, sequence])
         else:
             # Add Ticker_TL N-i to N
@@ -171,7 +170,7 @@ class get_stock_quote(threading.Thread):
                 price = self.ticker_tl["price"][i]
                 volume = self.ticker_tl["volume"][i]
                 ticker_direction = self.ticker_tl["ticker_direction"][i]
-                sequence = self.ticker_tl["sequence"][i]
+                sequence = str(self.ticker_tl["sequence"][i])
                 self.ticker_new_list.append([time, price, volume, ticker_direction, sequence])
 
         return
@@ -181,11 +180,13 @@ class get_stock_quote(threading.Thread):
     def get_cur_stock_ticker(self):
         ret_status, ret_data = self.__quote_ctx.get_rt_ticker(self.stock_code_list[0], self.ticker_num)
         if ret_status == RET_ERROR:
+            print(ret_data)
             return RET_ERROR
         ticker_table = ret_data
         self.ticker_tl_old = self.ticker_tl
-        self.ticker_tl = ticker_table
 
+        self.ticker_tl = ticker_table.copy()
+        #print(self.ticker_tl)
         return RET_OK
 
     def find_seller(self, ask_or_bid, seller_ident):
@@ -705,6 +706,19 @@ class get_stock_quote(threading.Thread):
         if ret_status == RET_ERROR:
             print("subscribe fail 3 times")
             return -1
+
+        #### Subscribe Ticker
+        for i in range (0, self.subscribe_trail):
+            ret_status, ret_data = self.subscribe_stock("TICKER")
+            if ret_status == RET_OK:
+                break
+            print("subscribe fail. Retry.")
+            time.sleep(0.5)
+
+        if ret_status == RET_ERROR:
+            print("subscribe fail 3 times")
+            return -1
+        self.init_ticker_tl()
         self.test = 0
         i = 180
         while(1):
@@ -739,7 +753,7 @@ class get_stock_quote(threading.Thread):
             self.cal_vol_ma()
 
             ### Ticker
-            self.init_ticker_tl()
+
             self.get_cur_stock_ticker()
             self.cal_new_tickers()
             self.process_new_tickers()

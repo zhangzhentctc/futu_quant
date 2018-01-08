@@ -17,11 +17,11 @@ class store_ticker(threading.Thread):
         if s != "":
             sm_data = json.loads(s)
             list = sm_data["data"]
-
-            for i in range(0, self.bat_num):
-                self.val.append(list.pop(0))
-                if len(list) == 0:
-                    break
+            if len(list) != 0:
+                for i in range(0, self.bat_num):
+                    self.val.append(list.pop(0))
+                    if len(list) == 0:
+                        break
 
             if len(list) == 0:
                 json_str = ""

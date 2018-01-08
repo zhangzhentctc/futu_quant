@@ -77,8 +77,8 @@ class zma20_strategy_quote(threading.Thread):
                                                "bull_decrease", "bear_decrease"])
         # 120K
         self.trade_qty = 15 * 10000
-        self.bear_code = 62057
-        self.bull_code = 69523
+        self.bear_code = 60148
+        self.bull_code = 61179
         self.hk_trade = hk_trade_api()
         self.hk_trade.initialize()
         self.hk_trade.unlock_trade('88888888', '920209')
