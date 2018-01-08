@@ -16,7 +16,7 @@ if __name__ == "__main__":
     s_simu.prepare_sample_simulator()
 
     comparer = sample_comparer(q_simu, s_simu)
-    comparer.set_distance_t(40)
+    comparer.set_distance_t(30)
     comparer.init_compare_data()
 
 

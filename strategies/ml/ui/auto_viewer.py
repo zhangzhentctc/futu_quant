@@ -7,6 +7,7 @@ from tkinter import *
 import pandas as pd
 from strategies.ml.ui.whatthefuck import *
 from strategies.ml.data_handler.dayk_handler import *
+from strategies.ml.simulator.sample_simulator import *
 
 class auto_viewer:
     def __init__(self, ui_ret, date_list):
@@ -18,8 +19,10 @@ class auto_viewer:
     def __init_frame(self):
         self.root = Tk()
         self.f = Figure(figsize=(5, 4), dpi=100)
-        self.plot_big_quo = self.f.add_subplot(211)
-        self.plot_small_quo = self.f.add_subplot(212)
+        self.plot_big_quo = self.f.add_subplot(311)
+        self.plot_small_quo = self.f.add_subplot(323)
+        self.plot_small_sap = self.f.add_subplot(324)
+        self.plot_comp = self.f.add_subplot(337)
         self.canvs = FigureCanvasTkAgg(self.f, self.root)
         self.canvs.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 
@@ -52,12 +55,13 @@ class auto_viewer:
 
         self.plot_big_quo.clear()
         self.plot_big_quo.plot()
+        self.show_big_quote(0)
         self.canvs.draw()
-
 
         self.wtf2.string = str(self.ui_ret[0][3])
         self.plot_small_quo.clear()
         self.plot_small_quo.plot()
+        self.show_small_quote(0)
         self.canvs.draw()
 
     def plot_day_quo(self, day):
@@ -86,8 +90,8 @@ class auto_viewer:
     def show_big_quote(self, step):
         if self.wtf1.cnt + step > len(self.date_list) - 1 or self.wtf1.cnt + step < 0:
             return
+
         self.wtf1.add_x(step)
-        #self.wtf1.string = str(self.ui_ret[self.wtf1.cnt][3])
         day = self.date_list[self.wtf1.cnt]
 
         self.plot_day_quo(day)
@@ -97,10 +101,10 @@ class auto_viewer:
         dayk = dayk_handler(day)
         dayk.prepare_dayk()
         self.plot_small_quo.clear()
-        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num:num + 7 + 10, COL_END ])
-        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num:num + 7 + 10, COL_MA5 ])
-        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num:num + 7 + 10, COL_MA10])
-        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num:num + 7 + 10, COL_MA20])
+        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num + 2:num + 7 + 10, COL_END ])
+        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num + 2:num + 7 + 10, COL_MA5 ])
+        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num + 2:num + 7 + 10, COL_MA10])
+        self.plot_small_quo.plot(dayk.day_1ktable.iloc[num + 2:num + 7 + 10, COL_MA20])
         self.plot_small_quo.annotate(
             "BUY " + str(self.ui_ret[self.wtf2.cnt][2]),
             xy=(self.ui_ret[self.wtf2.cnt][1] + dayk.inspect_bars,
@@ -112,19 +116,78 @@ class auto_viewer:
         self.canvs.draw()
         return
 
+    def plot_samp(self, sap_id):
+        s_si = sample_simulator()
+        s_si.prepare_sample_simulator()
+
+        if s_si.move_to_id(sap_id) == -1:
+            return
+
+        pd_sap_data = self.__format_kbars2plot(s_si.ret_data)
+        self.plot_small_sap.clear()
+        self.plot_small_sap.plot(pd_sap_data)
+        self.canvs.draw()
+
+    def plot_voice(self):
+        voice_data = [
+            self.ui_ret[self.wtf2.cnt][15],
+            self.ui_ret[self.wtf2.cnt][14],
+            self.ui_ret[self.wtf2.cnt][13],
+            self.ui_ret[self.wtf2.cnt][12],
+            self.ui_ret[self.wtf2.cnt][11],
+            self.ui_ret[self.wtf2.cnt][10],
+            self.ui_ret[self.wtf2.cnt][9]
+        ]
+        data = []
+        for i in range(0, len(voice_data)):
+            data.append({
+                "1": voice_data[i],"2": 10, "3":8
+            })
+        pd_data = pd.DataFrame(data, columns=["1","2","3"])
+        self.plot_comp.clear()
+        self.plot_comp.plot(pd_data)
+        self.plot_comp.set_ylim(0, 20)
+        self.canvs.draw()
+
     ## Show Sample
     def show_small_quote(self, step):
         if self.wtf2.cnt + step > len(self.ui_ret) - 1 or self.wtf2.cnt + step < 0:
             return
         self.wtf2.add_x(step)
-        self.wtf2.string = str(self.ui_ret[self.wtf2.cnt][3])
-        print(self.wtf2.string)
+        self.wtf2.string = str(self.ui_ret[self.wtf2.cnt][3])  + \
+                           "\nclose:" + str(self.ui_ret[self.wtf2.cnt][5]) + \
+                           " ma5:" + str(self.ui_ret[self.wtf2.cnt][6]) + \
+                           " ma10:" + str(self.ui_ret[self.wtf2.cnt][7]) + \
+                           " ma20:" + str(self.ui_ret[self.wtf2.cnt][8]) + \
+                           "\n" + \
+                           "" + str(self.ui_ret[self.wtf2.cnt][13]) + \
+                           " " + str(self.ui_ret[self.wtf2.cnt][12]) + \
+                           " " + str(self.ui_ret[self.wtf2.cnt][11]) + \
+                           " " + str(self.ui_ret[self.wtf2.cnt][10]) + \
+                           " " + str(self.ui_ret[self.wtf2.cnt][9])
+
+
+
+
+
+
         day = self.ui_ret[self.wtf2.cnt][0]
         num = self.ui_ret[self.wtf2.cnt][1]
         self.plot_unit_quo(day, num)
+        sap_id = self.ui_ret[self.wtf2.cnt][4]
+        self.plot_samp(sap_id)
+        self.plot_voice()
 
     def prepare_viewer(self):
         self.init_viwer()
         self.init_plots()
         self.start_viewer()
 
+    def __format_kbars2plot(self, cp_data):
+        data = []
+        for i in range(0, 7):
+            data.append({
+                "1": cp_data[i][0], "2": cp_data[i][1], "3": cp_data[i][2], "4": cp_data[i][3]
+            })
+        pd_data = pd.DataFrame(data, columns=["1", "2", "3", "4"])
+        return pd_data

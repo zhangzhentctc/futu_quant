@@ -41,6 +41,18 @@ class sample_simulator:
             ret_data.append([close, ma5, ma10, ma20])
         self.ret_data = ret_data
 
+    def move_to_id(self, id):
+        pos = -1
+        for i in range(0, self.sample_handler.length):
+            t_id = self.sample_handler.get_sample_id(i)
+            if t_id == id:
+                pos = i
+
+        if pos < 0 or pos >= self.sample_handler.length:
+            return -1
+        self.point = pos
+        self.__generate_ret()
+        return 0
 
     def get_next_data(self, step = 1):
         if self.point + step < 0 or self.point + step >= self.sample_handler.length:
@@ -64,3 +76,6 @@ class sample_simulator:
 
     def get_sample_status(self):
         return self.sample_handler.get_sample_status(self.point)
+
+    def get_sample_comp_cnt(self):
+        return self.sample_handler.get_sample_comp_cnt(self.point)

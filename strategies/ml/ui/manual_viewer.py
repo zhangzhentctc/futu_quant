@@ -16,14 +16,18 @@ class manual_viewer:
     def __init_frame(self):
         self.root = Tk()
         self.f = Figure(figsize=(5, 4), dpi=100)
-        self.plot_quo = self.f.add_subplot(211)
-        self.plot_sap = self.f.add_subplot(212)
+        self.plot_quo = self.f.add_subplot(221)
+        self.plot_quo_t = self.f.add_subplot(222)
+        self.plot_sap = self.f.add_subplot(223)
+        self.plot_sap_t = self.f.add_subplot(224)
         self.canvs = FigureCanvasTkAgg(self.f, self.root)
         self.canvs.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 
     def __init_button(self):
-        Button(self.root, text='BigNext->', command=lambda: self.show_quote(1)).pack()
-        Button(self.root, text='<-BigBack', command=lambda: self.show_quote(-1)).pack()
+        Button(self.root, text='NextQuo->', command=lambda: self.show_quote(1)).pack()
+        Button(self.root, text='<-BackQuo', command=lambda: self.show_quote(-1)).pack()
+        Button(self.root, text='NextQuo->>', command=lambda: self.show_quote(10)).pack()
+        Button(self.root, text='<<-BackQuo', command=lambda: self.show_quote(-10)).pack()
         Button(self.root, text='Next->', command=lambda: self.show_sample(1)).pack()
         Button(self.root, text='<-Back', command=lambda: self.show_sample(-1)).pack()
 
@@ -61,20 +65,38 @@ class manual_viewer:
 
     ### Show Quote
     def show_quote(self, step):
+        self.update_quote(step)
+        self.update_sample(0)
+
+    def show_sample(self, step):
+        self.update_quote(0)
+        self.update_sample(step)
+
+    def update_quote(self, step):
         self.comparer.move_next_quo(step)
         self.wtf1.string = str(self.comparer.distance)
         pd_data = self.__format_kbars2plot(self.comparer.quo_data)
         self.plot_quo.clear()
         self.plot_quo.plot(pd_data)
+
+        pd_data_t = self.__format_kbars2plot(self.comparer.quo_data_t)
+        self.plot_quo_t.clear()
+        self.plot_quo_t.plot(pd_data_t)
+
         self.canvs.draw()
 
     ## Show Sample
-    def show_sample(self, step):
+    def update_sample(self, step):
         self.comparer.move_next_sap(step)
         self.wtf1.string = str(self.comparer.distance)
         pd_data = self.__format_kbars2plot(self.comparer.sap_data)
         self.plot_sap.clear()
         self.plot_sap.plot(pd_data)
+
+        pd_data_t = self.__format_kbars2plot(self.comparer.sap_data_t)
+        self.plot_sap_t.clear()
+        self.plot_sap_t.plot(pd_data_t)
+
         self.canvs.draw()
 
     def __format_kbars2plot(self, cp_data):
