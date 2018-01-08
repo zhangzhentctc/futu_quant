@@ -21,10 +21,15 @@ class db_ticker:
         #2017-12-15
         #13:58:56
         time_tl = time_.split(" ")
-        sql = "insert into ticker(date, time, price, volume, direction,　sequence) values(" + \
-              str(time_tl[0]) + "," + str(time_tl[1]) + "," + str(price) + "," + str(volume) + "," + str(direction) + "," + str(sequence) + ");"
-        print(sql)
-        #ret = db_basic.insertMysql(sql)
+        sql = "insert into ticker(date,time,price,volume,direction,sequence) values(" + \
+              "'" + str(time_tl[0]) + "'" + "," + \
+              "'" + str(time_tl[1]) + "'" + "," + \
+              str(price) + "," + \
+              str(volume) + "," + \
+              "'" + str(direction) + "'" + "," + \
+              "'" + str(sequence)  + "'" + ");"
+        #print(sql)
+        ret = db_basic.insertMysql(sql)
         return 1
 
 

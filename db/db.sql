@@ -1,3 +1,24 @@
+create table ticker(
+
+date varchar(10) ,
+time varchar(8) ,
+price float  ,
+volume int  ,
+direction varchar  ,
+seq varchar,
+);
+
+create table ticker (
+date varchar(10)  DEFAULT NULL,
+time varchar(8)  DEFAULT NULL,
+price float,
+volume int,
+direction varchar(10)  DEFAULT NULL,
+sequence varchar(20)  DEFAULT NULL
+);
+
+
+
 CREATE DATABASE ml_k_analysis;
 USE ml_k_analysis;
 create table onekbar(

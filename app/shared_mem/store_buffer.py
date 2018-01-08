@@ -7,7 +7,7 @@ import random
 import json
 
 FILE_DFT_NAME = "./tick_store_buff.dat"
-FILE_DFT_SIZE = 1024 * 32
+FILE_DFT_SIZE = 1024 * 1024
 
 RET_ERR = -1
 RET_OK = 0
