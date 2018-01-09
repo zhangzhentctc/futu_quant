@@ -3,3 +3,4 @@ openft/__pycache__
 *.pyc
 ./.DS_Store
 ./strategies/.DS_Store
+./app/tick_store_buff.dat
