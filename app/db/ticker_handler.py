@@ -17,6 +17,7 @@ class ticker_handler:
         self.dbop = db_ticker()
 
 ## date,time,price,volume,direction,sequence
+
     def import_tickers_from_db(self):
         count = self.dbop.dbop_get_day_ticker(self.db, self.date)
         if count == 0:
@@ -44,6 +45,10 @@ class ticker_handler:
         ])
 
         self.length = len(self.tickers.index)
+        self.start_ptr = 0
+        self.start_time_s = self.tickers["time"][0]
+        self.end_ptr = 0
+        self.end_time_s = self.start_time_s
         return
 
 ##09:34:23

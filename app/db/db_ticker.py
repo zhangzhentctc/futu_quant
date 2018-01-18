@@ -21,7 +21,7 @@ class db_ticker:
         #2017-12-15
         #13:58:56
         time_tl = time_.split(" ")
-        sql = "insert into ticker(date,time,price,volume,direction,sequence) values(" + \
+        sql = "insert into ticker20180112(date,time,price,volume,direction,sequence) values(" + \
               "'" + str(time_tl[0]) + "'" + "," + \
               "'" + str(time_tl[1]) + "'" + "," + \
               str(price) + "," + \
@@ -34,7 +34,8 @@ class db_ticker:
 
 
     def dbop_get_day_ticker(self, db_basic, day):
-        sql = "select * from ticker where date = " + str(day) + " order by sequence;"
+        sql = "select * from ticker order by sequence;"
+        #sql = "select * from ticker where date = " + str(day) + " order by sequence;"
         self.count = db_basic.queryMysql(sql)
         return self.count
 
