@@ -11,6 +11,7 @@ MAX_HIGHT = DEF_HIGHT_CHARS * DEF_FONT
 BUY_CYB = '+'
 SELL_CYB = '#'
 NEUL_CYB = '='
+ZOOM = 1/2
 
 class viewer:
     def __init__(self, ticker_h):
@@ -32,13 +33,14 @@ class viewer:
 
     def draw_bars(self):
         dig_str = ""
+        dig_str += "From:" + self.start_time + " To:" + self.end_time + '\n'
         for i in range(len(self.data_prices_l) - 1, -1, -1):
             dig_str += str(self.data_prices_l[i]) + " | "
-            for cnt in range(0, self.data_buy_l[i]):
+            for cnt in range(0, int(self.data_buy_l[i]*ZOOM)):
                 dig_str += BUY_CYB
-            for cnt in range(0, self.data_sell_l[i]):
+            for cnt in range(0, int(self.data_sell_l[i]*ZOOM)):
                 dig_str += SELL_CYB
-            for cnt in range(0, self.data_neul_l[i]):
+            for cnt in range(0, int(self.data_neul_l[i]*ZOOM)):
                 dig_str += NEUL_CYB
             dig_str += '\n'
         self.text_diagram.config(state=NORMAL)
@@ -84,6 +86,8 @@ class viewer:
         self.data_buy_l = self.ticker_h.buy_l
         self.data_neul_l = self.ticker_h.neul_l
         self.data_sell_l = self.ticker_h.sell_l
+        self.start_time = self.ticker_h.get_start_time()
+        self.end_time = self.ticker_h.get_end_time()
 
 
 ticker_h = ticker_handler()

@@ -10,6 +10,7 @@ class ticker_handler:
         self.start_time_s = 0
         self.end_ptr = -1
         self.end_time_s = 0
+        self.noon_rest_time = '12:00:00'
 
     def init_db(self):
         self.db = MySQLCommand("localhost", 3306, "root", "123456", "ticker")
@@ -32,7 +33,8 @@ class ticker_handler:
                 "price": line[2],
                 "volume": line[3],
                 "direction": line[4],
-                "sequence": line[5]
+                "sequence": line[5],
+                "real_time": line[1]
             })
 
 
@@ -41,7 +43,8 @@ class ticker_handler:
                 "price",
                 "volume",
                 "direction",
-                "sequence"
+                "sequence",
+                "real_time"
         ])
 
         self.length = len(self.tickers.index)
@@ -49,6 +52,7 @@ class ticker_handler:
         self.start_time_s = self.tickers["time"][0]
         self.end_ptr = 0
         self.end_time_s = self.start_time_s
+        self.noon_rest_time_s = self.__parse_time(self.noon_rest_time)
         return
 
 ##09:34:23
@@ -56,12 +60,13 @@ class ticker_handler:
         ret = -1
         self.start_time_s = self.__parse_time(start_time)
         for i in range(0, self.length):
-            if self.tickers["time"][i] == self.start_time_s:
+            if self.tickers["time"][i] >= self.start_time_s:
                 self.start_ptr = i
                 ret = 0
                 break
         if ret == -1:
             print("Set Start Pointer Fail")
+            return
         self.end_ptr = self.start_ptr
         self.end_time_s = self.start_time_s
         self.move_end_ptr(60)
@@ -69,15 +74,21 @@ class ticker_handler:
 
     def move_end_ptr(self, seconds):
         ret = -1
+        if self.end_time_s + seconds + 1 > self.noon_rest_time_s and \
+           self.start_time_s <= self.noon_rest_time_s:
+            dest_time_s = self.end_time_s + seconds + 1 + 3600
+        else:
+            dest_time_s = self.end_time_s + seconds + 1
+
         for i in range(self.end_ptr, self.length):
-            if self.tickers["time"][i] == self.end_time_s + seconds + 1:
+            if self.tickers["time"][i] >= dest_time_s:
                 self.end_ptr = i - 1
                 ret = 0
                 break
         if ret == -1:
             print("Move End Pointer Fail")
             return
-        self.end_time_s = self.end_time_s + seconds
+        self.end_time_s = dest_time_s - 1
         return
 
     def gen_data(self):
@@ -97,7 +108,6 @@ class ticker_handler:
                     break
 
             if have_p == False:
-                print("Create Price")
                 self.price_l.append(price)
                 self.buy_l.append(0)
                 self.neul_l.append(0)
@@ -136,9 +146,13 @@ class ticker_handler:
 
         return
 
+    def get_start_time(self):
+        return self.tickers["real_time"][self.start_ptr]
+
+    def get_end_time(self):
+        return self.tickers["real_time"][self.end_ptr]
 
     def __parse_time(self, time_):
-        #morning_start = "09:15:00"
         time_list = time_.split(":")
         time_second = int(time_list[0]) * 3600 + \
                       int(time_list[1]) * 60 + \
