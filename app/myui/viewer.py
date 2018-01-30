@@ -44,7 +44,7 @@ class viewer:
                 dig_str += NEUL_CYB
             dig_str += '\n'
         self.text_diagram.config(state=NORMAL)
-        self.text_diagram.delete(1.0, 'delete')
+        self.text_diagram.delete(1.0, 'end')
         self.text_diagram.insert('insert', dig_str)
         self.text_diagram.config(state=DISABLED)
 
