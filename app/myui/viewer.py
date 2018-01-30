@@ -28,16 +28,11 @@ class viewer:
         self.text_diagram.config(yscrollcommand=bar.set)
         bar.pack(side=RIGHT,fill=Y)
         self.text_diagram.pack(side=LEFT,fill=BOTH,expand=1)
-        self.draw_bars()
 
 
     def draw_bars(self):
-        self.data_prices_l=[100, 101, 102, 103, 104, 105, 106, 107, 108, 109]
-        self.data_buy_l= [2,3,4,5,2,4,5,6,3,2]
-        self.data_sell_l=[1,3,4,6,3,6,3,2,4,6]
-        self.data_neul_l=[4,3,2,4,5,1,2,3,4,5]
         dig_str = ""
-        for i in range(0, len(self.data_prices_l)):
+        for i in range(len(self.data_prices_l) - 1, -1, -1):
             dig_str += str(self.data_prices_l[i]) + " | "
             for cnt in range(0, self.data_buy_l[i]):
                 dig_str += BUY_CYB
