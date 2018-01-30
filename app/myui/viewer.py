@@ -36,6 +36,11 @@ class viewer:
         dig_str += "From:" + self.start_time + " To:" + self.end_time + '\n'
         for i in range(len(self.data_prices_l) - 1, -1, -1):
             dig_str += str(self.data_prices_l[i]) + " | "
+            total = self.data_buy_l[i] + self.data_sell_l[i] + self.data_neul_l[i]
+            buy_per = int(100 * self.data_buy_l[i]/total)
+            sell_per = int(100 * self.data_sell_l[i] / total)
+            dig_str += str(buy_per) + " " + str(sell_per) +  " | "
+
             for cnt in range(0, int(self.data_buy_l[i]*ZOOM)):
                 dig_str += BUY_CYB
             for cnt in range(0, int(self.data_sell_l[i]*ZOOM)):
